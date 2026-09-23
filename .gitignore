@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+!.env.example
+.DS_Store
+docs/qa/
+content/assets/candidates/
+supabase/.temp/
