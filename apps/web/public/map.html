@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'java-provinces': {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: [{
+                type: 'Feature',
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: [[[105, -8], [115, -8], [115, -5], [105, -5], [105, -8]]]
+                },
+                properties: { Propinsi: 'TEST JAWA' }
+              }]
+            }
+          }
+        },
+        layers: [
+          {
+            id: 'ocean-bg',
+            type: 'background',
+            paint: { 'background-color': '#d1f4f9' }
+          },
+          {
+            id: 'java-fill',
+            type: 'fill',
+            source: 'java-provinces',
+            paint: { 'fill-color': '#ff0000' }
+          }
+        ]
+      },
+      center: [110, -7],
+      zoom: 6
+    });
+  </script>
+</body>
+</html>

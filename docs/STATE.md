@@ -7,8 +7,8 @@ Diperbarui oleh agent di akhir setiap sesi (`AKHIRI SESI`).
 | Batch | Status | Tag | Catatan |
 |---|---|---|---|
 | B0 Kontrak | **selesai** | `contract-v1` | Skema, RLS, Shared Types, ENV setup. |
-| B0.5 Design system | belum | | |
-| B1 Peta | belum | | |
+| B0.5 Design system | **selesai** | 05-done | Komponen UI dan styleguide S02. |
+| B1 Peta | **dalam progres** | | Fase 0 Spike Selesai. |
 | B2 Pipeline | belum | | |
 | B3 Reader dan Auth UI | belum | | |
 | B4 Kontribusi, profil, admin, deploy | belum | | |
@@ -30,4 +30,4 @@ Versi: **`contract-v1`**.
 
 ## Langkah berikutnya
 
-Mulai B0.5 atau B1 sesuai prioritas.
+Eksekusi Fase A Batch B1 (Paralel 3 Sub-Agent).

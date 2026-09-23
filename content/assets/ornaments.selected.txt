@@ -1,0 +1,3 @@
+perahu_1.svg
+pohon_1.svg
+candi_1.svg

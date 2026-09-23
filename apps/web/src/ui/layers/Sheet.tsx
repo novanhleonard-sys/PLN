@@ -1,0 +1,62 @@
+import { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { Icon } from '../basic/Icon';
+
+export interface SheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  snapPoints?: string[]; // e.g. ['30vh', '55vh', '92vh']
+}
+
+export function Sheet({ isOpen, onClose, children }: SheetProps) {
+  // Simple implementation of bottom sheet without complex drag physics for now
+  // In a real app we might use react-use-gesture or vaul
+  
+  // Close on Escape
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-[#2E2A26]/40 z-40"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: '0%' }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 h-[55vh] max-h-[92vh] bg-white rounded-t-3xl shadow-warm-lg z-50 flex flex-col"
+          >
+            <div className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing">
+              <div className="w-12 h-1.5 bg-border-light rounded-pill" />
+            </div>
+            
+            <div className="absolute top-4 right-4">
+              <button onClick={onClose} className="p-2 bg-cream text-text-muted hover:text-text-main rounded-full">
+                <Icon name="X" size={20} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              {children}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
