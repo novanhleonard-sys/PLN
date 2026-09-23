@@ -1,0 +1,24 @@
+{
+  "name": "pln-monorepo",
+  "private": true,
+  "scripts": {
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "build": "pnpm -r run build",
+    "env:check": "tsx scripts/env-check.ts"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.117.1",
+    "@types/node": "^24.13.3",
+    "eslint": "^10.11.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
+    "zod": "^4.6.5"
+  }
+}

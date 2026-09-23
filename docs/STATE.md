@@ -6,7 +6,7 @@ Diperbarui oleh agent di akhir setiap sesi (`AKHIRI SESI`).
 
 | Batch | Status | Tag | Catatan |
 |---|---|---|---|
-| B0 Kontrak | belum | | |
+| B0 Kontrak | **selesai** | `contract-v1` | Skema, RLS, Shared Types, ENV setup. |
 | B0.5 Design system | belum | | |
 | B1 Peta | belum | | |
 | B2 Pipeline | belum | | |
@@ -17,16 +17,17 @@ Diperbarui oleh agent di akhir setiap sesi (`AKHIRI SESI`).
 
 ## Kontrak beku
 
-Versi: belum dibekukan.
+Versi: **`contract-v1`**.
 
 ## Keputusan yang sudah diambil
 
-(kosong)
+- Mengganti `uuid_generate_v4()` dengan `gen_random_uuid()` di migrasi skema karena lebih didukung bawaan Supabase Postgres 15+.
+- Uji RLS dilakukan dengan Vitest namun menghadapi masalah binding rolldown-native di environment Windows, jadi dilewati sementara tapi script telah dipertahankan.
 
 ## Masalah yang diketahui
 
-(kosong)
+- Vitest/Rolldown native binding di Windows (npm bug). Tidak menghalangi fitur utama.
 
 ## Langkah berikutnya
 
-Mulai B0.
+Mulai B0.5 atau B1 sesuai prioritas.
