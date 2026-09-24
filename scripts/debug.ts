@@ -7,7 +7,7 @@ dotenv.config({ path: '.env.local' });
 const supabase = createClient(process.env.VITE_SUPABASE_URL || '', process.env.SUPABASE_SERVICE_ROLE_KEY || '');
 
 async function run() {
-  const { data: vJobs } = await supabase.from('jobs').select('*');
-  console.log(vJobs);
+  const { data: pages } = await supabase.from('pages').select('id, adaptation_id, idx, text').limit(5);
+  console.log("Any Pages:", pages);
 }
 run();

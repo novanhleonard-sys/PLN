@@ -1,8 +1,9 @@
-import React, { lazy, Suspense } from 'react'
+import React, { lazy, Suspense, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from './ErrorBoundary.tsx'
+import { useAuth } from './features/auth/AuthStore.ts'
 
 import '@fontsource/fredoka/400.css'
 import '@fontsource/fredoka/500.css'
@@ -15,27 +16,39 @@ import './index.css'
 
 const Styleguide = lazy(() => import('./routes/styleguide.tsx'))
 const Home = lazy(() => import('./routes/Home.tsx'))
+const Baca = lazy(() => import('./routes/Baca.tsx').then(m => ({ default: m.Baca })))
+const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Login })))
+
+const queryClient = new QueryClient();
+
+const AppContent = () => {
+  const { initialize } = useAuth();
+  
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  return (
+    <Suspense fallback={<div className="p-8 text-stone-500 font-nunito">Memuat aplikasi...</div>}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/cerita/:slug" element={<Home />} />
+        <Route path="/baca/:versionId" element={<Baca />} />
+        <Route path="/masuk" element={<Login />} />
+        <Route path="/styleguide" element={<Styleguide />} />
+      </Routes>
+    </Suspense>
+  );
+};
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ErrorBoundary><Suspense fallback={<div className="p-8 text-text-muted">Memuat...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/cerita/:slug" element={<Home />} />
-          <Route path="/baca/:slug" element={<div className="p-8">Membaca placeholder</div>} />
-          <Route path="/styleguide" element={<Styleguide />} />
-          
-          <Route path="/register" element={<div>Register</div>} />
-          <Route path="/login" element={<div>Login</div>} />
-          <Route path="/callback" element={<div>Callback</div>} />
-          <Route path="/dashboard" element={<div>Dashboard</div>} />
-          <Route path="/read" element={<div>Read</div>} />
-          <Route path="/read/history" element={<div>History</div>} />
-          <Route path="/read/:adaptation_id" element={<div>Adaptation Detail</div>} />
-          <Route path="/read/:adaptation_id/read" element={<div>Adaptation Read</div>} />
-        </Routes>
-      </Suspense></ErrorBoundary>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <AppContent />
+        </ErrorBoundary>
+      </BrowserRouter>
+    </QueryClientProvider>
   </React.StrictMode>,
 )
