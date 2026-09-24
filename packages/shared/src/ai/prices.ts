@@ -19,7 +19,7 @@ export const AI_PRICES = {
     }
   },
   zai: {
-    'glm-4-flash': {
+    'glm-5.3-flash': {
       input_per_1m: 0.01,
       output_per_1m: 0.01,
     }
@@ -28,14 +28,16 @@ export const AI_PRICES = {
 
 export function calculateCost(provider: string, model: string, inputTokens: number, outputTokens: number, isImage = false): number {
   if (isImage) {
-    const costPerImage = AI_PRICES[provider as keyof typeof AI_PRICES]?.[model as any]?.per_image || 0.03;
+    const costPerImage = (AI_PRICES[provider as keyof typeof AI_PRICES] as any)?.[model]?.per_image || 0.03;
     return costPerImage * outputTokens; // outputTokens is number of images
   }
   
-  const pricing = AI_PRICES[provider as keyof typeof AI_PRICES]?.[model as any];
+  const pricing = (AI_PRICES[provider as keyof typeof AI_PRICES] as any)?.[model];
   if (!pricing) return 0;
   
   const inCost = (inputTokens / 1_000_000) * pricing.input_per_1m;
   const outCost = (outputTokens / 1_000_000) * pricing.output_per_1m;
   return inCost + outCost;
 }
+
+

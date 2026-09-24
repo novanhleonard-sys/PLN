@@ -11,11 +11,11 @@ export class GeminiProvider implements AIProvider {
     this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   }
 
-  async generateText(model: string, prompt: string, systemInstruction?: string) {
+  async generateText(model: string, prompt: string, systemInstruction?: string, opts?: Record<string, any>) {
     const response = await this.ai.models.generateContent({
       model,
       contents: prompt,
-      config: systemInstruction ? { systemInstruction } : undefined
+      config: { systemInstruction, tools: opts?.useSearchGrounding ? [{ googleSearch: {} }] as any : undefined }
     });
     
     return {
@@ -25,8 +25,8 @@ export class GeminiProvider implements AIProvider {
     };
   }
 
-  async generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string) {
-    const jsonSchema = zodToJsonSchema(schema, "mySchema") as any;
+  async generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>) {
+    const jsonSchema = zodToJsonSchema(schema as any, "mySchema") as any;
     // Adapt zodToJsonSchema output for Gemini
     const geminiSchema = jsonSchema.definitions ? jsonSchema.definitions.mySchema : jsonSchema;
 
@@ -34,7 +34,8 @@ export class GeminiProvider implements AIProvider {
       model,
       contents: prompt,
       config: {
-        systemInstruction,
+        tools: opts?.useSearchGrounding ? [{ googleSearch: {} }] as any : undefined,
+                systemInstruction,
         responseMimeType: 'application/json',
         responseSchema: geminiSchema,
       }
@@ -53,3 +54,8 @@ export class GeminiProvider implements AIProvider {
     };
   }
 }
+
+
+
+
+

@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
-import { calculateCost } from '../../../packages/shared/src/ai/prices';
+import { calculateCost } from '../../../../packages/shared/src/ai/prices';
 import { BudgetGuard } from '../core/budget';
 
 export interface GenerateOptions {
@@ -11,12 +11,13 @@ export interface GenerateOptions {
   ref?: string;
   userId?: string;
   stage: string;
+  useSearchGrounding?: boolean;
 }
 
 export interface AIProvider {
   name: string;
-  generateText(model: string, prompt: string, systemInstruction?: string): Promise<{ text: string; inputTokens: number; outputTokens: number }>;
-  generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string): Promise<{ data: T; inputTokens: number; outputTokens: number }>;
+  generateText(model: string, prompt: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ text: string; inputTokens: number; outputTokens: number }>;
+  generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>): Promise<{ data: T; inputTokens: number; outputTokens: number }>;
 }
 
 export class ProviderRegistry {
@@ -40,13 +41,13 @@ export class ProviderRegistry {
     let attempt = 0;
     while (attempt < 2) { // 1 retry
       try {
-        const result = await provider.generateJSON(opts.model, opts.prompt, schema, opts.systemInstruction);
+        const result = await provider.generateJSON(opts.model, opts.prompt, schema, opts.systemInstruction, opts);
         await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
         return result.data;
       } catch (err: any) {
         attempt++;
         if (attempt >= 2) {
-          throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message);
+          throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
         }
       }
     }
@@ -65,13 +66,13 @@ export class ProviderRegistry {
     let attempt = 0;
     while (attempt < 2) { // 1 retry
       try {
-        const result = await provider.generateText(opts.model, opts.prompt, opts.systemInstruction);
+        const result = await provider.generateText(opts.model, opts.prompt, opts.systemInstruction, opts);
         await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
         return result.text;
       } catch (err: any) {
         attempt++;
         if (attempt >= 2) {
-          throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message);
+          throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
         }
       }
     }
@@ -93,3 +94,7 @@ export class ProviderRegistry {
     });
   }
 }
+
+
+
+

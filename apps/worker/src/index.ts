@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import WebSocket from 'ws';
+globalThis.WebSocket = WebSocket as any;
+
 import { BudgetGuard } from './core/budget';
 import { ProviderRegistry } from './providers/registry';
 import { GeminiProvider } from './providers/gemini';
@@ -7,15 +10,14 @@ import { ZaiProvider } from './providers/zai';
 import { JobRunner } from './core/runner';
 
 // Import stages
-import { processTriageStage } from './stages/triage';
-import { processVerifyStage } from './stages/verify';
-import { processSegmentStage } from './stages/segment';
-import { processCharacterStage } from './stages/character';
+import { triageStage } from './stages/triage';
+import { verifyStage } from './stages/verify';
+import { segmentStage } from './stages/segment';
+import { characterStage } from './stages/character';
 import { processSceneImageStage } from './stages/scene-image';
-import { processFinalizeStage } from './stages/finalize';
-import { processAudioStage } from './stages/audio';
+import { audioStage } from './stages/audio';
 
-dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '../../.env.local' });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''; // Worker needs service role
@@ -35,28 +37,23 @@ registry.register(new ZaiProvider());
 const runner = new JobRunner(supabase);
 
 // Register stages
-runner.register('triage', processTriageStage);
-runner.register('verify', processVerifyStage);
-runner.register('segment', processSegmentStage);
-runner.register('character', processCharacterStage);
-runner.register('scene-image', processSceneImageStage);
-runner.register('finalize', processFinalizeStage);
-runner.register('audio', processAudioStage);
+runner.register('triage', async (ctx, job) => await triageStage(ctx, job, registry));
+runner.register('verify', async (ctx, job) => await verifyStage(ctx, job, registry));
+runner.register('segment', async (ctx, job) => await segmentStage(ctx, job, registry));
+runner.register('character', async (ctx, job) => await characterStage(ctx, job, registry));
+runner.register('scene-image', async (ctx, job) => await processSceneImageStage(ctx, job));
+runner.register('audio', async (ctx, job) => await audioStage(ctx, job));
 
-let isPolling = true;
+const isPolling = true;
 
 async function main() {
   console.log('Worker started. Polling for jobs...');
-  while (isPolling) {
-    await runner.runOnce(5);
+  let iterations = 0;
+  while (isPolling && iterations < 30) {
+    await runner.runOnce(1);
     await new Promise(r => setTimeout(r, 2000));
+    iterations++;
   }
 }
-
-process.on('SIGINT', () => {
-  console.log('Shutting down...');
-  isPolling = false;
-  runner.shutdown();
-});
 
 main().catch(console.error);

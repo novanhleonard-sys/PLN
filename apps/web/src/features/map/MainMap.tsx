@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Map, setWorkerUrl } from 'maplibre-gl';
+import { Map, setWorkerUrl, GeoJSONSource } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 setWorkerUrl(workerUrl);
 
@@ -17,7 +17,7 @@ interface MainMapProps {
 
 
 export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProps) {
-  const MAP_VERSION = 'v1.0.1';
+  
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -65,7 +65,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
       fetch('/map/provinsi.geojson').then(r => r.json()).then(data => {
         if (!map.current) return;
         const m = map.current;
-        (m.getSource('provinsi') as maplibregl.GeoJSONSource).setData(data); setDebugLogs(l => [...l, 'FETCH SUCCESS ' + data.features.length]);
+        (m.getSource('provinsi') as GeoJSONSource).setData(data); setDebugLogs(l => [...l, 'FETCH SUCCESS ' + data.features.length]);
         const labels = {
           type: 'FeatureCollection',
           features: data.features.map((f: any) => ({
@@ -74,13 +74,13 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
             properties: f.properties
           }))
         };
-        (m.getSource('provinsi-labels') as maplibregl.GeoJSONSource).setData(labels as any);
+        (m.getSource('provinsi-labels') as GeoJSONSource).setData(labels as any);
       });
 
       fetch('/map/kabkota.geojson').then(r => r.json()).then(data => {
         if (!map.current) return;
         const m = map.current;
-        (m.getSource('kabkota') as maplibregl.GeoJSONSource).setData(data);
+        (m.getSource('kabkota') as GeoJSONSource).setData(data);
         const labels = {
           type: 'FeatureCollection',
           features: data.features.map((f: any) => ({
@@ -89,7 +89,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
             properties: f.properties
           }))
         };
-        (m.getSource('kabkota-labels') as maplibregl.GeoJSONSource).setData(labels as any);
+        (m.getSource('kabkota-labels') as GeoJSONSource).setData(labels as any);
       });
 
       // 3. Style A Layers
@@ -318,5 +318,6 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
     </>
   );
 }
+
 
 

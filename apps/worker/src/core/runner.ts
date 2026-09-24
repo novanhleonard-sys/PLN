@@ -49,8 +49,10 @@ export class JobRunner {
 
     if (!jobs || jobs.length === 0) return;
 
-    // Execute jobs concurrently
-    await Promise.all(jobs.map(job => this.executeJob(job)));
+    // Execute jobs sequentially to avoid rate limits
+    for (const job of jobs) {
+      await this.executeJob(job);
+    }
   }
 
   private async executeJob(job: Job) {
@@ -95,7 +97,7 @@ export class JobRunner {
   }
 
   private async handleRetry(job: Job, errorMsg: string) {
-    let nextRunAfter = new Date();
+    const nextRunAfter = new Date();
     
     // attempts is already incremented by claim_job
     // if attempts == 1, failed once -> wait 30s
@@ -126,3 +128,4 @@ export class JobRunner {
     this.isShuttingDown = true;
   }
 }
+
