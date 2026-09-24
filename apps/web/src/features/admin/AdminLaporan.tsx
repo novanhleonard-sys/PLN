@@ -61,7 +61,7 @@ export function AdminLaporan() {
             <div key={report.id} className="bg-white border border-border-light rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <Chip type={report.target_type === 'adaptation' ? 'region' : 'legend'} label={report.target_type.toUpperCase()} className="h-6 px-2 text-xs" />
+                  <Chip type={report.target_type === 'adaptation' ? 'region' : 'legenda'} label={report.target_type.toUpperCase()} className="h-6 px-2 text-xs" />
                   <span className="text-xs text-stone-500 font-mono">{report.target_id}</span>
                 </div>
                 <p className="text-text-main font-semibold">"{report.reason}"</p>
