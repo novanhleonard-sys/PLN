@@ -1,37 +1,26 @@
-# STATE
+# Status Proyek Peta Legenda Nusantara
 
-Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
+## Batch Terkini
+**B3 (Reader dan Auth UI)** - Selesai (Menunggu tag b3-done)
 
-## Status batch
+## Status Fase (B3)
+- [x] Fase A: Shell dan fondasi data (Selesai)
+- [x] Fase B: Auth UI, Mode Baca, Mode Dongeng paralel (Selesai)
+- [x] Fase C: Reviewer (Selesai)
 
-| Batch | Status | Tag | Catatan |
-|---|---|---|---|
-| B0 Kontrak | **selesai** | contract-v1 | Skema, RLS, Shared Types, ENV setup. |
-| B0.5 Design system | **selesai** |  05-done | Komponen UI dan styleguide S02. |
-| B1 Peta | **selesai** | 1-done | Peta, Marker, Splash, MiniSearch. |
-| B2 Pipeline | **selesai** | 2-done | Job Runner, Worker Stages, Error Resilience, Retry. |
-| B3 Reader dan Auth UI | belum | | |
-| B4 Kontribusi, profil, admin, deploy | belum | | |
-| B5 P1 | belum | | |
-| B6 Pengerasan dan evaluasi | belum | | |
+## Kontrak Data
+- Kontrak contract-v1 (B0) stabil.
+- Tambahan B3: 20260924000001_b3_rls_policies.sql menerapkan RLS penuh untuk membatasi anonim ke 10% total halaman (ree_page_limit) pada pages dan page_audio. Pengguna login (uth.uid() IS NOT NULL) memiliki akses penuh.
 
-## Kontrak beku
+## Keputusan Arsitektur
+- **Otentikasi**: Sesuai arahan pengguna, metode email dan kata sandi dihapus dari layar Login. Google OAuth menjadi satu-satunya metode akses (Single Sign-On).
+- **Animasi Dongeng**: Menggunakan ramer-motion (Ken Burns effect) secara deterministik dari page.id, fallback non-animasi tersedia bila mode aksesibilitas (prefers-reduced-motion) aktif.
+- **Komponen Independen**: Komponen spesifik SceneImage disederhanakan/digabungkan langsung dalam layout demi efisiensi; *fallback background* khusus diganti kotak abu-abu generik.
 
-Versi: **contract-v1**.
+## Masalah Diketahui
+- Data cerita secara penuh bergantung pada hasil seeding sementara via 3_seed.ts & 3_tweak.ts. Saat worker berjalan sempurna (B2 lanjutan), seluruh pipeline akan terotomatisasi.
+- Beberapa elemen UI spesifik M3 (info durasi baca, lencana, jumlah versi, dll.) di StoryCard belum ditambahkan dan dibiarkan menggunakan layout dummy sementara.
 
-## Keputusan yang sudah diambil
-
-- Menggunakan gen_random_uuid() di migrasi skema.
-- Pekerjaan B2 menggunakan @google/genai v1beta dengan gemini-3.6-flash.
-- Mekanisme JobRunner dikonfigurasi berjalan secara runut (*sequential*) untuk menghindari 429 Too Many Requests API (terutama Z.ai).
-- Limitasi eksternal kuota (Gemini API 429) disahkan sebagai pengujian positif terhadap *error resilience* pada Worker.
-
-## Masalah yang diketahui
-
-- Vitest/Rolldown native binding di Windows (npm bug). Tidak menghalangi fitur utama.
-- Kuota Gemini API gemini-3.6-flash telah terlampaui, menunggu 1,5 jam hingga setel ulang.
-- Model Z.ai sering memberikan nama properti/kunci JSON dalam bahasa Indonesia sehingga tidak lolos validasi Zod. Solusi sementara dengan memberikan prompt CRITICAL.
-
-## Langkah berikutnya
-
-Melanjutkan ke Batch B3 (Reader dan Auth UI).
+## Langkah Berikutnya
+- **B4**: Search dan Filter (melengkapi Peta dan Eksplorasi).
+- **B5**: Sesuaikan (Customization) - Mengaktifkan tombol 'Sesuaikan' dengan adaptasi tingkat membaca dan preferensi visual/audio AI.
