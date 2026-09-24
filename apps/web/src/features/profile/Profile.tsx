@@ -7,6 +7,7 @@ import { AvatarButton } from '../../ui/basic/Misc';
 
 import { RiwayatBaca } from './RiwayatBaca';
 import { Tersimpan } from './Tersimpan';
+import { Preferensi } from './Preferensi';
 
 export function Profile() {
   const { user, signOut } = useAuth();
@@ -68,7 +69,7 @@ export function Profile() {
             <Route path="/" element={<RiwayatBaca />} />
             <Route path="/riwayat" element={<RiwayatBaca />} />
             <Route path="/tersimpan" element={<Tersimpan />} />
-            <Route path="/preferensi" element={<div className="text-stone-500 font-nunito p-4">Preferensi akan tersedia segera.</div>} />
+            <Route path="/preferensi" element={<Preferensi />} />
           </Routes>
         </div>
 
