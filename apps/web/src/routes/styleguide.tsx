@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '../ui/basic/Button';
 import { Chip } from '../ui/basic/Chip';
 import { Badge, Card } from '../ui/basic/BadgeCard';
+import { Input } from '../ui/basic/Input';
 
 import { Stepper } from '../ui/basic/Stepper';
 import { SegmentedControl } from '../ui/basic/SegmentedControl';
@@ -26,14 +27,21 @@ export default function Styleguide() {
       <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-12">
         <header>
           <h1 className="text-3xl font-fredoka text-teal mb-2">Design System / Styleguide</h1>
-          <p className="text-text-muted">Peta Legenda Nusantara (B0.5 - Revisi 2)</p>
+          <p className="text-text-muted">Peta Legenda Nusantara (B0.5 - Gabungan)</p>
         </header>
 
         {/* Form & Controls */}
         <section className="space-y-6">
-          <h2 className="text-xl font-fredoka">Kendali Khusus (Toggles & Steppers)</h2>
+          <h2 className="text-xl font-fredoka">Form & Kontrol</h2>
           <div className="grid md:grid-cols-2 gap-8 items-start">
-            <div className="space-y-6">
+            {/* Kiri: Inputs (Dari Revisi 1) */}
+            <div className="space-y-4">
+              <Input label="Nama Tampilan" placeholder="Masukkan nama..." leftIcon="User" />
+              <Input label="Kata Sandi" type="password" rightIcon="Eye" defaultValue="rahasia" />
+              <Input label="Error State" error="Email tidak valid" defaultValue="salah@email" />
+            </div>
+            {/* Kanan: Toggles & Steppers (Dari Revisi 2) */}
+            <div className="space-y-6 w-full max-w-sm">
               <SegmentedControl 
                 options={['Baca', 'Dongeng']} 
                 value={segVal} 
@@ -45,8 +53,6 @@ export default function Styleguide() {
                 label="tahun"
                 min={1} max={12}
               />
-            </div>
-            <div className="space-y-6 w-full max-w-sm">
               <ProgressBar progress={40} label="Halaman 4 dari 10" />
             </div>
           </div>
@@ -195,3 +201,4 @@ export default function Styleguide() {
     </div>
   );
 }
+
