@@ -93,7 +93,7 @@ export function AdminDashboard() {
         )}
       </div>
 
-      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage('')} />}
+      {toastMessage && <Toast visible={!!toastMessage} message={toastMessage} onClose={() => setToastMessage('')} />}
     </div>
   );
 }

@@ -139,8 +139,9 @@ export const Baca: React.FC = () => {
             &larr;
           </Link>
           <h1 className="font-fredoka text-lg md:text-xl font-bold text-text-main line-clamp-1">
-            {versionData.version.story.title}
-          </h1>
+              {versionData.version.story.title}
+            </h1>
+            <ReportButton targetType={selectedAdaptation ? 'adaptation' : 'version'} targetId={selectedAdaptation || versionId || ''} />
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
           <button className="px-4 py-2 text-sm font-bold text-teal bg-teal/10 rounded-full" onClick={() => setAdaptModalOpen(true)}>
@@ -225,6 +226,7 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
 
 
 
