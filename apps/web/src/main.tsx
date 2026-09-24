@@ -22,6 +22,7 @@ const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Lo
 const AdminAntrean = lazy(() => import('./features/admin/AdminAntrean').then(m => ({ default: m.AdminAntrean })))
 const AdminKonten = lazy(() => import('./features/admin/AdminKonten').then(m => ({ default: m.AdminKonten })))
 const AdminPengaturan = lazy(() => import('./features/admin/AdminPengaturan').then(m => ({ default: m.AdminPengaturan })))
+const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const AppContent = () => {
         <Route path="/cerita/:slug" element={<Home />} />
         <Route path="/baca/:versionId" element={<Baca />} />
         <Route path="/masuk" element={<Login />} />
+        <Route path="/profil/*" element={<Profile />} />
         <Route path="/styleguide" element={<Styleguide />} />
         
         <Route path="/admin/antrean" element={<RequireAdmin><AdminAntrean /></RequireAdmin>} />
@@ -60,3 +62,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
+
