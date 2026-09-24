@@ -16,7 +16,7 @@ import './index.css'
 
 const Styleguide = lazy(() => import('./routes/styleguide.tsx'))
 const Home = lazy(() => import('./routes/Home.tsx'))
-const Baca = lazy(() => import('./routes/Baca.tsx').then(m => ({ default: m.Baca })))
+const Baca = lazy(() => import('./features/reader/baca/Baca').then(m => ({ default: m.Baca })))
 const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Login })))
 
 const queryClient = new QueryClient();
@@ -52,3 +52,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
+
+

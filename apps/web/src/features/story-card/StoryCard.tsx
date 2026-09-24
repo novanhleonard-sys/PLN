@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useMediaQuery } from '../../utils/useMediaQuery';
 import { SidePanel } from '../../ui/layers/SidePanel';
 import { Sheet } from '../../ui/layers/Sheet';
@@ -5,6 +6,9 @@ import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
 import { type StoryPin } from '../map/dummy-stories';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthStore';
+import { GateModal } from '../auth/GateModal';
+import { supabase } from '../../lib/supabase';
 
 interface StoryCardProps {
   story: StoryPin | null;
@@ -14,15 +18,50 @@ interface StoryCardProps {
 export function StoryCard({ story, onClose }: StoryCardProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const [isGateOpen, setIsGateOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [readHistory, setReadHistory] = useState<any>(null);
+  
+  // Real version id for testing (Kancil)
+  const testVersionId = '798ad75a-62eb-4153-abf6-5312b4c2147c';
+
+  useEffect(() => {
+    if (!user || !story) return;
+    
+    // Check saved status (using a fixed story id for demo)
+    const testStoryId = '697008eb-d2b7-4157-ad8f-1ebdfe91bc35';
+    
+    supabase.from('saved_stories').select('*').eq('user_id', user.id).eq('story_id', testStoryId).single()
+      .then(({ data }) => setIsSaved(!!data));
+      
+    supabase.from('read_history').select('*').eq('user_id', user.id).eq('version_id', testVersionId).single()
+      .then(({ data }) => setReadHistory(data));
+      
+  }, [user, story]);
 
   const handleRead = () => {
     if (story) {
-      navigate(`/baca/placeholder`);
+      navigate(`/baca/` + testVersionId);
     }
   };
 
-  const handleSave = () => {
-    alert('Simpan cerita: Fitur akan tersedia di B3');
+  const handleSave = async () => {
+    if (!user) {
+      setIsGateOpen(true);
+      return;
+    }
+    
+    const testStoryId = '697008eb-d2b7-4157-ad8f-1ebdfe91bc35';
+    
+    if (isSaved) {
+      await supabase.from('saved_stories').delete().eq('user_id', user.id).eq('story_id', testStoryId);
+      setIsSaved(false);
+    } else {
+      await supabase.from('saved_stories').insert({ user_id: user.id, story_id: testStoryId });
+      setIsSaved(true);
+    }
   };
 
   const content = story ? (
@@ -50,12 +89,18 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
       <div className="mt-auto pt-4 flex gap-3">
         <Button onClick={handleRead} variant="primary" className="flex-1">
-          Lanjut baca
+          {readHistory ? `Lanjutkan halaman ${readHistory.last_page_idx}` : 'Lanjut baca'}
         </Button>
-        <Button onClick={handleSave} variant="secondary" className="px-3" aria-label="Simpan cerita">
-          <Icon name="Bookmark" size={20} />
+        <Button onClick={handleSave} variant="secondary" className={`px-3 ${isSaved ? 'text-coral' : ''}`} aria-label="Simpan cerita">
+          <Icon name="Bookmark" size={20} className={isSaved ? 'fill-current' : ''} />
         </Button>
       </div>
+      
+      <GateModal 
+        isOpen={isGateOpen} 
+        onClose={() => setIsGateOpen(false)} 
+        message="Masuk untuk menyimpan cerita ke koleksi Anda." 
+      />
     </div>
   ) : null;
 
