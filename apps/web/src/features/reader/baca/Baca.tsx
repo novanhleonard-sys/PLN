@@ -194,14 +194,11 @@ export const Baca: React.FC = () => {
       </main>
       
       {/* Progress bar */}
-      <div className="h-1.5 bg-stone-100 w-full absolute top-0 left-0 z-50">
-        <div 
-          className="h-full bg-coral transition-all duration-300 rounded-r-full"
-          style={{ width: `${((currentPage + 1) / totalAdaptPages) * 100}%` }}
-        />
-      </div>
-      
-      <GateModal 
+        <div className="absolute top-0 left-0 w-full z-50">
+          <ProgressBar progress={((currentPage + 1) / totalAdaptPages) * 100} />
+        </div>
+        
+        <GateModal 
         isOpen={gateOpen} 
         onClose={() => setGateOpen(false)} 
         message="Anda telah mencapai batas halaman gratis untuk sesi ini. Silakan masuk untuk membaca sampai tamat."
@@ -209,5 +206,8 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
+
+
 
 

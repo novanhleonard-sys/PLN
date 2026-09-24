@@ -81,7 +81,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Chip type={story.type as any} label={story.type.toUpperCase()} className="h-6 px-3 text-xs" />
-          <Chip type="region" label={story.region} className="h-6 px-3 text-xs" />
+          <Chip type="region" label={story.region || ""} className="h-6 px-3 text-xs" />
         </div>
         <h2 className="text-2xl font-fredoka text-text-main mb-2">{story.title}</h2>
         <p className="text-sm text-text-light leading-relaxed">
@@ -127,5 +127,6 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     </Sheet>
   );
 }
+
 
 
