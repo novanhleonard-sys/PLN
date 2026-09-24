@@ -11,7 +11,6 @@ export const tierForZoom = (z: number) => {
     return 4;
 };
 
-// applyVerdict logic from 8.3
 export const applyVerdict = (
     verdict: 'pass' | 'no_pass' | 'needs_human_review',
     confidence: number,
@@ -32,3 +31,29 @@ export const applyVerdict = (
     return 'needs_review';
 };
 export * from './voice_personas';
+
+import { z } from 'zod';
+
+export const contributionSchema = z.object({
+  target_story_id: z.string().uuid().optional().nullable(),
+  title: z.string().min(3).max(100),
+  type: z.enum(['legenda', 'mite', 'fabel', 'dongeng']),
+  region_id: z.string().uuid().optional().nullable(), // Allow optional/null if not picking region yet, though PRD might mandate it. Make it optional for now.
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+  version_label: z.string().min(2).max(50),
+  body: z.string().refine(val => {
+    const words = val.trim().split(/\s+/).length;
+    return words >= 150 && words <= 3000;
+  }, { message: "Teks harus antara 150 - 3000 kata" }),
+  sources: z.array(z.object({
+    type: z.enum(['buku', 'arsip', 'web', 'lisan']),
+    citation: z.string().min(5),
+    author: z.string().min(2).optional()
+  })).min(1, { message: "Minimal satu sumber cerita" }),
+  rights_declared: z.boolean().refine(val => val === true, {
+    message: "Harus menyetujui pernyataan hak"
+  })
+});
+
+export type ContributionPayload = z.infer<typeof contributionSchema>;
