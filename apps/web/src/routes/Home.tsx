@@ -5,7 +5,7 @@ import { MainMap } from '../features/map/MainMap';
 import { Search } from '../features/search/Search';
 import { StoryCard } from '../features/story-card/StoryCard';
 import { DUMMY_STORIES, type StoryPin } from '../features/map/dummy-stories';
-import { Button } from '../ui/basic/Button';
+import { MapStyleToggle } from '../features/map/MapStyleToggle';
 
 export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
@@ -23,7 +23,15 @@ export default function Home() {
       }
     }
   }, [slug]);
-  const [styleType, setStyleType] = useState<'A' | 'B'>('A');
+  const [styleType, setStyleType] = useState<'A' | 'B'>(() => {
+    const saved = localStorage.getItem('pln_map_style');
+    return (saved === 'A' || saved === 'B') ? saved : 'A';
+  });
+
+  const handleStyleChange = (style: 'A' | 'B') => {
+    setStyleType(style);
+    localStorage.setItem('pln_map_style', style);
+  };
 
   return (
     <div className="w-full h-screen flex flex-col font-nunito relative overflow-hidden bg-[#d1f4f9]">
@@ -48,20 +56,7 @@ export default function Home() {
             onClose={() => { setSelectedStory(null); navigate('/'); }} 
           />
           
-          <div className="absolute top-4 right-4 z-20 bg-white/90 backdrop-blur p-2 rounded-2xl shadow-warm flex gap-2 items-center">
-            <Button 
-              variant={styleType === 'A' ? 'primary' : 'secondary'} 
-              onClick={() => setStyleType('A')}
-            >
-              Gaya A
-            </Button>
-            <Button 
-              variant={styleType === 'B' ? 'primary' : 'secondary'} 
-              onClick={() => setStyleType('B')}
-            >
-              Gaya B
-            </Button>
-          </div>
+          <MapStyleToggle currentStyle={styleType} onChange={handleStyleChange} />
         </>
       )}
     </div>

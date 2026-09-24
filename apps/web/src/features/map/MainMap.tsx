@@ -188,6 +188,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
             `https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg?api_key=${stadiaKey}`
           ],
           tileSize: 256,
+          maxzoom: 11,
           attribution: '&copy; Stadia Maps'
         });
         
@@ -195,6 +196,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
           id: 'stadia-watercolor-layer',
           type: 'raster',
           source: 'stadia-watercolor',
+          maxzoom: 11,
           layout: { visibility: 'none' }
         }, 'prov-shadow'); 
       }
