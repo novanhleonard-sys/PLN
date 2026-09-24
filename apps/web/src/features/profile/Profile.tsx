@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
-import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Routes, Route, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
 import { SegmentedControl } from '../../ui/basic/SegmentedControl';
-import { cn } from '../../utils/cn';
 
 import { RiwayatBaca } from './RiwayatBaca';
 import { Tersimpan } from './Tersimpan';
@@ -78,6 +77,7 @@ export function Profile() {
     </div>
   );
 }
+
 
 
 
