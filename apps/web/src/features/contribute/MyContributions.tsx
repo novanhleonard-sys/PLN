@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
-import { StatusLabel } from '../../ui/components/StatusLabel';
+import { Badge, Card } from '../../ui/basic/BadgeCard';
 import { Link } from 'react-router-dom';
 
 export const MyContributions = () => {
@@ -32,21 +32,22 @@ export const MyContributions = () => {
         </div>
       ) : (
         submissions?.map(sub => (
-          <Link key={sub.id} to={`/kontribusi/${sub.id}`} className="block p-4 border border-border-light rounded-2xl hover:border-teal transition-colors bg-white">
+          <Link key={sub.id} to={`/kontribusi/${sub.id}`} className="block"><Card className="p-4 hover:border-teal">
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h3 className="font-bold text-text-main font-fredoka text-lg">{sub.title}</h3>
                 <p className="text-sm text-text-light">{sub.version_label}</p>
               </div>
-              <StatusLabel status={sub.status as any} />
+              <Badge variant={sub.status === "approved" ? "success" : sub.status === "rejected" ? "error" : sub.status === "pending" ? "warning" : "default"}>{sub.status}</Badge>
             </div>
             {sub.status === 'rejected' && sub.reject_reason && (
               <p className="text-sm text-red-600 mt-2 p-2 bg-red-50 rounded-lg">{sub.reject_reason}</p>
             )}
-          </Link>
+          </Card></Link>
         ))
       )}
     </div>
   );
 };
+
 

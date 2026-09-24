@@ -47,15 +47,13 @@ export const AdminAntrean = () => {
             const latestVer = verifications.length > 0 ? verifications[verifications.length - 1] : null;
 
             return (
-              <div key={sub.id} className="border border-stone-200 p-6 rounded-xl bg-white shadow-sm flex flex-col gap-4">
+              <Card key={sub.id} className="p-6 flex flex-col gap-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <h2 className="text-xl font-bold font-fredoka text-text-main">{sub.title}</h2>
                     <p className="text-sm text-stone-500">{sub.type} | {sub.version_label}</p>
                   </div>
-                  <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold uppercase rounded-full">
-                    {sub.status}
-                  </span>
+                  <Badge variant={sub.status === "pending" ? "warning" : "default"} className="uppercase">{sub.status}</Badge>
                 </div>
 
                 <div className="bg-stone-50 p-4 rounded-lg text-sm border border-border-light h-32 overflow-y-auto whitespace-pre-wrap">
@@ -81,19 +79,14 @@ export const AdminAntrean = () => {
                 )}
 
                 <div className="flex gap-4 mt-2">
-                  <button 
-                    className="px-4 py-2 bg-teal text-white font-bold rounded hover:bg-teal-dark"
-                    onClick={() => {
+                  <Button onClick={() => {
                       if (confirm('Setujui kontribusi ini?')) {
                         verdictMutation.mutate({ id: sub.id, verdict: 'approved' });
                       }
                     }}
                   >
-                    Setujui
-                  </button>
-                  <button 
-                    className="px-4 py-2 bg-red-100 text-red-700 font-bold rounded hover:bg-red-200"
-                    onClick={() => {
+                    Setujui</Button>
+                  <Button variant="ghost" className="text-feedback-error bg-feedback-error/10 hover:bg-feedback-error/20" onClick={() => {
                       const reason = prompt('Alasan tolak (wajib):');
                       if (reason && reason.length >= 5) {
                         verdictMutation.mutate({ id: sub.id, verdict: 'rejected', reason });
@@ -102,10 +95,9 @@ export const AdminAntrean = () => {
                       }
                     }}
                   >
-                    Tolak
-                  </button>
+                    Tolak</Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -113,3 +105,8 @@ export const AdminAntrean = () => {
     </div>
   );
 };
+
+
+
+
+

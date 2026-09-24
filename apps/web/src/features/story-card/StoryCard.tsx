@@ -4,10 +4,12 @@ import { SidePanel } from '../../ui/layers/SidePanel';
 import { Sheet } from '../../ui/layers/Sheet';
 import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
+import { Chip } from '../../ui/basic/Chip';
 import { type StoryPin } from '../map/dummy-stories';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
 import { GateModal } from '../auth/GateModal';
+import { Toast } from '../../ui/basic/Toast';
 import { supabase } from '../../lib/supabase';
 
 interface StoryCardProps {
@@ -22,6 +24,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   
   const [isGateOpen, setIsGateOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [readHistory, setReadHistory] = useState<any>(null);
   
   // Real version id for testing (Kancil)
@@ -58,9 +61,11 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     if (isSaved) {
       await supabase.from('saved_stories').delete().eq('user_id', user.id).eq('story_id', testStoryId);
       setIsSaved(false);
+      setToastMessage('Cerita dihapus dari koleksi');
     } else {
       await supabase.from('saved_stories').insert({ user_id: user.id, story_id: testStoryId });
       setIsSaved(true);
+      setToastMessage('Cerita berhasil disimpan!');
     }
   };
 
@@ -75,10 +80,8 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
       
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-bold text-coral bg-coral/10 px-2 py-1 rounded-full uppercase tracking-wider">
-            {story.type}
-          </span>
-          <span className="text-xs text-text-muted">{story.region}</span>
+          <Chip type={story.type as any} label={story.type.toUpperCase()} className="h-6 px-3 text-xs" />
+          <Chip type="region" label={story.region} className="h-6 px-3 text-xs" />
         </div>
         <h2 className="text-2xl font-fredoka text-text-main mb-2">{story.title}</h2>
         <p className="text-sm text-text-light leading-relaxed">
@@ -101,6 +104,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
         onClose={() => setIsGateOpen(false)} 
         message="Masuk untuk menyimpan cerita ke koleksi Anda." 
       />
+      <Toast visible={!!toastMessage} message={toastMessage || ""} type="success" onClose={() => setToastMessage(null)} />
     </div>
   ) : null;
 
@@ -123,3 +127,5 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     </Sheet>
   );
 }
+
+

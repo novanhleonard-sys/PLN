@@ -3,6 +3,7 @@ import { useAuth } from './AuthStore';
 import { supabase } from '../../lib/supabase';
 import { useLocation } from 'react-router-dom';
 import { Sheet } from '../../ui/layers/Sheet';
+import { Modal } from '../../ui/layers/Modal';
 import { useMediaQuery } from '../../utils/useMediaQuery';
 
 interface GateModalProps {
@@ -62,14 +63,9 @@ export const GateModal: React.FC<GateModalProps> = ({ isOpen, onClose, message, 
 
   if (isDesktop) {
     return (
-      <div className="fixed inset-0 bg-text-main/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-cream border-2 border-border-light rounded-[32px] shadow-warm-lg max-w-sm w-full relative">
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 text-text-muted hover:text-text-main">
-             ?
-          </button>
-          {content}
-        </div>
-      </div>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        {content}
+      </Modal>
     );
   }
 
@@ -79,3 +75,4 @@ export const GateModal: React.FC<GateModalProps> = ({ isOpen, onClose, message, 
     </Sheet>
   );
 };
+

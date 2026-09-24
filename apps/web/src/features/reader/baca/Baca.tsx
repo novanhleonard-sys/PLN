@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabase';
 import { SegmentedControl } from '../../../ui/basic/SegmentedControl';
 import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { GateModal } from '../../auth/GateModal';
+import { ProgressBar } from '../../../ui/basic/Misc';
 import { DongengMode } from '../dongeng/DongengMode';
 
 export const Baca: React.FC = () => {
@@ -208,4 +209,5 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
 

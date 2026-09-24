@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import { Card } from '../../ui/basic/BadgeCard';
 
 export const AdminKonten = () => {
   const queryClient = useQueryClient();
@@ -66,7 +67,7 @@ export const AdminKonten = () => {
       <h1 className="text-2xl font-fredoka font-semibold mb-6">Kelola Konten</h1>
       <div className="flex flex-col gap-6">
         {stories?.map((story) => (
-          <div key={story.id} className="border border-stone-200 p-4 rounded bg-white shadow-sm">
+          <Card key={story.id} className="p-6">
             <h2 className="text-xl font-bold mb-2">{story.title}</h2>
             <div className="flex gap-4 items-center mb-4 text-sm">
               <div>
@@ -75,8 +76,7 @@ export const AdminKonten = () => {
               <div>
                 <strong>Lng:</strong> {story.lng}
               </div>
-              <button
-                onClick={() => {
+              <Button variant="text" onClick={() => {
                   const newLat = parseFloat(prompt('Masukkan Latitude baru', story.lat.toString()) || '');
                   const newLng = parseFloat(prompt('Masukkan Longitude baru', story.lng.toString()) || '');
                   if (!isNaN(newLat) && !isNaN(newLng)) {
@@ -85,8 +85,7 @@ export const AdminKonten = () => {
                 }}
                 className="text-blue-600 underline"
               >
-                Ubah Pin
-              </button>
+                Ubah Pin</Button>
             </div>
             
             <div className="mb-4">
@@ -99,8 +98,7 @@ export const AdminKonten = () => {
                       <div className="text-xs text-stone-500">Tier: {version.tier} {version.tier_locked ? '(Terkunci)' : ''}</div>
                     </div>
                     <div className="flex gap-4 items-center">
-                      <button
-                        onClick={() => {
+                      <Button variant="text" onClick={() => {
                            const t = parseInt(prompt('Set Tier (1-4):', version.tier) || '0');
                            if (t >= 1 && t <= 4) {
                              mutationUpdateTier.mutate({ id: version.id, tier: t, tier_locked: !version.tier_locked });
@@ -108,10 +106,8 @@ export const AdminKonten = () => {
                         }}
                         className="text-blue-600 underline text-sm"
                       >
-                        Ubah/Kunci Tier
-                      </button>
-                      <button
-                        onClick={() =>
+                        Ubah/Kunci Tier</Button>
+                      <Button variant="text" onClick={() =>
                           mutationVersionStatus.mutate({
                             id: version.id,
                             status: version.status === 'published' ? 'unpublished' : 'published',
@@ -119,8 +115,7 @@ export const AdminKonten = () => {
                         }
                         className="text-blue-600 underline text-sm"
                       >
-                        {version.status === 'published' ? 'Unpublish' : 'Publish'}
-                      </button>
+                        {version.status === 'published' ? 'Unpublish' : 'Publish'}</Button>
                     </div>
                   </div>
                 ))}
@@ -135,16 +130,14 @@ export const AdminKonten = () => {
                     <span>
                       Band: {adapt.age_band} | Prompt: {adapt.prompt_version} | Status: {adapt.status}
                     </span>
-                    <button
-                      onClick={() => {
+                    <Button variant="text" onClick={() => {
                         if (confirm('Yakin hapus adaptasi ini?')) {
                           mutationDeleteAdaptation.mutate(adapt.id);
                         }
                       }}
                       className="text-red-600 underline text-sm"
                     >
-                      Hapus
-                    </button>
+                      Hapus</Button>
                   </div>
                 ))}
                 {(!story.adaptations || story.adaptations.length === 0) && (
@@ -152,9 +145,11 @@ export const AdminKonten = () => {
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
   );
 };
+
+
