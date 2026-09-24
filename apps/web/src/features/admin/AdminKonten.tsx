@@ -11,7 +11,7 @@ export const AdminKonten = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stories')
-        .select('*, story_versions(*), adaptations(*)');
+        .select('*, story_versions(*), adaptations(*), story_stats(*)');
       if (error) throw error;
       return data;
     },
@@ -96,7 +96,7 @@ export const AdminKonten = () => {
                   <div key={version.id} className="flex justify-between items-center bg-stone-50 p-2 rounded gap-4">
                     <div className="flex-1">
                       <div>{version.label} ({version.language}) - {version.status}</div>
-                      <div className="text-xs text-stone-500">Tier: {version.tier} {version.tier_locked ? '(Terkunci)' : ''}</div>
+                      
                     </div>
                     <div className="flex gap-4 items-center">
                       <Button variant="text" onClick={() => {

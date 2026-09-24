@@ -9,6 +9,7 @@ import { ProviderRegistry } from './providers/registry';
 import { GeminiProvider } from './providers/gemini';
 import { ZaiProvider } from './providers/zai';
 import { JobRunner } from './core/runner';
+import { checkAndRunTierJob } from './jobs/tier/calculate';
 
 // Import stages
 import { triageStage } from './stages/triage';
@@ -69,6 +70,7 @@ async function main() {
   while (isPolling) {
     try {
       await runner.runOnce(1);
+      await checkAndRunTierJob(supabase);
     } catch (e) {
       console.error("Error during runOnce:", e);
     }
