@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
-import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
 import { cn } from '../../utils/cn';
 
@@ -50,7 +49,7 @@ export function Profile() {
               <p className="text-sm font-nunito text-text-muted">{user.email}</p>
             </div>
           </div>
-          <Button variant="secondary" onClick={handleLogout} leftIcon="log-out">
+          <Button variant="secondary" onClick={handleLogout} leftIcon="LogOut">
             Keluar
           </Button>
         </div>
@@ -90,3 +89,4 @@ export function Profile() {
     </div>
   );
 }
+

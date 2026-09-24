@@ -1,4 +1,3 @@
-import React from 'react';
 
 type Status = 'submitted' | 'triaging' | 'verifying' | 'needs_review' | 'approved' | 'rejected' | 'draft';
 
@@ -21,3 +20,4 @@ export const StatusLabel = ({ status }: { status: Status }) => {
     </span>
   );
 };
+

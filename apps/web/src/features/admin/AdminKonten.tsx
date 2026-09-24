@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 
@@ -134,3 +133,6 @@ export const AdminKonten = () => {
     </div>
   );
 };
+
+
+
