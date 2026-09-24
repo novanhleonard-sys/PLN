@@ -84,8 +84,9 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack }: any) =
         </motion.div>
       ) : (
         <div className="absolute inset-0 z-0 bg-stone-900 flex items-center justify-center">
-          <span className="text-white/30">Gambar tidak tersedia</span>
-        </div>
+            <img src={`/assets/fallback_bg_3.svg`} alt="Sedang disiapkan" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+            <span className="text-white/30 relative z-10">Gambar tidak tersedia</span>
+          </div>
       )}
 
       {/* Header overlay */}
@@ -168,5 +169,6 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack }: any) =
     </div>
   );
 };
+
 
 

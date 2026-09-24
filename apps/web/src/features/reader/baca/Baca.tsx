@@ -152,8 +152,9 @@ export const Baca: React.FC = () => {
             <img src={page.scene.image_path} alt={page.scene.description || 'Ilustrasi cerita'} className="w-full h-full object-cover" />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-200/50">
-              <span className="text-sm font-nunito text-text-muted mb-2">Ilustrasi sedang disiapkan</span>
-            </div>
+                <img src={`/assets/fallback_bg_${(versionData.version.story.id.charCodeAt(0) % 5) + 1}.svg`} alt="Sedang disiapkan" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
+                <span className="text-sm font-nunito text-text-muted mb-2 relative z-10 bg-white/80 px-3 py-1 rounded-full">Ilustrasi sedang disiapkan</span>
+              </div>
           )}
           <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 backdrop-blur text-white/90 text-xs rounded-md font-nunito font-semibold">
             Dibuat AI
@@ -207,3 +208,4 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+

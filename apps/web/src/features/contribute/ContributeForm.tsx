@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
+import { Input } from '../../ui/basic/Input';
 
 const STEPS = ['Info', 'Teks', 'Sumber', 'Hak', 'Tinjau'];
 
@@ -84,8 +85,7 @@ export const ContributeForm = () => {
             <div className="space-y-6">
               <h2 className="text-2xl font-fredoka font-bold text-text-main">Informasi Dasar</h2>
               <div>
-                <label className="block text-sm font-bold text-text-muted mb-2">Judul Cerita</label>
-                <input type="text" value={formData.title} onChange={e => updateForm('title', e.target.value)} className="w-full p-3 border border-border-light rounded-xl" placeholder="Contoh: Sangkuriang" />
+                <Input label="Judul Cerita" value={formData.title} onChange={e => updateForm('title', e.target.value)} placeholder="Contoh: Sangkuriang" />
               </div>
               <div>
                 <label className="block text-sm font-bold text-text-muted mb-2">Jenis Cerita</label>
@@ -97,8 +97,7 @@ export const ContributeForm = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-bold text-text-muted mb-2">Label Versi</label>
-                <input type="text" value={formData.version_label} onChange={e => updateForm('version_label', e.target.value)} className="w-full p-3 border border-border-light rounded-xl" placeholder="Contoh: Versi Kasunanan" />
+                <Input label="Label Versi" value={formData.version_label} onChange={e => updateForm('version_label', e.target.value)} placeholder="Contoh: Versi Kasunanan" />
               </div>
             </div>
           )}
@@ -215,4 +214,5 @@ export const ContributeForm = () => {
     </div>
   );
 };
+
 

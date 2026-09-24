@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
+import { SegmentedControl } from '../../ui/basic/SegmentedControl';
 import { cn } from '../../utils/cn';
 
 import { RiwayatBaca } from './RiwayatBaca';
@@ -55,24 +56,12 @@ export function Profile() {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto border-b border-border-light no-scrollbar gap-6">
-          {tabs.map((tab) => {
-            const isActive = location.pathname.startsWith(tab.path) || (location.pathname === '/profil' && tab.path === '/profil/riwayat');
-            return (
-              <Link
-                key={tab.path}
-                to={tab.path}
-                className={cn(
-                  "pb-3 text-sm font-fredoka transition-colors whitespace-nowrap",
-                  isActive 
-                    ? "text-teal border-b-2 border-teal" 
-                    : "text-text-muted hover:text-text-main"
-                )}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
+        <div className="flex justify-center border-b border-border-light pb-4 overflow-x-auto">
+          <SegmentedControl 
+            options={tabs.map(t => t.label)} 
+            value={tabs.find(t => location.pathname.startsWith(t.path) || (location.pathname === '/profil' && t.path === '/profil/riwayat'))?.label || tabs[0].label} 
+            onChange={(val) => { const path = tabs.find(t => t.label === val)?.path; if (path) navigate(path); }} 
+          />
         </div>
 
         {/* Content */}
@@ -89,4 +78,6 @@ export function Profile() {
     </div>
   );
 }
+
+
 

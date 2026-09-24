@@ -1,0 +1,30 @@
+{
+  "perahu_1": {
+    "width": 100,
+    "height": 100,
+    "x": 0,
+    "y": 0,
+    "pixelRatio": 1
+  },
+  "pohon_1": {
+    "width": 100,
+    "height": 100,
+    "x": 100,
+    "y": 0,
+    "pixelRatio": 1
+  },
+  "candi_1": {
+    "width": 100,
+    "height": 100,
+    "x": 200,
+    "y": 0,
+    "pixelRatio": 1
+  },
+  "fallback_pin": {
+    "width": 24,
+    "height": 24,
+    "x": 300,
+    "y": 0,
+    "pixelRatio": 1
+  }
+}
