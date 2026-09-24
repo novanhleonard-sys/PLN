@@ -6,7 +6,8 @@
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",
     "build": "pnpm -r run build",
-    "env:check": "tsx scripts/env-check.ts"
+    "env:check": "tsx scripts/env-check.ts",
+    "report:cost": "tsx scripts/report-cost.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

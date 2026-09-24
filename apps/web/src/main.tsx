@@ -23,6 +23,8 @@ const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Lo
 const AdminAntrean = lazy(() => import('./features/admin/AdminAntrean').then(m => ({ default: m.AdminAntrean })))
 const AdminKonten = lazy(() => import('./features/admin/AdminKonten').then(m => ({ default: m.AdminKonten })))
 const AdminPengaturan = lazy(() => import('./features/admin/AdminPengaturan').then(m => ({ default: m.AdminPengaturan })))
+const AdminLaporan = lazy(() => import('./features/admin/AdminLaporan').then(m => ({ default: m.AdminLaporan })))
+const AdminDashboard = lazy(() => import('./features/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
 const ContributeForm = lazy(() => import('./features/contribute/ContributeForm').then(m => ({ default: m.ContributeForm })))
 const MyContributions = lazy(() => import('./features/contribute/MyContributions').then(m => ({ default: m.MyContributions })))
@@ -53,6 +55,8 @@ const AppContent = () => {
         <Route path="/admin/antrean" element={<RequireAdmin><AdminAntrean /></RequireAdmin>} />
         <Route path="/admin/konten" element={<RequireAdmin><AdminKonten /></RequireAdmin>} />
         <Route path="/admin/pengaturan" element={<RequireAdmin><AdminPengaturan /></RequireAdmin>} />
+        <Route path="/admin/laporan" element={<RequireAdmin><AdminLaporan /></RequireAdmin>} />
+        <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
       </Routes>
     </Suspense>
   );

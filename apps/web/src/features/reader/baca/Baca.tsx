@@ -8,6 +8,7 @@ import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { GateModal } from '../../auth/GateModal';
 import { ProgressBar } from '../../../ui/basic/Misc';
 import { DongengMode } from '../dongeng/DongengMode';
+import { ReportButton } from '../../report/ReportButton';
 import { AdaptationModal } from '../adapt/AdaptationModal';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
 

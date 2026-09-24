@@ -12,7 +12,7 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B2 Pipeline | **selesai** | b2-done | Job Runner, Worker Stages, Error Resilience, Retry. |
 | B3 Reader dan Auth UI | **selesai** | b3-done | Auth UI (Google OAuth), Mode Baca, Mode Dongeng. |
 | B4 Kontribusi, profil, admin, deploy | **selesai** | b4-done | Form wizard (S12), Profil (S11), Dashboard Admin, Edge Function submit_contribution, Integrasi Komponen B0.5. |
-| B5 Kustomisasi Preferensi & AI | parsial | b5d-done | Fitur 5a (Sesuaikan usia), 5b (Gaya peta B), 5c (Tier), 5d (Preferensi & Hapus Akun). |
+| B5 Kustomisasi Preferensi & AI | **selesai** | b5e-done | Fitur 5a (Sesuaikan usia), 5b (Gaya peta B), 5c (Tier), 5d (Preferensi & Hapus Akun), 5e (Laporan & Dashboard Biaya AI). |
 | B6 Pengerasan dan evaluasi | belum | | |
 
 ## Kontrak beku
@@ -38,5 +38,6 @@ Versi: **contract-v1**.
 
 ## Langkah berikutnya
 
-Melanjutkan ke **Batch B5 (Fitur 5e)**. Di tahap selanjutnya:
-- Laporan & Dashboard Biaya AI.
+Melanjutkan ke **Batch B6 (Pengerasan dan evaluasi)**. Di tahap selanjutnya:
+- Menguji seluruh alur kerja B1-B5.
+- Memperbaiki temuan evaluasi QA.

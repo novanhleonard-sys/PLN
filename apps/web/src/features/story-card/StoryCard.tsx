@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
 import { GateModal } from '../auth/GateModal';
 import { Toast } from '../../ui/basic/Toast';
+import { ReportButton } from '../report/ReportButton';
 import { supabase } from '../../lib/supabase';
 
 interface StoryCardProps {
@@ -79,11 +80,14 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
       </div>
       
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Chip type={story.type as any} label={story.type.toUpperCase()} className="h-6 px-3 text-xs" />
-          <Chip type="region" label={story.region || ""} className="h-6 px-3 text-xs" />
-        </div>
-        <h2 className="text-2xl font-fredoka text-text-main mb-2">{story.title}</h2>
+        <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Chip type={story.type as any} label={story.type.toUpperCase()} className="h-6 px-3 text-xs" />
+              <Chip type="region" label={story.region || ""} className="h-6 px-3 text-xs" />
+            </div>
+            <ReportButton targetType="story" targetId="697008eb-d2b7-4157-ad8f-1ebdfe91bc35" />
+          </div>
+          <h2 className="text-2xl font-fredoka text-text-main mb-2">{story.title}</h2>
         <p className="text-sm text-text-light leading-relaxed">
           Ini adalah ringkasan singkat tentang kisah {story.title} dari {story.region}. 
           Masyarakat lokal mempercayai kisah ini secara turun temurun.
@@ -127,6 +131,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     </Sheet>
   );
 }
+
 
 
 
