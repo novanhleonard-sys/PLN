@@ -21,8 +21,8 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   console.log("Calling Gemini for verify...", submission.title);
   const result = await registry.generateJSON(schema, {
-    provider: "zai",
-    model: "glm-5.3-flash",
+    provider: "gemini",
+    model: "gemini-3.6-flash",
     prompt,
     systemInstruction: "Anda adalah verifikator ahli folklor Nusantara. Lakukan pencarian web untuk memvalidasi folklor, lalu kembalikan JSON hasil verifikasi dengan lokasi akurat (lat, lng).",
     ref: submission.id,
@@ -40,20 +40,29 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
   });
 
   if (result.isValid) {
-    // Upsert to stories table
-    const { data: story } = await ctx.supabase.from("stories").upsert({
+    const slug = submission.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { data: story, error: storyErr } = await ctx.supabase.from("stories").upsert({
       title: submission.title,
-      summary: result.reason,
-      geom: `POINT(${result.location.lng} ${result.location.lat})`,
+      slug: slug,
+      type: 'dongeng',
+      synopsis: result.reason,
+      lat: result.location.lat,
+      lng: result.location.lng,
       status: 'published'
-    }, { onConflict: 'title' }).select().single();
+    }, { onConflict: 'slug' }).select().single();
     
+    if (storyErr) console.error("Story Upsert Error:", storyErr);
+
     if (story) {
-      const { data: version } = await ctx.supabase.from("story_versions").insert({
+      const { data: version, error: versionErr } = await ctx.supabase.from("story_versions").insert({
         story_id: story.id,
-        content: result.originalStory,
+        label: 'Asli',
+        sources: submission.sources || [],
+        body: result.originalStory,
         status: "processing"
       }).select().single();
+
+      if (versionErr) console.error("Version Insert Error:", versionErr);
 
       if (version) {
         await ctx.supabase.from("jobs").insert({
@@ -74,5 +83,6 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
   await ctx.supabase.from("submissions").update({ status: result.isValid ? 'approved' : 'rejected' }).eq("id", submission.id);
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
+
 
 

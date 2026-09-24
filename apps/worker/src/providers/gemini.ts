@@ -1,7 +1,38 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type, Schema } from '@google/genai';
 import { z } from 'zod';
 import { AIProvider } from './registry';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+
+function zodToGeminiSchema(schema: any): Schema {
+  const typeStr = schema._def?.type || schema.type;
+  if (typeStr === 'object') {
+    const properties: any = {};
+    const required: string[] = [];
+    const shape = schema.shape || schema._def?.shape();
+    for (const key of Object.keys(shape)) {
+      const fieldSchema = shape[key];
+      const isOpt = fieldSchema._def?.type === 'optional' || fieldSchema.isOptional?.();
+      properties[key] = zodToGeminiSchema(isOpt ? (fieldSchema._def?.innerType || fieldSchema.unwrap()) : fieldSchema);
+      if (!isOpt) required.push(key);
+    }
+    return {
+      type: Type.OBJECT,
+      properties,
+      required: required.length > 0 ? required : undefined,
+      description: schema.description
+    };
+  }
+  if (typeStr === 'array') {
+    return {
+      type: Type.ARRAY,
+      items: zodToGeminiSchema(schema.element || schema._def?.type),
+      description: schema.description
+    };
+  }
+  if (typeStr === 'string') return { type: Type.STRING, description: schema.description };
+  if (typeStr === 'number') return { type: Type.NUMBER, description: schema.description };
+  if (typeStr === 'boolean') return { type: Type.BOOLEAN, description: schema.description };
+  return { type: Type.STRING };
+}
 
 export class GeminiProvider implements AIProvider {
   name = 'gemini';
@@ -26,9 +57,7 @@ export class GeminiProvider implements AIProvider {
   }
 
   async generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>) {
-    const jsonSchema = zodToJsonSchema(schema as any, "mySchema") as any;
-    // Adapt zodToJsonSchema output for Gemini
-    const geminiSchema = jsonSchema.definitions ? jsonSchema.definitions.mySchema : jsonSchema;
+    const geminiSchema = zodToGeminiSchema(schema);
 
     const response = await this.ai.models.generateContent({
       model,

@@ -25,8 +25,8 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
   console.log("Calling Gemini for segment...", version.story.title);
   const result = await registry.generateJSON(schema, {
-    provider: "zai",
-    model: "glm-5.3-flash",
+    provider: "gemini",
+    model: "gemini-3.6-flash",
     prompt,
     systemInstruction: "Anda adalah pembuat naskah buku anak. Bagi cerita ke halaman dengan panjang merata. Hasilkan juga sinopsis, tema, sensitivitas, tokoh, dan deskripsi visual yang detail untuk tiap halaman.",
     ref: version.id,
@@ -98,5 +98,6 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
+
 
 
