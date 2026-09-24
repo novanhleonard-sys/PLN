@@ -8,6 +8,8 @@ import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { GateModal } from '../../auth/GateModal';
 import { ProgressBar } from '../../../ui/basic/Misc';
 import { DongengMode } from '../dongeng/DongengMode';
+import { AdaptationModal } from '../adapt/AdaptationModal';
+import { AdaptationBanner } from '../adapt/AdaptationBanner';
 
 export const Baca: React.FC = () => {
   const { versionId } = useParams<{ versionId: string }>();
@@ -18,6 +20,7 @@ export const Baca: React.FC = () => {
   const [selectedAdaptation, setSelectedAdaptation] = useState<string | null>(null);
   const [mode, setMode] = useState('Baca');
   const [gateOpen, setGateOpen] = useState(false);
+  const [adaptModalOpen, setAdaptModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -124,7 +127,7 @@ export const Baca: React.FC = () => {
   const fontSize = isDesktop ? 'text-[20px]' : 'text-[18px]';
 
   if (mode === 'Dongeng') {
-    return <DongengMode pages={pages} initialPage={currentPage} versionTitle={versionData.version.story.title} onBack={() => setMode('Baca')} />;
+    return <DongengMode pages={pages} initialPage={currentPage} versionTitle={versionData.version.story.title} onBack={() => setMode('Baca')} adaptation={currentAdapt} />;
   }
   
   return (
@@ -139,12 +142,20 @@ export const Baca: React.FC = () => {
           </h1>
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
-          <button className="px-4 py-2 text-sm font-bold text-teal bg-teal/10 rounded-full" onClick={() => alert('Sesuaikan (B5)')}>
+          <button className="px-4 py-2 text-sm font-bold text-teal bg-teal/10 rounded-full" onClick={() => setAdaptModalOpen(true)}>
             Sesuaikan
           </button>
           <SegmentedControl options={['Baca', 'Dongeng']} value={mode} onChange={setMode} />
         </div>
       </header>
+      
+      <AdaptationBanner 
+        band={currentAdapt?.age_band || 'asli'} 
+        onViewOriginal={() => {
+           const asli = versionData.adaptations.find(a => a.age_band === 'asli') || versionData.adaptations[0];
+           if (asli) setSelectedAdaptation(asli.id);
+        }} 
+      />
       
       <main className="flex-1 flex flex-col sm:max-[768px]:flex-col md:max-h-full min-[768px]:portrait:flex-col min-[768px]:landscape:flex-row overflow-hidden relative">
         {/* Visual / Image Area */}
@@ -202,6 +213,13 @@ export const Baca: React.FC = () => {
         isOpen={gateOpen} 
         onClose={() => setGateOpen(false)} 
         message="Anda telah mencapai batas halaman gratis untuk sesi ini. Silakan masuk untuk membaca sampai tamat."
+      />
+      
+      <AdaptationModal
+        isOpen={adaptModalOpen}
+        onClose={() => setAdaptModalOpen(false)}
+        versionId={versionId!}
+        onAdaptationReady={(id) => setSelectedAdaptation(id)}
       />
     </div>
   );

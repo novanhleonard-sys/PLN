@@ -38,7 +38,7 @@ export const contributionSchema = z.object({
   target_story_id: z.string().uuid().optional().nullable(),
   title: z.string().min(3).max(100),
   type: z.enum(['legenda', 'mite', 'fabel', 'dongeng']),
-  region_id: z.string().uuid().optional().nullable(), // Allow optional/null if not picking region yet, though PRD might mandate it. Make it optional for now.
+  region_id: z.string().uuid().optional().nullable(),
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
   version_label: z.string().min(2).max(50),
@@ -57,3 +57,13 @@ export const contributionSchema = z.object({
 });
 
 export type ContributionPayload = z.infer<typeof contributionSchema>;
+
+import { Database } from './database.types';
+
+export const ageToBand = (age: number): Database['public']['Enums']['age_band'] => {
+    if (age < 5) return '3-4';
+    if (age <= 6) return '5-6';
+    if (age <= 9) return '7-9';
+    if (age <= 12) return '10-12';
+    return 'asli';
+};

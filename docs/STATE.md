@@ -12,7 +12,7 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B2 Pipeline | **selesai** | b2-done | Job Runner, Worker Stages, Error Resilience, Retry. |
 | B3 Reader dan Auth UI | **selesai** | b3-done | Auth UI (Google OAuth), Mode Baca, Mode Dongeng. |
 | B4 Kontribusi, profil, admin, deploy | **selesai** | b4-done | Form wizard (S12), Profil (S11), Dashboard Admin, Edge Function submit_contribution, Integrasi Komponen B0.5. |
-| B5 Kustomisasi Preferensi & AI | belum | | |
+| B5 Kustomisasi Preferensi & AI | parsial | b5a-done | Fitur 5a (Sesuaikan usia) selesai. Edge function request_adaptation, worker adapt/adapt_check, UI Mode Baca (S08, S06). |
 | B6 Pengerasan dan evaluasi | belum | | |
 
 ## Kontrak beku
@@ -28,6 +28,7 @@ Versi: **contract-v1**.
 - Otentikasi murni menggunakan OAuth Google. Form Login Email/Password dihapus sesuai PRD B3.
 - Menggunakan komponen design system internal murni dari B0.5 (Tailwind), menggantikan layout sementara.
 - *Background Worker* di *deploy* ke Koyeb gagal (akuisisi Mistral), pindah ke Render Free Web Service dengan HTTP port *dummy* 8080 (di-*ping* via cron-job.org).
+- Adaptasi usia (B5a) menggunakan Worker pipeline. Modal UI tidak menyimpan usia, langsung mengarahkan ke versi adaptasi.
 
 ## Masalah yang diketahui
 
@@ -37,6 +38,6 @@ Versi: **contract-v1**.
 
 ## Langkah berikutnya
 
-Melanjutkan ke **Batch B5 (Kustomisasi Preferensi & AI)**. Di batch ini, kita akan:
-- Membangun UI Preferensi (Tingkat Bahasa, Audio).
-- Mengaktifkan AI personalisasi konten.
+Melanjutkan ke **Batch B5 (Fitur 5b dan seterusnya)**. Di tahap selanjutnya:
+- Membangun UI Kustomisasi Audio.
+- Integrasi Voice Personas.

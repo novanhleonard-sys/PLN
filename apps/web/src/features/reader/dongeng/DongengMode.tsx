@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { usePageAudio } from '../api/queries';
+import { supabase } from '../../../lib/supabase';
+import { Icon } from '../../../ui/basic/Icon';
 
-export const DongengMode = ({ pages, initialPage, versionTitle, onBack }: any) => {
+export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptation }: any) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSubtitles, setShowSubtitles] = useState(true);
@@ -34,26 +36,41 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack }: any) =
     }
   };
   
+  const handleBuatSuara = async () => {
+     if (adaptation) {
+         await supabase.from('jobs').insert({
+             kind: 'audio',
+             ref_type: 'adaptation',
+             ref_id: adaptation.id,
+             idempotency_key: `audio:${adaptation.id}`
+         });
+         alert('Proses pembuatan suara sedang dikerjakan. Anda bisa menutup mode dongeng sementara menunggu.');
+     }
+  };
+
   // S07b Locked state if audio is not ready
-  if (page?.audio_status !== 'ready' && !audioData) {
+  if (adaptation?.audio_status !== 'ready' && !audioData) {
     return (
       <div className="flex flex-col h-[100dvh] bg-black text-white overflow-hidden items-center justify-center font-nunito p-4 relative">
         <button onClick={onBack} className="absolute top-4 left-4 p-2 bg-white/10 rounded-full hover:bg-white/20">
           &larr; Kembali ke Baca
         </button>
         <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 opacity-70">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
+          <Icon name="Lock" size={32} className="opacity-70" />
         </div>
         <h2 className="text-2xl font-bold font-fredoka mb-2">Suara sedang disiapkan</h2>
         <p className="text-white/60 mb-8 max-w-sm text-center">
           Mode Dongeng untuk versi ini sedang dalam proses. Silakan kembali ke Mode Baca sementara kami menyelesaikannya.
         </p>
-        <button disabled className="px-6 py-3 bg-white/10 text-white/50 rounded-full font-bold">
-          Buat Suara
-        </button>
+        {adaptation?.age_band !== 'asli' && adaptation?.audio_status === 'none' ? (
+          <button onClick={handleBuatSuara} className="px-6 py-3 bg-teal text-white rounded-full font-bold hover:bg-teal/80">
+            Buat Suara
+          </button>
+        ) : (
+          <button disabled className="px-6 py-3 bg-white/10 text-white/50 rounded-full font-bold">
+            Buat Suara
+          </button>
+        )}
       </div>
     );
   }
