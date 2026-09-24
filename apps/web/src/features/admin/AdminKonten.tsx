@@ -26,6 +26,17 @@ export const AdminKonten = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-stories'] }),
   });
 
+  const mutationUpdateTier = useMutation({
+    mutationFn: async ({ id, tier, tier_locked }: { id: string; tier: number; tier_locked: boolean }) => {
+      const { error } = await supabase
+        .from('story_versions')
+        .update({ tier, tier_locked })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-stories'] }),
+  });
+
   const mutationDeleteAdaptation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -82,21 +93,35 @@ export const AdminKonten = () => {
               <h3 className="font-semibold text-lg mb-2">Versi Cerita:</h3>
               <div className="flex flex-col gap-2">
                 {story.story_versions?.map((version: any) => (
-                  <div key={version.id} className="flex justify-between items-center bg-stone-50 p-2 rounded">
-                    <span>
-                      {version.label} ({version.language}) - {version.status}
-                    </span>
-                    <button
-                      onClick={() =>
-                        mutationVersionStatus.mutate({
-                          id: version.id,
-                          status: version.status === 'published' ? 'unpublished' : 'published',
-                        })
-                      }
-                      className="text-blue-600 underline text-sm"
-                    >
-                      {version.status === 'published' ? 'Unpublish' : 'Publish'}
-                    </button>
+                  <div key={version.id} className="flex justify-between items-center bg-stone-50 p-2 rounded gap-4">
+                    <div className="flex-1">
+                      <div>{version.label} ({version.language}) - {version.status}</div>
+                      <div className="text-xs text-stone-500">Tier: {version.tier} {version.tier_locked ? '(Terkunci)' : ''}</div>
+                    </div>
+                    <div className="flex gap-4 items-center">
+                      <button
+                        onClick={() => {
+                           const t = parseInt(prompt('Set Tier (1-4):', version.tier) || '0');
+                           if (t >= 1 && t <= 4) {
+                             mutationUpdateTier.mutate({ id: version.id, tier: t, tier_locked: !version.tier_locked });
+                           }
+                        }}
+                        className="text-blue-600 underline text-sm"
+                      >
+                        Ubah/Kunci Tier
+                      </button>
+                      <button
+                        onClick={() =>
+                          mutationVersionStatus.mutate({
+                            id: version.id,
+                            status: version.status === 'published' ? 'unpublished' : 'published',
+                          })
+                        }
+                        className="text-blue-600 underline text-sm"
+                      >
+                        {version.status === 'published' ? 'Unpublish' : 'Publish'}
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -133,6 +158,3 @@ export const AdminKonten = () => {
     </div>
   );
 };
-
-
-

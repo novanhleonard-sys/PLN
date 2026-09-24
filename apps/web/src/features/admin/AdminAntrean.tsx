@@ -1,82 +1,115 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 
-
 export const AdminAntrean = () => {
   const queryClient = useQueryClient();
 
   const { data: submissions, isLoading } = useQuery({
     queryKey: ['admin-submissions'],
     queryFn: async () => {
+      // Query submissions and their latest verification runs
       const { data, error } = await supabase
         .from('submissions')
-        .select('*')
+        .select(`
+          *,
+          verification_runs(*)
+        `)
+        .eq('status', 'needs_review')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => {
-      const { error } = await supabase
-        .from('submissions')
-        .update({ status })
-        .eq('id', id);
+  const verdictMutation = useMutation({
+    mutationFn: async ({ id, verdict, reason }: { id: string; verdict: 'approved' | 'rejected', reason?: string }) => {
+      const { data, error } = await supabase.functions.invoke('admin_verdict', {
+        body: { submission_id: id, verdict, reason }
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
   });
 
-  if (isLoading) return <div className="p-8">Memuat antrean...</div>;
+  if (isLoading) return <div className="p-8 font-nunito">Memuat antrean...</div>;
 
   return (
-    <div className="p-8 font-nunito max-w-5xl mx-auto">
-      <h1 className="text-2xl font-fredoka font-semibold mb-6">Antrean Submission</h1>
-      <div className="flex flex-col gap-4">
-        {submissions?.map((sub) => (
-          <div key={sub.id} className="border border-stone-200 p-4 rounded bg-white shadow-sm">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-bold">{sub.title}</h2>
-                <p className="text-sm text-stone-500">Tipe: {sub.type} | Label: {sub.version_label}</p>
-                <p className="text-sm text-stone-500">Status: {sub.status}</p>
+    <div className="p-8 font-nunito max-w-6xl mx-auto">
+      <h1 className="text-2xl font-fredoka font-semibold mb-6">Antrean Kontribusi</h1>
+      
+      {submissions?.length === 0 ? (
+        <p className="text-stone-500">Tidak ada kontribusi yang menunggu tinjauan admin.</p>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {submissions?.map(sub => {
+            const verifications = Array.isArray(sub.verification_runs) ? sub.verification_runs : [];
+            const latestVer = verifications.length > 0 ? verifications[verifications.length - 1] : null;
+
+            return (
+              <div key={sub.id} className="border border-stone-200 p-6 rounded-xl bg-white shadow-sm flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-bold font-fredoka text-text-main">{sub.title}</h2>
+                    <p className="text-sm text-stone-500">{sub.type} | {sub.version_label}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold uppercase rounded-full">
+                    {sub.status}
+                  </span>
+                </div>
+
+                <div className="bg-stone-50 p-4 rounded-lg text-sm border border-border-light h-32 overflow-y-auto whitespace-pre-wrap">
+                  {sub.body}
+                </div>
+
+                {latestVer && (
+                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-lg text-sm">
+                    <h3 className="font-bold text-blue-900 mb-2">Hasil Verifikasi AI:</h3>
+                    <p><strong>Verdict:</strong> {latestVer.verdict} ({latestVer.confidence * 100}%)</p>
+                    {latestVer.safety_flags?.length > 0 && (
+                      <p className="text-red-600 font-bold">Safety Flags: {latestVer.safety_flags.join(', ')}</p>
+                    )}
+                    {latestVer.discrepancies?.length > 0 && (
+                      <div>
+                        <strong className="text-amber-700">Discrepancies:</strong>
+                        <ul className="list-disc pl-5">
+                          {latestVer.discrepancies.map((d: any, i: number) => <li key={i}>{d}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-4 mt-2">
+                  <button 
+                    className="px-4 py-2 bg-teal text-white font-bold rounded hover:bg-teal-dark"
+                    onClick={() => {
+                      if (confirm('Setujui kontribusi ini?')) {
+                        verdictMutation.mutate({ id: sub.id, verdict: 'approved' });
+                      }
+                    }}
+                  >
+                    Setujui
+                  </button>
+                  <button 
+                    className="px-4 py-2 bg-red-100 text-red-700 font-bold rounded hover:bg-red-200"
+                    onClick={() => {
+                      const reason = prompt('Alasan tolak (wajib):');
+                      if (reason && reason.length >= 5) {
+                        verdictMutation.mutate({ id: sub.id, verdict: 'rejected', reason });
+                      } else if (reason !== null) {
+                        alert('Alasan tolak wajib diisi minimal 5 karakter.');
+                      }
+                    }}
+                  >
+                    Tolak
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => mutation.mutate({ id: sub.id, status: 'approved' })}
-                  disabled={mutation.isPending}
-                  className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 disabled:opacity-50"
-                >
-                  Setujui
-                </button>
-                <button
-                  onClick={() => mutation.mutate({ id: sub.id, status: 'rejected' })}
-                  disabled={mutation.isPending}
-                  className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 disabled:opacity-50"
-                >
-                  Tolak
-                </button>
-              </div>
-            </div>
-            <div className="mt-4 text-sm bg-stone-50 p-3 rounded">
-              <p className="font-semibold mb-1">Body:</p>
-              <p className="whitespace-pre-wrap">{sub.body}</p>
-            </div>
-            <div className="mt-4 text-sm">
-              <p className="font-semibold mb-1">Sumber:</p>
-              <pre className="bg-stone-100 p-2 rounded overflow-auto">
-                {JSON.stringify(sub.sources, null, 2)}
-              </pre>
-            </div>
-          </div>
-        ))}
-        {submissions?.length === 0 && <p className="text-stone-500">Tidak ada antrean.</p>}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
-
-
