@@ -18,6 +18,7 @@ const Styleguide = lazy(() => import('./routes/styleguide.tsx'))
 const Home = lazy(() => import('./routes/Home.tsx'))
 const Baca = lazy(() => import('./features/reader/baca/Baca').then(m => ({ default: m.Baca })))
 const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Login })))
+const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const AppContent = () => {
         <Route path="/cerita/:slug" element={<Home />} />
         <Route path="/baca/:versionId" element={<Baca />} />
         <Route path="/masuk" element={<Login />} />
+        <Route path="/profil/*" element={<Profile />} />
         <Route path="/styleguide" element={<Styleguide />} />
       </Routes>
     </Suspense>
@@ -52,5 +54,3 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
-
-
