@@ -4,7 +4,7 @@ import { Splash } from '../features/splash/Splash';
 import { MainMap } from '../features/map/MainMap';
 import { Search } from '../features/search/Search';
 import { StoryCard } from '../features/story-card/StoryCard';
-import { DUMMY_STORIES, type StoryPin } from '../features/map/dummy-stories';
+import { useStories, type StoryPin } from '../features/map/useStories';
 import { MapStyleToggle } from '../features/map/MapStyleToggle';
 
 export default function Home() {
@@ -12,11 +12,12 @@ export default function Home() {
   const [selectedStory, setSelectedStory] = useState<StoryPin | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<[number, number] | null>(null);
   const { slug } = useParams();
+  const { data: stories = [] } = useStories();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (slug) {
-      const story = DUMMY_STORIES.find(s => s.slug === slug);
+      const story = stories.find(s => s.slug === slug || s.id === slug);
       if (story) {
         setSelectedStory(story);
         setSearchedLocation([story.lng, story.lat]);
@@ -42,11 +43,12 @@ export default function Home() {
         styleType={styleType} 
         onPinClick={setSelectedStory} 
         searchedLocation={searchedLocation}
+          stories={stories}
       />
       
       {splashDone && (
         <>
-          <Search 
+          <Search stories={stories} 
             onSelectStory={setSelectedStory} 
             onSelectLocation={setSearchedLocation} 
           />
@@ -62,3 +64,4 @@ export default function Home() {
     </div>
   );
 }
+

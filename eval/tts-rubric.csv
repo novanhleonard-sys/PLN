@@ -1,0 +1,4 @@
+Criteria,Description,Weight,Score_1,Score_2,Score_3,Score_4,Score_5
+Pronunciation,Are words pronounced correctly?,0.3,Many errors,Some errors,Average,Few errors,Perfect pronunciation
+Intonation,Does the voice have natural flow and emotion?,0.4,Monotone/robotic,Slightly unnatural,Average,Good emotion and flow,Highly natural and expressive
+Audio Quality,Is the audio clear without noise?,0.3,Poor quality with noise,Low quality,Average quality,Good quality,Excellent clear audio

@@ -16,6 +16,7 @@ export function Stepper({ value, min = 0, max = 100, onChange, label, className 
       <button 
         onClick={() => onChange(Math.max(min, value - 1))}
         disabled={value <= min}
+        aria-label="Kurangi"
         className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-teal disabled:opacity-50 active:scale-95 transition-transform shadow-sm"
       >
         <Icon name="Minus" size={20} />
@@ -29,6 +30,7 @@ export function Stepper({ value, min = 0, max = 100, onChange, label, className 
       <button 
         onClick={() => onChange(Math.min(max, value + 1))}
         disabled={value >= max}
+        aria-label="Tambah"
         className="w-10 h-10 flex items-center justify-center rounded-full bg-white text-teal disabled:opacity-50 active:scale-95 transition-transform shadow-sm"
       >
         <Icon name="Plus" size={20} />

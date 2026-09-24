@@ -16,7 +16,7 @@ export const MapStyleToggle: React.FC<Props> = ({ currentStyle, onChange }) => {
     >
       <div className="absolute inset-0 bg-stone-200">
          {isA ? (
-           <img src="/assets/fallback_bg_3.svg" alt="" className="w-full h-full object-cover opacity-60 mix-blend-multiply" />
+           <img src="/assets/fallback_bg_3.svg" alt="" loading="lazy" className="w-full h-full object-cover opacity-60 mix-blend-multiply" />
          ) : (
            <div className="w-full h-full bg-[#fff9ec] flex flex-col items-center justify-center">
              <div className="w-full h-1/2 bg-[#d1f4f9]" />

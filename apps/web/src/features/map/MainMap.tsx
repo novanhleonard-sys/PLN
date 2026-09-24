@@ -3,7 +3,7 @@ import { Map, setWorkerUrl, GeoJSONSource } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 setWorkerUrl(workerUrl);
 
-import { DUMMY_STORIES, type StoryPin } from './dummy-stories';
+import type { StoryPin } from './useStories';
 
 
 
@@ -12,11 +12,12 @@ interface MainMapProps {
   styleType: 'A' | 'B';
   onPinClick: (story: StoryPin) => void;
   searchedLocation?: [number, number] | null;
+  stories?: StoryPin[];
 }
 
 
 
-export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProps) {
+export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] }: MainMapProps) {
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
@@ -203,64 +204,24 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
 
       // Ornaments for Style B removed to prevent missing image crash
 
-      // 5. Story Pins Source
-      const pinFeatures = DUMMY_STORIES.map(story => ({
-        type: 'Feature' as const,
-        geometry: { type: 'Point' as const, coordinates: [story.lng, story.lat] },
-        properties: { ...story }
-      }));
-
+      // 5. Story Pins Source (Initialized empty, populated in separate effect)
       m.addSource('story-pins', {
         type: 'geojson',
-        data: {
-          type: 'FeatureCollection',
-          features: pinFeatures
-        }
+        data: { type: 'FeatureCollection', features: [] }
       });
 
-      // A simple circle for pin (since SVG assets A2 not ready yet, using circle and label)
       m.addLayer({
         id: 'story-pins-layer',
         type: 'circle',
         source: 'story-pins',
         paint: {
           'circle-radius': 10,
-          'circle-color': ['match', ['get', 'type'], 
-            'legenda', '#e63946',
-            'dongeng', '#457b9d',
-            'fabel', '#2a9d8f',
-            'mite', '#9c6644',
-            '#000'
-          ],
+          'circle-color': ['match', ['get', 'tier'], 1, '#FFA500', 2, '#4CAF50', 3, '#2196F3', '#E91E63'],
           'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff'
-        }
-      });
-      
-      // Pin labels
-      m.addLayer({
-        id: 'story-pins-label',
-        type: 'symbol',
-        source: 'story-pins',
-        minzoom: 6,
-        layout: {
-          'text-field': ['get', 'title'],
-          'text-font': ['Open Sans Semibold'],
-          'text-size': 12,
-          'text-offset': [0, 1.2],
-          'text-anchor': 'top',
-          'icon-allow-overlap': false,
-          'text-optional': true,
-          'symbol-sort-key': ['-', ['get', 'score']]
-        },
-        paint: {
-          'text-color': '#1d3557',
-          'text-halo-color': '#fff',
-          'text-halo-width': 2
+          'circle-stroke-color': '#FFFFFF'
         }
       });
 
-      // Interactivity
       m.on('click', 'story-pins-layer', (e) => {
         if (!e.features?.[0]) return;
         const props = e.features[0].properties as StoryPin;
@@ -313,6 +274,20 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
     }
   }, [searchedLocation, loaded]);
 
+  useEffect(() => {
+    if (map.current && loaded && map.current.getSource('story-pins')) {
+      const geojson = {
+        type: 'FeatureCollection',
+        features: stories.map(s => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
+          properties: s
+        }))
+      };
+      (map.current.getSource('story-pins') as GeoJSONSource).setData(geojson as any);
+    }
+  }, [stories, loaded]);
+
   return (
     <>
       <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full z-0 bg-[#d1f4f9]" />
@@ -320,6 +295,9 @@ export function MainMap({ styleType, onPinClick, searchedLocation }: MainMapProp
     </>
   );
 }
+
+
+
 
 
 

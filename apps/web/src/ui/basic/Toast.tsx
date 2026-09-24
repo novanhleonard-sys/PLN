@@ -37,7 +37,7 @@ export function Toast({ message, type = 'info', visible, onClose }: ToastProps) 
           <Icon name={icons[type]} size={20} />
           <span className="text-sm font-nunito flex-1">{message}</span>
           {onClose && (
-            <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full transition-colors">
+            <button onClick={onClose} aria-label="Tutup" className="p-1 hover:bg-white/20 rounded-full transition-colors">
               <Icon name="X" size={16} />
             </button>
           )}

@@ -1,0 +1,4 @@
+Criteria,Description,Weight,Score_1,Score_2,Score_3,Score_4,Score_5
+Relevance,Does the image accurately represent the scene or characters?,0.4,Completely irrelevant,Slightly relevant but missing key elements,Moderately relevant,Mostly relevant,Highly relevant and accurate
+Quality,Is the image visually appealing and well-rendered?,0.3,Poor quality,Low quality,Average quality,Good quality,Excellent quality
+Style consistency,Does the image match the desired artistic style?,0.3,No match,Slight match,Moderate match,Close match,Perfect match

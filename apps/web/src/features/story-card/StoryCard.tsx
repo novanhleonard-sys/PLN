@@ -5,7 +5,7 @@ import { Sheet } from '../../ui/layers/Sheet';
 import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
 import { Chip } from '../../ui/basic/Chip';
-import { type StoryPin } from '../map/dummy-stories';
+import { type StoryPin } from '../map/useStories';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
 import { GateModal } from '../auth/GateModal';
@@ -29,25 +29,25 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   const [readHistory, setReadHistory] = useState<any>(null);
   
   // Real version id for testing (Kancil)
-  const testVersionId = '798ad75a-62eb-4153-abf6-5312b4c2147c';
+  
 
   useEffect(() => {
     if (!user || !story) return;
     
     // Check saved status (using a fixed story id for demo)
-    const testStoryId = '697008eb-d2b7-4157-ad8f-1ebdfe91bc35';
     
-    supabase.from('saved_stories').select('*').eq('user_id', user.id).eq('story_id', testStoryId).single()
+    
+    supabase.from('saved_stories').select('*').eq('user_id', user.id).eq('story_id', story.id).single()
       .then(({ data }) => setIsSaved(!!data));
       
-    supabase.from('read_history').select('*').eq('user_id', user.id).eq('version_id', testVersionId).single()
+    supabase.from('read_history').select('*').eq('user_id', user.id).eq('version_id', story.versionId).single()
       .then(({ data }) => setReadHistory(data));
       
   }, [user, story]);
 
   const handleRead = () => {
     if (story) {
-      navigate(`/baca/` + testVersionId);
+      navigate(`/baca/` + story.versionId);
     }
   };
 
@@ -56,15 +56,16 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
       setIsGateOpen(true);
       return;
     }
+    if (!story) return;
     
-    const testStoryId = '697008eb-d2b7-4157-ad8f-1ebdfe91bc35';
+    
     
     if (isSaved) {
-      await supabase.from('saved_stories').delete().eq('user_id', user.id).eq('story_id', testStoryId);
+      await supabase.from('saved_stories').delete().eq('user_id', user.id).eq('story_id', story.id);
       setIsSaved(false);
       setToastMessage('Cerita dihapus dari koleksi');
     } else {
-      await supabase.from('saved_stories').insert({ user_id: user.id, story_id: testStoryId });
+      await supabase.from('saved_stories').insert({ user_id: user.id, story_id: story.id });
       setIsSaved(true);
       setToastMessage('Cerita berhasil disimpan!');
     }
@@ -116,7 +117,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     return (
       <SidePanel isOpen={!!story} className="absolute top-4 bottom-4 left-4 rounded-2xl shadow-warm-lg z-20 !h-auto">
         <div className="p-6 h-full flex flex-col relative">
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-cream text-text-muted hover:text-text-main rounded-full z-10">
+          <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 p-2 bg-cream text-text-muted hover:text-text-main rounded-full z-10">
             <Icon name="X" size={16} />
           </button>
           {content}
@@ -131,6 +132,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     </Sheet>
   );
 }
+
 
 
 

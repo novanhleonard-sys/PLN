@@ -135,7 +135,7 @@ export const Baca: React.FC = () => {
     <div className="flex flex-col h-[100dvh] bg-[#FDF9F1] overflow-hidden relative">
       <header className="flex-none p-4 flex flex-col md:flex-row items-start md:items-center justify-between border-b border-border-light gap-4 bg-white z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <Link to="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-cream text-text-main hover:bg-stone-200">
+          <Link to="/" aria-label="Kembali ke Beranda" className="w-10 h-10 flex items-center justify-center rounded-full bg-cream text-text-main hover:bg-stone-200">
             &larr;
           </Link>
           <h1 className="font-fredoka text-lg md:text-xl font-bold text-text-main line-clamp-1">
@@ -163,10 +163,10 @@ export const Baca: React.FC = () => {
         {/* Visual / Image Area */}
         <div className="flex-1 relative flex items-center justify-center bg-stone-100 min-h-[30vh]">
           {page.scene?.image_status === 'ready' && page.scene.image_path ? (
-            <img src={page.scene.image_path} alt={page.scene.description || 'Ilustrasi cerita'} className="w-full h-full object-cover" />
+            <img src={page.scene.image_path} alt={page.scene.description || 'Ilustrasi cerita'} loading="lazy" className="w-full h-full object-cover" />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-200/50">
-                <img src={`/assets/fallback_bg_${(versionData.version.story.id.charCodeAt(0) % 5) + 1}.svg`} alt="Sedang disiapkan" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
+                <img src={`/assets/fallback_bg_${(versionData.version.story.id.charCodeAt(0) % 5) + 1}.svg`} alt="Sedang disiapkan" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
                 <span className="text-sm font-nunito text-text-muted mb-2 relative z-10 bg-white/80 px-3 py-1 rounded-full">Ilustrasi sedang disiapkan</span>
               </div>
           )}

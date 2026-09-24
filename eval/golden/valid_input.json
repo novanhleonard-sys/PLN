@@ -1,0 +1,27 @@
+[
+  {
+    "title": "Si Kancil dan Buaya",
+    "content": "Pada zaman dahulu, hiduplah seekor kancil yang cerdik. Suatu hari, ia ingin menyeberangi sungai yang dipenuhi buaya. Dengan akal bulusnya, kancil mengelabui buaya agar berbaris di sungai sehingga ia bisa melompat di atas punggung mereka hingga ke seberang.",
+    "expected_status": "valid"
+  },
+  {
+    "title": "Legenda Rawa Pening",
+    "content": "Rawa Pening terbentuk dari cabutan lidi oleh Baru Klinting. Tidak ada warga desa yang mampu mencabut lidi tersebut kecuali dirinya. Setelah lidi tercabut, air memancar deras hingga menenggelamkan desa dan menjadi rawa.",
+    "expected_status": "valid"
+  },
+  {
+    "title": "Si Pitung Jagoan Betawi",
+    "content": "Si Pitung adalah seorang pendekar dari Betawi yang merampok orang-orang kaya tamak untuk dibagikan kepada rakyat miskin. Ia belajar ilmu bela diri dan agama dari Haji Naipin.",
+    "expected_status": "valid"
+  },
+  {
+    "title": "Kucing Terbang dari Monas",
+    "content": "Di sebuah malam yang gelap, seekor kucing bersayap terbang dari pucuk Monumen Nasional. Kucing itu menyebarkan emas kepada warga yang sedang tidur nyenyak di Jakarta.",
+    "expected_status": "fake"
+  },
+  {
+    "title": "Asal Usul Danau Toba",
+    "content": "Danau Toba adalah sebuah danau tekto-vulkanik ukuran panjang 100 kilometer dan lebar 30 kilometer yang terletak di Provinsi Sumatra Utara, Indonesia. Danau ini merupakan danau terbesar di Indonesia dan Asia Tenggara. Di tengah danau ini terdapat sebuah pulau vulkanik bernama Pulau Samosir.",
+    "expected_status": "verbatim"
+  }
+]

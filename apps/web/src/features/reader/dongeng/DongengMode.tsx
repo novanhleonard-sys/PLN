@@ -141,6 +141,7 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
           <button 
             disabled={currentPage === 0}
             onClick={() => setCurrentPage((p: number) => p - 1)}
+            aria-label="Sebelumnya"
             className="w-12 h-12 flex items-center justify-center text-white hover:scale-110 transition-transform disabled:opacity-30"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
@@ -148,6 +149,7 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
           
           <button 
             onClick={() => setIsPlaying(!isPlaying)}
+            aria-label={isPlaying ? "Jeda" : "Putar"}
             className="w-16 h-16 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 transition-transform"
           >
             {isPlaying ? (
@@ -160,6 +162,7 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
           <button 
             disabled={currentPage === pages.length - 1}
             onClick={() => setCurrentPage((p: number) => p + 1)}
+            aria-label="Selanjutnya"
             className="w-12 h-12 flex items-center justify-center text-white hover:scale-110 transition-transform disabled:opacity-30"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>

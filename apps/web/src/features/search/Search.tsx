@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react';
 import MiniSearch from 'minisearch';
-import { DUMMY_STORIES, type StoryPin } from '../map/dummy-stories';
+import type { StoryPin } from '../map/useStories';
 import { Input } from '../../ui/basic/Input';
 import { Search as SearchIcon, MapPin } from 'lucide-react';
 
 interface SearchProps {
+  stories: StoryPin[];
   onSelectStory: (story: StoryPin) => void;
   onSelectLocation?: (loc: [number, number]) => void;
 }
 
-export function Search({ onSelectStory, onSelectLocation }: SearchProps) {
+export function Search({ stories, onSelectStory, onSelectLocation }: SearchProps) {
   const [query, setQuery] = useState('');
   
   const miniSearch = useMemo(() => {
@@ -21,9 +22,9 @@ export function Search({ onSelectStory, onSelectLocation }: SearchProps) {
         fuzzy: 0.2
       }
     });
-    ms.addAll(DUMMY_STORIES);
+    ms.addAll(stories);
     return ms;
-  }, []);
+  }, [stories]);
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
@@ -55,7 +56,7 @@ export function Search({ onSelectStory, onSelectLocation }: SearchProps) {
                 key={res.id}
                 className="text-left px-3 py-2 rounded-lg hover:bg-teal/10 transition-colors flex items-center gap-3"
                 onClick={() => {
-                  const story = DUMMY_STORIES.find(s => s.id === res.id);
+                  const story = stories.find(s => s.id === res.id);
                   if (story) {
                     onSelectStory(story);
                     if (onSelectLocation) onSelectLocation([story.lng, story.lat]);
@@ -78,3 +79,4 @@ export function Search({ onSelectStory, onSelectLocation }: SearchProps) {
     </div>
   );
 }
+

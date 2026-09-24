@@ -46,7 +46,7 @@ export function Sheet({ isOpen, onClose, children }: SheetProps) {
             </div>
             
             <div className="absolute top-4 right-4">
-              <button onClick={onClose} className="p-2 bg-cream text-text-muted hover:text-text-main rounded-full">
+              <button onClick={onClose} aria-label="Tutup" className="p-2 bg-cream text-text-muted hover:text-text-main rounded-full">
                 <Icon name="X" size={20} />
               </button>
             </div>
