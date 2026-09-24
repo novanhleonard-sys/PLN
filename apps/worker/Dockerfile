@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Enable Corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
 # Copy monorepo configuration and lockfile
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -40,4 +40,5 @@ WORKDIR /app/apps/worker
 
 # Start worker
 CMD ["pnpm", "start"]
+
 
