@@ -132,49 +132,49 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
       {/* Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent z-10 flex flex-col items-center">
         <div className="flex items-center gap-6 mb-4">
-          <Button variant="ghost" 
+          <button
             onClick={() => setSpeed(s => s === 1 ? 1.2 : s === 1.2 ? 0.8 : 1)}
-            className="w-12 h-12 flex items-center justify-center text-white/70 font-bold hover:text-white"
+            className="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-colors bg-white/20 text-white hover:bg-white/30"
           >
             {speed}x
-          </Button>
+          </button>
           
-          <Button variant="ghost" 
+          <button
             disabled={currentPage === 0}
             onClick={() => setCurrentPage((p: number) => p - 1)}
             aria-label="Sebelumnya"
-            className="w-12 h-12 flex items-center justify-center text-white hover:scale-110 transition-transform disabled:opacity-30"
+            className="w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white/20 text-white hover:bg-white/30 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
-          </Button>
+          </button>
           
-          <Button variant="ghost" 
+          <button
             onClick={() => setIsPlaying(!isPlaying)}
             aria-label={isPlaying ? "Jeda" : "Putar"}
-            className="w-16 h-16 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 transition-transform"
+            className="w-16 h-16 rounded-full flex items-center justify-center transition-transform bg-white text-black hover:scale-105"
           >
             {isPlaying ? (
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
             ) : (
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 ml-1"><path d="M8 5v14l11-7z"/></svg>
             )}
-          </Button>
+          </button>
           
-          <Button variant="ghost" 
+          <button
             disabled={currentPage === pages.length - 1}
             onClick={() => setCurrentPage((p: number) => p + 1)}
             aria-label="Selanjutnya"
-            className="w-12 h-12 flex items-center justify-center text-white hover:scale-110 transition-transform disabled:opacity-30"
+            className="w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white/20 text-white hover:bg-white/30 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-          </Button>
+          </button>
           
-          <Button variant="ghost" 
+          <button
             onClick={() => setShowSubtitles(!showSubtitles)}
-            className={`w-12 h-12 flex items-center justify-center font-bold text-sm ${showSubtitles ? 'text-white' : 'text-white/30'}`}
+            className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${showSubtitles ? 'bg-white/40 text-white' : 'bg-white/20 text-white/50 hover:bg-white/30'}`}
           >
             CC
-          </Button>
+          </button>
         </div>
       </div>
       
