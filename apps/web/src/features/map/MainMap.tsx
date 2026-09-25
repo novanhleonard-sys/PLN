@@ -24,7 +24,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [debugLogs, setDebugLogs] = useState<string[]>(['Init']);
+  
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -47,8 +47,8 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
 
     map.current = m;
 
-    m.on('error', (e) => setDebugLogs(l => [...l, 'ERR: ' + (e.error?.message || JSON.stringify(e))]));
-    m.on('render', () => { const c = m.getCanvas(); if(c && !(window as any)._loggedRender) { (window as any)._loggedRender=true; setDebugLogs(l => [...l, 'RENDER: ' + c.clientWidth + 'x' + c.clientHeight]); } });
+    
+    
     m.on('load', () => {
       // 1. Ocean Background
       m.addLayer({
@@ -68,7 +68,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
       fetch('/map/provinsi.geojson').then(r => r.json()).then(data => {
         if (!map.current) return;
         const m = map.current;
-        (m.getSource('provinsi') as GeoJSONSource).setData(data); setDebugLogs(l => [...l, 'FETCH SUCCESS ' + data.features.length]);
+        (m.getSource('provinsi') as GeoJSONSource).setData(data); 
         const labels = {
           type: 'FeatureCollection',
           features: data.features.map((f: any) => ({
@@ -209,7 +209,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
       // 5. Story Pins Source (Initialized empty, populated in separate effect)
       // Markers handled by React in useEffect
 
-      setLoaded(true); setDebugLogs(l => [...l, 'LOADED SUCCESS']); setTimeout(() => { const feats = m.queryRenderedFeatures(); setDebugLogs(l => [...l, 'VISIBLE FEATS: ' + feats.length]); }, 2000); setTimeout(() => m.resize(), 500);
+      setLoaded(true);  setTimeout(() => m.resize(), 500);
     });
 
     return () => {
@@ -281,7 +281,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
   return (
     <>
       <div ref={mapContainer} className="absolute top-0 left-0 w-full h-full z-0 bg-[#d1f4f9]" />
-      <div className="absolute bottom-0 left-0 z-[999] bg-black/80 backdrop-blur text-white px-4 py-4 text-xs font-mono pointer-events-none whitespace-pre flex flex-col gap-1"><b>V1.0.2 DIAGNOSTICS:</b>{debugLogs.map((l, i) => <div key={i}>{l}</div>)}</div>
+      
     </>
   );
 }

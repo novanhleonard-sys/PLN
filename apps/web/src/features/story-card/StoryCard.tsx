@@ -99,7 +99,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
         <Button onClick={handleRead} variant="primary" className="flex-1">
           {readHistory ? `Lanjutkan halaman ${readHistory.last_page_idx}` : 'Lanjut baca'}
         </Button>
-        <Button onClick={handleSave} variant="secondary" className={`px-3 ${isSaved ? 'text-coral' : ''}`} aria-label="Simpan cerita">
+        <Button onClick={handleSave} variant="secondary" className={`w-11 !px-0 flex-none ${isSaved ? "text-coral" : ""}`} aria-label="Simpan cerita">
           <Icon name="Bookmark" size={20} className={isSaved ? 'fill-current' : ''} />
         </Button>
       </div>
@@ -115,9 +115,9 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
   if (isDesktop) {
     return (
-      <SidePanel isOpen={!!story} className="absolute top-4 bottom-4 left-4 rounded-2xl shadow-warm-lg z-20 !h-auto">
+      <SidePanel isOpen={!!story} className="absolute top-0 bottom-0 left-0 z-30 h-full">
         <div className="p-6 h-full flex flex-col relative">
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 !p-2 rounded-full z-10 !min-w-0 !h-auto"><Icon name="X" size={16} /></Button>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 w-8 h-8 !px-0 rounded-full z-10"><Icon name="X" size={16} /></Button>
           {content}
         </div>
       </SidePanel>
