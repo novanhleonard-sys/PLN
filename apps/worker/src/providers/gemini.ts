@@ -115,24 +115,19 @@ export class GeminiProvider implements AIProvider {
     };
   }
   async generateImage(model: string, prompt: string, opts?: Record<string, any>) {
-    const response = await this.ai.models.generateContent({
+    const interaction = await this.ai.interactions.create({
       model: model || 'gemini-3.1-flash-image',
-      contents: prompt,
-      config: {
-        outputMimeType: 'image/jpeg',
-      }
+      input: prompt,
     });
 
-    const parts = response.candidates?.[0]?.content?.parts || [];
-    const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.mimeType?.startsWith('image/'));
-    
-    if (!imagePart || !imagePart.inlineData || !imagePart.inlineData.data) {
+    const outputImage = interaction.output_image;
+    if (!outputImage || !outputImage.data) {
       throw new Error('Gemini did not return image data.');
     }
 
     return {
-      imageBase64: imagePart.inlineData.data as string,
-      costUsd: undefined // cost will be calculated generically by registry
+      imageBase64: outputImage.data as string,
+      costUsd: undefined
     };
   }
 }
