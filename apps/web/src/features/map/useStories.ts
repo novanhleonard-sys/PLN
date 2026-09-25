@@ -25,13 +25,14 @@ export function useStories() {
         .from('stories')
         .select(`
           id, title, type, lat, lng,
-          story_versions ( id, status, tier, cover_path, region )
+          tier, status, regions(name), story_versions(id, status)
         `);
       if (error) throw error;
       
       const pins: StoryPin[] = [];
       for (const story of data) {
         // Find published version
+        if (story.status !== 'published') continue;
         const publishedVersion = story.story_versions?.find((v: any) => v.status === 'published');
         if (!publishedVersion) continue;
         
@@ -42,10 +43,10 @@ export function useStories() {
           type: story.type as StoryType,
           lat: story.lat,
           lng: story.lng,
-          tier: publishedVersion.tier || 1,
+          tier: story.tier || 1,
           score: 100, // Dummy score or derived from story_stats later
-          cover: publishedVersion.cover_path,
-          region: publishedVersion.region,
+          cover: undefined,
+          region: story.regions?.name,
           versionId: publishedVersion.id
         });
       }
@@ -53,4 +54,5 @@ export function useStories() {
     }
   });
 }
+
 
