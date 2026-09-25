@@ -19,6 +19,7 @@ export interface AIProvider {
   generateText(model: string, prompt: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ text: string; inputTokens: number; outputTokens: number }>;
   generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>): Promise<{ data: T; inputTokens: number; outputTokens: number }>;
   generateAudio?(model: string, prompt: string, voiceName: string, opts?: Record<string, any>): Promise<{ audioBase64: string; inputTokens: number; outputTokens: number }>;
+  generateImage?(model: string, prompt: string, opts?: Record<string, any>): Promise<{ imageBase64: string; costUsd?: number }>;
 }
 
 export class ProviderRegistry {
@@ -100,6 +101,49 @@ export class ProviderRegistry {
         attempt++;
         if (attempt >= 2) {
           throw new Error('Provider ' + opts.provider + ' failed audio generation after retry: ' + err.message, { cause: err });
+        }
+      }
+    }
+    throw new Error('Unreachable');
+  }
+
+  async generateImage(opts: GenerateOptions): Promise<string> {
+    const budgetCheck = await this.budgetGuard.checkBudget(opts.ref);
+    if (!budgetCheck.allowed) {
+      throw new Error('BUDGET_EXCEEDED: ' + budgetCheck.reason);
+    }
+
+    const provider = this.providers.get(opts.provider);
+    if (!provider) throw new Error('Provider not found: ' + opts.provider);
+    if (!provider.generateImage) throw new Error('Provider ' + opts.provider + ' does not support generateImage');
+
+    let attempt = 0;
+    while (attempt < 2) {
+      try {
+        const result = await provider.generateImage(opts.model, opts.prompt, opts);
+        
+        let cost = result.costUsd || 0;
+        if (!result.costUsd) {
+          // For Imagen 3, the cost is roughly $0.03 per image
+          cost = calculateCost(opts.provider, opts.model, 0, 1, true);
+        }
+        
+        await this.supabase.from('ai_usage').insert({
+          stage: opts.stage,
+          provider: opts.provider,
+          model: opts.model,
+          units_in: 0,
+          units_out: 1, // 1 image
+          cost_usd: cost,
+          ref: opts.ref,
+          user_id: opts.userId
+        });
+        
+        return result.imageBase64;
+      } catch (err: any) {
+        attempt++;
+        if (attempt >= 2) {
+          throw new Error('Provider ' + opts.provider + ' failed image generation after retry: ' + err.message, { cause: err });
         }
       }
     }
