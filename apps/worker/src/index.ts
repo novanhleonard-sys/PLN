@@ -48,7 +48,7 @@ runner.register('verify', async (ctx, job) => await verifyStage(ctx, job, regist
 runner.register('segment', async (ctx, job) => await segmentStage(ctx, job, registry));
 runner.register('character', async (ctx, job) => await characterStage(ctx, job, registry));
 runner.register('scene-image', async (ctx, job) => await processSceneImageStage(ctx, job));
-runner.register('audio', async (ctx, job) => await audioStage(ctx, job));
+runner.register('audio', async (ctx, job) => await audioStage(ctx, job, registry));
 runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry));
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));
 

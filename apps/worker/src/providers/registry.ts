@@ -18,6 +18,7 @@ export interface AIProvider {
   name: string;
   generateText(model: string, prompt: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ text: string; inputTokens: number; outputTokens: number }>;
   generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>): Promise<{ data: T; inputTokens: number; outputTokens: number }>;
+  generateAudio?(model: string, prompt: string, voiceName: string, opts?: Record<string, any>): Promise<{ audioBase64: string; inputTokens: number; outputTokens: number }>;
 }
 
 export class ProviderRegistry {
@@ -73,6 +74,32 @@ export class ProviderRegistry {
         attempt++;
         if (attempt >= 2) {
           throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
+        }
+      }
+    }
+    throw new Error('Unreachable');
+  }
+
+  async generateAudio(opts: GenerateOptions & { voiceName: string }): Promise<string> {
+    const budgetCheck = await this.budgetGuard.checkBudget(opts.ref);
+    if (!budgetCheck.allowed) {
+      throw new Error('BUDGET_EXCEEDED: ' + budgetCheck.reason);
+    }
+
+    const provider = this.providers.get(opts.provider);
+    if (!provider) throw new Error('Provider not found: ' + opts.provider);
+    if (!provider.generateAudio) throw new Error('Provider ' + opts.provider + ' does not support generateAudio');
+
+    let attempt = 0;
+    while (attempt < 2) {
+      try {
+        const result = await provider.generateAudio(opts.model, opts.prompt, opts.voiceName, opts);
+        await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
+        return result.audioBase64;
+      } catch (err: any) {
+        attempt++;
+        if (attempt >= 2) {
+          throw new Error('Provider ' + opts.provider + ' failed audio generation after retry: ' + err.message, { cause: err });
         }
       }
     }

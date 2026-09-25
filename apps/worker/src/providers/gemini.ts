@@ -82,6 +82,38 @@ export class GeminiProvider implements AIProvider {
       outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
     };
   }
+
+  async generateAudio(model: string, prompt: string, voiceName: string, opts?: Record<string, any>) {
+    const response = await this.ai.models.generateContent({
+      model: model || 'gemini-2.0-flash',
+      contents: prompt,
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: voiceName
+            }
+          }
+        }
+      }
+    });
+
+    const parts = response.candidates?.[0]?.content?.parts || [];
+    const audioPart = parts.find((p: any) => p.inlineData && p.inlineData.mimeType?.startsWith('audio/'));
+    
+    if (!audioPart || !audioPart.inlineData || !audioPart.inlineData.data) {
+      throw new Error('Gemini did not return audio data.');
+    }
+
+    console.log("Audio mimeType:", audioPart.inlineData.mimeType);
+
+    return {
+      audioBase64: audioPart.inlineData.data as string,
+      inputTokens: response.usageMetadata?.promptTokenCount || 0,
+      outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
+    };
+  }
 }
 
 
