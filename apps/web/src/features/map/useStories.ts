@@ -46,7 +46,7 @@ export function useStories() {
           tier: story.tier || 1,
           score: 100, // Dummy score or derived from story_stats later
           cover: undefined,
-          region: story.regions?.name,
+          region: Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name,
           versionId: publishedVersion.id
         });
       }
@@ -54,5 +54,6 @@ export function useStories() {
     }
   });
 }
+
 
 
