@@ -12,6 +12,7 @@ import { ReportButton } from '../../report/ReportButton';
 import { AdaptationModal } from '../adapt/AdaptationModal';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
 
+
 export const Baca: React.FC = () => {
   const { versionId } = useParams<{ versionId: string }>();
   const { data: versionData, isLoading: isLoadingVersion } = useStoryVersions(versionId || '');

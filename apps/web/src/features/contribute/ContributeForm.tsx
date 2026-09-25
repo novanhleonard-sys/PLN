@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
 import { Input } from '../../ui/basic/Input';
+import { Icon } from '../../ui/basic/Icon';
 
 const STEPS = ['Info', 'Teks', 'Sumber', 'Hak', 'Tinjau'];
 
@@ -89,12 +90,13 @@ export const ContributeForm = () => {
               </div>
               <div>
                 <label className="block text-sm font-bold text-text-muted mb-2">Jenis Cerita</label>
-                <select value={formData.type} onChange={e => updateForm('type', e.target.value)} className="w-full p-3 border border-border-light rounded-xl">
+                <div className="relative"><select value={formData.type} onChange={e => updateForm('type', e.target.value)} className="w-full h-12 bg-white border border-border-light rounded-2xl px-4 font-nunito text-base text-text-main focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal appearance-none cursor-pointer">
                   <option value="legenda">Legenda (asal-usul tempat)</option>
                   <option value="mite">Mite (dewa dan makhluk gaib)</option>
                   <option value="fabel">Fabel (tokoh hewan)</option>
                   <option value="dongeng">Dongeng (cerita rakyat umum)</option>
                 </select>
+<div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted"><Icon name="ChevronDown" size={18} /></div></div>
               </div>
               <div>
                 <Input label="Label Versi" value={formData.version_label} onChange={e => updateForm('version_label', e.target.value)} placeholder="Contoh: Versi Kasunanan" />
@@ -122,21 +124,22 @@ export const ContributeForm = () => {
               {formData.sources.map((src, i) => (
                 <div key={i} className="p-4 border border-border-light rounded-xl space-y-4 bg-stone-50">
                   <div className="flex gap-4">
-                    <select 
+                    <div className="relative"><select 
                       value={src.type} 
                       onChange={e => {
                         const newSources = [...formData.sources];
                         newSources[i].type = e.target.value as any;
                         updateForm('sources', newSources);
                       }}
-                      className="p-2 border border-border-light rounded-lg bg-white"
+                      className="w-full h-12 bg-white border border-border-light rounded-2xl px-4 font-nunito text-base text-text-main focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal appearance-none cursor-pointer"
                     >
                       <option value="buku">Buku</option>
                       <option value="arsip">Arsip</option>
                       <option value="web">Web</option>
                       <option value="lisan">Lisan / Narasumber</option>
                     </select>
-                    <input 
+<div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted"><Icon name="ChevronDown" size={18} /></div></div>
+                    <Input 
                       type="text" 
                       value={src.citation} 
                       onChange={e => {
@@ -144,7 +147,7 @@ export const ContributeForm = () => {
                         newSources[i].citation = e.target.value;
                         updateForm('sources', newSources);
                       }}
-                      className="flex-1 p-2 border border-border-light rounded-lg bg-white" 
+                      className="flex-1" 
                       placeholder="Sitasi atau URL"
                     />
                   </div>

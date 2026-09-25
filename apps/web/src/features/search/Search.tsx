@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import MiniSearch from 'minisearch';
 import type { StoryPin } from '../map/useStories';
 import { Input } from '../../ui/basic/Input';
+
 import { Search as SearchIcon, MapPin } from 'lucide-react';
 
 interface SearchProps {

@@ -5,7 +5,7 @@ import { MainMap } from '../features/map/MainMap';
 import { Search } from '../features/search/Search';
 import { StoryCard } from '../features/story-card/StoryCard';
 import { useStories, type StoryPin } from '../features/map/useStories';
-import { MapStyleToggle } from '../features/map/MapStyleToggle';
+import { MapStyleToggle } from '../ui/basic/Misc';
 
 export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
@@ -58,7 +58,7 @@ export default function Home() {
             onClose={() => { setSelectedStory(null); navigate('/'); }} 
           />
           
-          <MapStyleToggle currentStyle={styleType} onChange={handleStyleChange} />
+          <MapStyleToggle isPainting={styleType === 'A'} onChange={(isA) => handleStyleChange(isA ? 'A' : 'B')} className="absolute bottom-6 left-6 z-20" />
         </>
       )}
     </div>

@@ -117,9 +117,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     return (
       <SidePanel isOpen={!!story} className="absolute top-4 bottom-4 left-4 rounded-2xl shadow-warm-lg z-20 !h-auto">
         <div className="p-6 h-full flex flex-col relative">
-          <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 p-2 bg-cream text-text-muted hover:text-text-main rounded-full z-10">
-            <Icon name="X" size={16} />
-          </button>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 !p-2 rounded-full z-10 !min-w-0 !h-auto"><Icon name="X" size={16} /></Button>
           {content}
         </div>
       </SidePanel>
