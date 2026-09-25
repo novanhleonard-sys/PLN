@@ -26,7 +26,7 @@ export const processSceneImageStage = async (ctx: any, job: any, registry: Provi
 
   const result = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.6-image", 
+    model: "gemini-3.1-flash-image", 
     prompt,
     ref: scene.version.id,
     stage: "scene-image",
