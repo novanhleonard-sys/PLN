@@ -15,6 +15,8 @@ export interface StoryPin {
   cover?: string;
   region?: string;
   versionId?: string;
+  versionCount: number;
+  dongengReady: boolean;
 }
 
 export function useStories() {
@@ -25,7 +27,7 @@ export function useStories() {
         .from('stories')
         .select(`
           id, title, type, lat, lng,
-          tier, status, regions(name), story_versions(id, status)
+          tier, status, regions(name), story_versions(id, status, asset_status)
         `);
       if (error) throw error;
       
@@ -47,7 +49,9 @@ export function useStories() {
           score: 100, // Dummy score or derived from story_stats later
           cover: undefined,
           region: Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name,
-          versionId: publishedVersion.id
+          versionId: publishedVersion.id,
+          versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
+          dongengReady: publishedVersion.asset_status === 'ready'
         });
       }
       return pins;
