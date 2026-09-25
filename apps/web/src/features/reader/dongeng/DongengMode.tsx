@@ -109,7 +109,7 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
 
       {/* Header overlay */}
       <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-10 flex items-center justify-between">
-        <Button variant="ghost" onClick={onBack} className="text-white font-bold font-nunito flex items-center gap-2 drop-shadow-md">
+        <Button variant="ghost" onClick={onBack} className="text-black bg-white hover:bg-white/90 font-bold font-nunito flex items-center gap-2 drop-shadow-md rounded-full px-4 py-2">
           &larr; <span className="hidden sm:inline">Keluar</span>
         </Button>
         <div className="text-white/90 font-fredoka font-bold drop-shadow-md">

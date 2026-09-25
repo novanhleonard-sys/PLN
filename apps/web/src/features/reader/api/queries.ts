@@ -56,7 +56,10 @@ export const usePageAudio = (pageId: string) => {
         .single();
         
       if (error && error.code !== 'PGRST116') throw error;
-      return data || null;
+      if (!data) return null;
+      
+      const publicUrl = supabase.storage.from('audio').getPublicUrl(data.path).data.publicUrl;
+      return { ...data, audio_url: publicUrl };
     },
     enabled: !!pageId
   });
