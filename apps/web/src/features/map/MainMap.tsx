@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Map, setWorkerUrl, GeoJSONSource } from 'maplibre-gl';
+import { Map, setWorkerUrl, GeoJSONSource, Marker } from 'maplibre-gl';
+import { createRoot } from 'react-dom/client';
+import { MapPin } from '../../ui/basic/Misc';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 setWorkerUrl(workerUrl);
 
@@ -205,36 +207,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
       // Ornaments for Style B removed to prevent missing image crash
 
       // 5. Story Pins Source (Initialized empty, populated in separate effect)
-      m.addSource('story-pins', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] }
-      });
-
-      m.addLayer({
-        id: 'story-pins-layer',
-        type: 'circle',
-        source: 'story-pins',
-        paint: {
-          'circle-radius': 10,
-          'circle-color': ['match', ['get', 'tier'], 1, '#FFA500', 2, '#4CAF50', 3, '#2196F3', '#E91E63'],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#FFFFFF'
-        }
-      });
-
-      m.on('click', 'story-pins-layer', (e) => {
-        if (!e.features?.[0]) return;
-        const props = e.features[0].properties as StoryPin;
-        onPinClick(props);
-      });
-
-      m.on('mouseenter', 'story-pins-layer', () => {
-        m.getCanvas().style.cursor = 'pointer';
-      });
-
-      m.on('mouseleave', 'story-pins-layer', () => {
-        m.getCanvas().style.cursor = '';
-      });
+      // Markers handled by React in useEffect
 
       setLoaded(true); setDebugLogs(l => [...l, 'LOADED SUCCESS']); setTimeout(() => { const feats = m.queryRenderedFeatures(); setDebugLogs(l => [...l, 'VISIBLE FEATS: ' + feats.length]); }, 2000); setTimeout(() => m.resize(), 500);
     });
@@ -274,17 +247,34 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
     }
   }, [searchedLocation, loaded]);
 
+  const markersRef = useRef<Marker[]>([]);
   useEffect(() => {
-    if (map.current && loaded && map.current.getSource('story-pins')) {
-      const geojson = {
-        type: 'FeatureCollection',
-        features: stories.map(s => ({
-          type: 'Feature',
-          geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
-          properties: s
-        }))
-      };
-      (map.current.getSource('story-pins') as GeoJSONSource).setData(geojson as any);
+    if (map.current && loaded) {
+      // Clear old markers
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      
+      // Add new markers
+      stories.forEach(story => {
+        const el = document.createElement('div');
+        el.className = 'story-marker-container';
+        const root = createRoot(el);
+        // mapping tier to type
+        let pinType: 'legenda' | 'mite' | 'fabel' | 'dongeng' = 'dongeng';
+        if (story.type) {
+           const t = story.type.toLowerCase();
+           if (t.includes('legenda')) pinType = 'legenda';
+           else if (t.includes('mite')) pinType = 'mite';
+           else if (t.includes('fabel')) pinType = 'fabel';
+        }
+        root.render(<MapPin type={pinType} title={story.title} onClick={() => onPinClick(story)} />);
+        
+        const marker = new Marker({ element: el })
+          .setLngLat([story.lng, story.lat])
+          .addTo(map.current!);
+          
+        markersRef.current.push(marker);
+      });
     }
   }, [stories, loaded]);
 

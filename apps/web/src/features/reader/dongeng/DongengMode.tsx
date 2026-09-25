@@ -1,3 +1,4 @@
+import { Button } from '../../../ui/basic/Button';
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { usePageAudio } from '../api/queries';
@@ -52,9 +53,9 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
   if (adaptation?.audio_status !== 'ready' && !audioData) {
     return (
       <div className="flex flex-col h-[100dvh] bg-black text-white overflow-hidden items-center justify-center font-nunito p-4 relative">
-        <button onClick={onBack} className="absolute top-4 left-4 p-2 bg-white/10 rounded-full hover:bg-white/20">
+        <Button variant="secondary"  onClick={onBack}  className="absolute top-4 left-4 p-2 bg-white/10 rounded-full hover:bg-white/20" >
           &larr; Kembali ke Baca
-        </button>
+        </Button>
         <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
           <Icon name="Lock" size={32} className="opacity-70" />
         </div>
@@ -63,13 +64,13 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
           Mode Dongeng untuk versi ini sedang dalam proses. Silakan kembali ke Mode Baca sementara kami menyelesaikannya.
         </p>
         {adaptation?.age_band !== 'asli' && adaptation?.audio_status === 'none' ? (
-          <button onClick={handleBuatSuara} className="px-6 py-3 bg-teal text-white rounded-full font-bold hover:bg-teal/80">
+          <Button variant="primary"  onClick={handleBuatSuara}  className="px-6 py-3 bg-teal text-white rounded-full font-bold hover:bg-teal/80" >
             Buat Suara
-          </button>
+          </Button>
         ) : (
-          <button disabled className="px-6 py-3 bg-white/10 text-white/50 rounded-full font-bold">
+          <Button variant="secondary"  disabled  className="px-6 py-3 bg-white/10 text-white/50 rounded-full font-bold" >
             Buat Suara
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -108,9 +109,9 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
 
       {/* Header overlay */}
       <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent z-10 flex items-center justify-between">
-        <button onClick={onBack} className="text-white font-bold font-nunito flex items-center gap-2 drop-shadow-md">
+        <Button variant="ghost" onClick={onBack} className="text-white font-bold font-nunito flex items-center gap-2 drop-shadow-md">
           &larr; <span className="hidden sm:inline">Keluar</span>
-        </button>
+        </Button>
         <div className="text-white/90 font-fredoka font-bold drop-shadow-md">
           {versionTitle}
         </div>
@@ -131,23 +132,23 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
       {/* Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent z-10 flex flex-col items-center">
         <div className="flex items-center gap-6 mb-4">
-          <button 
+          <Button variant="ghost" 
             onClick={() => setSpeed(s => s === 1 ? 1.2 : s === 1.2 ? 0.8 : 1)}
             className="w-12 h-12 flex items-center justify-center text-white/70 font-bold hover:text-white"
           >
             {speed}x
-          </button>
+          </Button>
           
-          <button 
+          <Button variant="ghost" 
             disabled={currentPage === 0}
             onClick={() => setCurrentPage((p: number) => p - 1)}
             aria-label="Sebelumnya"
             className="w-12 h-12 flex items-center justify-center text-white hover:scale-110 transition-transform disabled:opacity-30"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
-          </button>
+          </Button>
           
-          <button 
+          <Button variant="ghost" 
             onClick={() => setIsPlaying(!isPlaying)}
             aria-label={isPlaying ? "Jeda" : "Putar"}
             className="w-16 h-16 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 transition-transform"
@@ -157,23 +158,23 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
             ) : (
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 ml-1"><path d="M8 5v14l11-7z"/></svg>
             )}
-          </button>
+          </Button>
           
-          <button 
+          <Button variant="ghost" 
             disabled={currentPage === pages.length - 1}
             onClick={() => setCurrentPage((p: number) => p + 1)}
             aria-label="Selanjutnya"
             className="w-12 h-12 flex items-center justify-center text-white hover:scale-110 transition-transform disabled:opacity-30"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-          </button>
+          </Button>
           
-          <button 
+          <Button variant="ghost" 
             onClick={() => setShowSubtitles(!showSubtitles)}
             className={`w-12 h-12 flex items-center justify-center font-bold text-sm ${showSubtitles ? 'text-white' : 'text-white/30'}`}
           >
             CC
-          </button>
+          </Button>
         </div>
       </div>
       

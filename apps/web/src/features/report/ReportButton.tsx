@@ -48,12 +48,12 @@ export function ReportButton({ targetType, targetId, className }: ReportButtonPr
 
   return (
     <>
-      <button 
+      <Button variant="ghost" 
         onClick={() => setIsOpen(true)}
         className={`text-status-error text-sm font-semibold hover:underline ${className || ''}`}
       >
         Laporkan
-      </button>
+      </Button>
 
       <Modal isOpen={isOpen} onClose={() => !submitting && setIsOpen(false)}>
         <div className="p-6 font-nunito">

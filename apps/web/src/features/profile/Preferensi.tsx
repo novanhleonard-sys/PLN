@@ -74,7 +74,7 @@ export function Preferensi() {
       <section>
         <h2 className="text-xl font-fredoka font-semibold mb-4 text-text-main">Gaya peta default</h2>
         <div className="grid grid-cols-2 gap-4">
-          <button 
+          <Button variant="ghost" 
             disabled={loadingMap}
             onClick={() => updateMapStyle('kartun')}
             className={`flex flex-col items-center gap-2 p-2 border-2 rounded-2xl transition-all ${mapStyle === 'kartun' ? 'border-primary-teal bg-primary-teal/10' : 'border-border-light bg-white hover:border-primary-teal/50'}`}
@@ -83,9 +83,9 @@ export function Preferensi() {
               <span className="text-stone-400 font-semibold">Thumbnail Kartun</span>
             </div>
             <span className={`font-semibold ${mapStyle === 'kartun' ? 'text-primary-teal' : 'text-text-main'}`}>Kartun</span>
-          </button>
+          </Button>
           
-          <button 
+          <Button variant="ghost" 
             disabled={loadingMap}
             onClick={() => updateMapStyle('lukisan')}
             className={`flex flex-col items-center gap-2 p-2 border-2 rounded-2xl transition-all ${mapStyle === 'lukisan' ? 'border-primary-teal bg-primary-teal/10' : 'border-border-light bg-white hover:border-primary-teal/50'}`}
@@ -94,7 +94,7 @@ export function Preferensi() {
                <span className="text-stone-400 font-semibold">Thumbnail Lukisan</span>
             </div>
             <span className={`font-semibold ${mapStyle === 'lukisan' ? 'text-primary-teal' : 'text-text-main'}`}>Lukisan</span>
-          </button>
+          </Button>
         </div>
       </section>
 

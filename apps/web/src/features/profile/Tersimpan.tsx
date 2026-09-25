@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../ui/basic/Button';
 
 export function Tersimpan() {
   const { user } = useAuth();
@@ -49,7 +50,7 @@ export function Tersimpan() {
           <div key={item.id} className="bg-white rounded-2xl border border-border-light shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-teal transition-colors" onClick={() => navigate(`/cerita/${story?.id}`)}>
             <div className="aspect-[4/3] bg-cream flex items-center justify-center relative">
                <span className="text-4xl opacity-20">??</span>
-               <button 
+               <Button variant="ghost" 
                   onClick={(e) => {
                     e.stopPropagation();
                     removeMutation.mutate(story?.id);
@@ -57,7 +58,7 @@ export function Tersimpan() {
                   className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-white rounded-full text-coral shadow-sm backdrop-blur-sm"
                >
                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
-               </button>
+               </Button>
             </div>
             <div className="p-4 flex flex-col flex-1">
               <div className="flex items-center gap-2 mb-2">

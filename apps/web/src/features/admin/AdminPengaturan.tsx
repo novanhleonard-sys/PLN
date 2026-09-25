@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '../../ui/basic/Button';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 
@@ -41,7 +42,7 @@ export const AdminPengaturan = () => {
             <div className="flex justify-between items-start mb-2">
               <h2 className="text-lg font-bold">{setting.key}</h2>
               {editingKey !== setting.key && (
-                <button
+                <Button variant="ghost"
                   onClick={() => {
                     setEditingKey(setting.key);
                     setEditValue(JSON.stringify(setting.value, null, 2));
@@ -49,7 +50,7 @@ export const AdminPengaturan = () => {
                   className="text-blue-600 underline text-sm"
                 >
                   Edit
-                </button>
+                </Button>
               )}
             </div>
             
@@ -61,13 +62,13 @@ export const AdminPengaturan = () => {
                   className="w-full h-40 p-2 border rounded font-mono text-sm"
                 />
                 <div className="flex gap-2 justify-end">
-                  <button
+                  <Button variant="ghost"
                     onClick={() => setEditingKey(null)}
                     className="px-4 py-2 text-sm border rounded"
                   >
                     Batal
-                  </button>
-                  <button
+                  </Button>
+                  <Button variant="ghost"
                     onClick={() => {
                       try {
                         const parsed = JSON.parse(editValue);
@@ -80,7 +81,7 @@ export const AdminPengaturan = () => {
                     className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                   >
                     Simpan
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (

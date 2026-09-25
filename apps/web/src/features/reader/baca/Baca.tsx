@@ -10,6 +10,7 @@ import { ProgressBar } from '../../../ui/basic/Misc';
 import { DongengMode } from '../dongeng/DongengMode';
 import { ReportButton } from '../../report/ReportButton';
 import { AdaptationModal } from '../adapt/AdaptationModal';
+import { Button } from '../../../ui/basic/Button';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
 
 
@@ -145,9 +146,7 @@ export const Baca: React.FC = () => {
             <ReportButton targetType={selectedAdaptation ? 'adaptation' : 'version'} targetId={selectedAdaptation || versionId || ''} />
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
-          <button className="px-4 py-2 text-sm font-bold text-teal bg-teal/10 rounded-full" onClick={() => setAdaptModalOpen(true)}>
-            Sesuaikan
-          </button>
+          <Button size="sm" variant="secondary" onClick={() => setAdaptModalOpen(true)} className="!bg-teal/10 !text-teal !border-transparent hover:!bg-teal/20">Sesuaikan</Button>
           <SegmentedControl options={['Baca', 'Dongeng']} value={mode} onChange={setMode} />
         </div>
       </header>
@@ -186,23 +185,11 @@ export const Baca: React.FC = () => {
           
           {/* Controls */}
           <div className="flex-none p-4 flex items-center justify-between border-t border-border-light bg-cream">
-            <button 
-              disabled={currentPage === 0}
-              onClick={() => setCurrentPage((p: number) => Math.max(0, p - 1))}
-              className="px-6 py-3 rounded-full bg-white border border-border-light text-text-main font-bold disabled:opacity-50 hover:bg-stone-50"
-            >
-              Sebelumnya
-            </button>
+            <Button variant="secondary" disabled={currentPage === 0} onClick={() => setCurrentPage((p: number) => Math.max(0, p - 1))}>Sebelumnya</Button>
             <div className="font-nunito text-sm text-text-muted font-bold">
               {currentPage + 1} / {totalAdaptPages}
             </div>
-            <button 
-              onClick={handleNext}
-              disabled={currentPage === pages.length - 1 && pages.length === totalAdaptPages}
-              className="px-6 py-3 rounded-full bg-teal text-white font-bold hover:bg-teal/90 disabled:opacity-50"
-            >
-              Selanjutnya
-            </button>
+            <Button variant="primary" disabled={currentPage === pages.length - 1 && pages.length === totalAdaptPages} onClick={handleNext}>Selanjutnya</Button>
           </div>
         </div>
       </main>
