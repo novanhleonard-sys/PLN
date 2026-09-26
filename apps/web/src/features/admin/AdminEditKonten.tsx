@@ -76,7 +76,7 @@ export function AdminEditKonten() {
       version_label: version?.label || 'Versi Admin',
       body: version?.body || '',
       sources: version?.sources || [{ type: 'buku', citation: '', author: '' }],
-      rights_declared: true
+      rights_declared: true, lat: null, lng: null, synopsis: '', hero_image_path: null, pin_image_path: null, asset_credits: '', force_new_reason: null
     });
   };
 

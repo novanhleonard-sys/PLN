@@ -45,9 +45,11 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
       title: submission.title,
       slug: slug,
       type: 'dongeng',
-      synopsis: result.reason,
-      lat: result.location.lat,
-      lng: result.location.lng,
+      synopsis: submission.synopsis || result.reason,
+      lat: submission.lat || result.location.lat,
+      lng: submission.lng || result.location.lng,
+      hero_image_path: submission.hero_image_path || null,
+      pin_image_path: submission.pin_image_path || null,
       status: 'published'
     }, { onConflict: 'slug' }).select().single();
     

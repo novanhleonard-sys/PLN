@@ -29,6 +29,7 @@ const AdminCenter = lazy(() => import('./features/admin/AdminCenter').then(m => 
 const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
 const Pengaturan = lazy(() => import('./features/profile/Pengaturan.tsx').then(m => ({ default: m.Pengaturan })))
 const ContributeForm = lazy(() => import('./features/contribute/ContributeForm').then(m => ({ default: m.ContributeForm })))
+const EditContributionWrapper = lazy(() => import('./features/contribute/EditContributionWrapper').then(m => ({ default: m.EditContributionWrapper })))
 const MyContributions = lazy(() => import('./features/contribute/MyContributions').then(m => ({ default: m.MyContributions })))
 const ContributionStatusDetail = lazy(() => import('./features/contribute/ContributionStatusDetail').then(m => ({ default: m.ContributionStatusDetail })))
 
@@ -55,6 +56,7 @@ const AppContent = () => {
         <Route path="/kontribusi" element={<RequireAuth><ContributeForm /></RequireAuth>} />
         <Route path="/kontribusi/saya" element={<RequireAuth><MyContributions /></RequireAuth>} />
         <Route path="/kontribusi/:id" element={<RequireAuth><ContributionStatusDetail /></RequireAuth>} />
+        <Route path="/kontribusi/:id/edit" element={<RequireAuth><EditContributionWrapper /></RequireAuth>} />
         <Route path="/admin/*" element={<AdminCenter />} />
         
         

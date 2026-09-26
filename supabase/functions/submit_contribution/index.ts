@@ -21,7 +21,12 @@ const contributionSchema = z.object({
   })).min(1, { message: "Minimal satu sumber cerita" }),
   rights_declared: z.boolean().refine(val => val === true, {
     message: "Harus menyetujui pernyataan hak"
-  })
+  }),
+  synopsis: z.string().max(500).optional().nullable(),
+  hero_image_path: z.string().optional().nullable(),
+  pin_image_path: z.string().optional().nullable(),
+  asset_credits: z.string().optional().nullable(),
+  force_new_reason: z.string().optional().nullable()
 });
 
 const corsHeaders = {
@@ -98,6 +103,11 @@ serve(async (req) => {
         body: data.body,
         sources: data.sources,
         rights_declared: data.rights_declared,
+        synopsis: data.synopsis || null,
+        hero_image_path: data.hero_image_path || null,
+        pin_image_path: data.pin_image_path || null,
+        asset_credits: data.asset_credits || null,
+        force_new_reason: data.force_new_reason || null,
         status: 'submitted'
       })
       .select()

@@ -1,9 +1,12 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
+import { Button } from '../../ui/basic/Button';
+import { Icon } from '../../ui/basic/Icon';
 
 export const ContributionStatusDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const { data: submission, isLoading } = useQuery({
     queryKey: ['submission', id],
@@ -19,12 +22,17 @@ export const ContributionStatusDetail = () => {
 
   return (
     <div className="min-h-screen bg-cream font-nunito p-4 md:p-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-border-light p-6 md:p-10 space-y-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-border-light p-6 md:p-10 space-y-8 animate-in fade-in zoom-in-95">
         <Link to="/profil/kontribusi" className="text-teal font-bold">&larr; Kembali ke Daftar</Link>
         
-        <div>
-          <h1 className="text-3xl font-fredoka font-bold text-text-main mb-2">{submission.title}</h1>
-          <div className="text-text-muted">{submission.version_label}</div>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-fredoka font-bold text-text-main mb-2">{submission.title}</h1>
+            <div className="text-text-muted">{submission.version_label}</div>
+          </div>
+          <Button onClick={() => navigate(`/kontribusi/${id}/edit`)} variant="secondary" className="gap-2">
+            <Icon name="Pen" size={16} /> Edit
+          </Button>
         </div>
 
         <div className="space-y-4">
@@ -32,7 +40,7 @@ export const ContributionStatusDetail = () => {
           <div className="flex flex-col gap-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-stone-300 before:to-transparent">
              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                 <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white bg-teal text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                  ?
+                  <Icon name={submission.status === 'approved' ? 'Check' : submission.status === 'rejected' ? 'X' : 'Clock'} size={20} />
                 </div>
                 <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-border-light bg-stone-50 shadow-sm">
                   <div className="font-bold text-text-main">Status Saat Ini</div>
@@ -52,4 +60,3 @@ export const ContributionStatusDetail = () => {
     </div>
   );
 };
-
