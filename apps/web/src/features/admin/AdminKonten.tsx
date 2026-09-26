@@ -1,157 +1,210 @@
-import { Button } from '../../ui/basic/Button';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import { Card } from '../../ui/basic/BadgeCard';
+import { Button } from '../../ui/basic/Button';
+import { Toast } from '../../ui/basic/Toast';
 
-export const AdminKonten = () => {
+export function AdminKonten() {
   const queryClient = useQueryClient();
+  const [toast, setToast] = useState('');
+  const [tab, setTab] = useState<'stories' | 'jobs'>('stories');
 
-  const { data: stories, isLoading } = useQuery({
-    queryKey: ['admin-stories'],
+  const { data: stories, isLoading: loadingStories } = useQuery({
+    queryKey: ['admin_stories'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stories')
-        .select('*, story_versions(*), adaptations(*), story_stats(*)');
+        .select(`
+          id, title, status, tier_locked,
+          story_stats(tier)
+        `)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: tab === 'stories'
   });
 
-  const mutationVersionStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: 'published' | 'unpublished' }) => {
-      const { error } = await supabase
-        .from('story_versions')
-        .update({ status })
-        .eq('id', id);
+  const { data: jobs, isLoading: loadingJobs } = useQuery({
+    queryKey: ['admin_jobs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .in('status', ['failed', 'running', 'queued'])
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: tab === 'jobs'
+  });
+
+  const toggleLockMutation = useMutation({
+    mutationFn: async ({ id, locked }: { id: string, locked: boolean }) => {
+      const { error } = await supabase.from('stories').update({ tier_locked: locked }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-stories'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin_stories'] });
+    }
   });
 
-  const mutationUpdateTier = useMutation({
-    mutationFn: async ({ id, tier, tier_locked }: { id: string; tier: number; tier_locked: boolean }) => {
-      const { error } = await supabase
-        .from('story_versions')
-        .update({ tier, tier_locked })
-        .eq('id', id);
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+      const newStatus = status === 'published' ? 'unpublished' : 'published';
+      const { error } = await supabase.from('stories').update({ status: newStatus }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-stories'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin_stories'] });
+    }
   });
 
-  const mutationDeleteAdaptation = useMutation({
+  const retryJobMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('adaptations')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('jobs').update({ status: 'queued', attempts: 0, run_after: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-stories'] }),
+    onSuccess: () => {
+      setToast('Job di-reset ke antrean.');
+      queryClient.invalidateQueries({ queryKey: ['admin_jobs'] });
+    }
   });
-
-  const mutationUpdatePin = useMutation({
-    mutationFn: async ({ id, lat, lng }: { id: string; lat: number; lng: number }) => {
-      const { error } = await supabase
-        .from('stories')
-        .update({ lat, lng })
-        .eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-stories'] }),
-  });
-
-  if (isLoading) return <div className="p-8">Memuat konten...</div>;
 
   return (
-    <div className="p-8 font-nunito max-w-6xl mx-auto">
-      <h1 className="text-2xl font-fredoka font-semibold mb-6">Kelola Konten</h1>
-      <div className="flex flex-col gap-6">
-        {stories?.map((story) => (
-          <Card key={story.id} className="p-6">
-            <h2 className="text-xl font-bold mb-2">{story.title}</h2>
-            <div className="flex gap-4 items-center mb-4 text-sm">
-              <div>
-                <strong>Lat:</strong> {story.lat}
-              </div>
-              <div>
-                <strong>Lng:</strong> {story.lng}
-              </div>
-              <Button variant="text" onClick={() => {
-                  const newLat = parseFloat(prompt('Masukkan Latitude baru', story.lat.toString()) || '');
-                  const newLng = parseFloat(prompt('Masukkan Longitude baru', story.lng.toString()) || '');
-                  if (!isNaN(newLat) && !isNaN(newLng)) {
-                    mutationUpdatePin.mutate({ id: story.id, lat: newLat, lng: newLng });
-                  }
-                }}
-                className="text-blue-600 underline"
-              >
-                Ubah Pin</Button>
-            </div>
-            
-            <div className="mb-4">
-              <h3 className="font-semibold text-lg mb-2">Versi Cerita:</h3>
-              <div className="flex flex-col gap-2">
-                {story.story_versions?.map((version: any) => (
-                  <div key={version.id} className="flex justify-between items-center bg-stone-50 p-2 rounded gap-4">
-                    <div className="flex-1">
-                      <div>{version.label} ({version.language}) - {version.status}</div>
-                      
-                    </div>
-                    <div className="flex gap-4 items-center">
-                      <Button variant="text" onClick={() => {
-                           const t = parseInt(prompt('Set Tier (1-4):', version.tier) || '0');
-                           if (t >= 1 && t <= 4) {
-                             mutationUpdateTier.mutate({ id: version.id, tier: t, tier_locked: !version.tier_locked });
-                           }
-                        }}
-                        className="text-blue-600 underline text-sm"
-                      >
-                        Ubah/Kunci Tier</Button>
-                      <Button variant="text" onClick={() =>
-                          mutationVersionStatus.mutate({
-                            id: version.id,
-                            status: version.status === 'published' ? 'unpublished' : 'published',
-                          })
-                        }
-                        className="text-blue-600 underline text-sm"
-                      >
-                        {version.status === 'published' ? 'Unpublish' : 'Publish'}</Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-lg mb-2">Adaptasi:</h3>
-              <div className="flex flex-col gap-2">
-                {story.adaptations?.map((adapt: any) => (
-                  <div key={adapt.id} className="flex justify-between items-center bg-stone-50 p-2 rounded">
-                    <span>
-                      Band: {adapt.age_band} | Prompt: {adapt.prompt_version} | Status: {adapt.status}
-                    </span>
-                    <Button variant="text" onClick={() => {
-                        if (confirm('Yakin hapus adaptasi ini?')) {
-                          mutationDeleteAdaptation.mutate(adapt.id);
-                        }
-                      }}
-                      className="text-red-600 underline text-sm"
-                    >
-                      Hapus</Button>
-                  </div>
-                ))}
-                {(!story.adaptations || story.adaptations.length === 0) && (
-                  <p className="text-sm text-stone-500">Tidak ada adaptasi.</p>
-                )}
-              </div>
-            </div>
-          </Card>
-        ))}
+    <div className="flex flex-col gap-8 font-nunito pb-12 max-w-5xl">
+      <div>
+        <h2 className="text-2xl font-fredoka font-bold text-stone-800">Kelola Konten</h2>
+        <p className="text-stone-500 text-sm mt-1">
+          Manajemen cerita yang telah tayang dan pantauan mesin AI (Jobs).
+        </p>
       </div>
+
+      <div className="flex gap-2 p-1 bg-stone-100 rounded-xl w-fit">
+        <button 
+          onClick={() => setTab('stories')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${tab === 'stories' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500'}`}
+        >
+          Daftar Cerita
+        </button>
+        <button 
+          onClick={() => setTab('jobs')}
+          className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${tab === 'jobs' ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500'}`}
+        >
+          Pantauan Jobs AI
+        </button>
+      </div>
+
+      {tab === 'stories' && (
+        <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+          {loadingStories ? (
+            <div className="p-8 text-center animate-pulse text-stone-500">Memuat cerita...</div>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
+                <tr>
+                  <th className="p-4 font-bold">Judul Cerita</th>
+                  <th className="p-4 font-bold">Status</th>
+                  <th className="p-4 font-bold">Tier</th>
+                  <th className="p-4 font-bold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stories?.map((story) => (
+                  <tr key={story.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
+                    <td className="p-4 font-bold text-stone-800">{story.title}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${story.status === 'published' ? 'bg-teal-100 text-teal-dark' : 'bg-stone-200 text-stone-600'}`}>
+                        {story.status}
+                      </span>
+                    </td>
+                    <td className="p-4 text-stone-600">
+                      Tier {story.story_stats?.tier || 1} 
+                      {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">??</span>}
+                    </td>
+                    <td className="p-4 flex gap-2 justify-end">
+                      <Button 
+                        variant="outline" 
+                        className="!text-xs !py-1 !px-3"
+                        onClick={() => toggleLockMutation.mutate({ id: story.id, locked: !story.tier_locked })}
+                        disabled={toggleLockMutation.isPending}
+                      >
+                        {story.tier_locked ? 'Buka Tier' : 'Kunci Tier'}
+                      </Button>
+                      <Button 
+                        variant={story.status === 'published' ? 'secondary' : 'primary'}
+                        className="!text-xs !py-1 !px-3"
+                        onClick={() => toggleStatusMutation.mutate({ id: story.id, status: story.status })}
+                        disabled={toggleStatusMutation.isPending}
+                      >
+                        {story.status === 'published' ? 'Unpublish' : 'Publish'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {stories?.length === 0 && (
+                  <tr><td colSpan={4} className="p-8 text-center text-stone-500">Belum ada cerita.</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {tab === 'jobs' && (
+        <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+          {loadingJobs ? (
+            <div className="p-8 text-center animate-pulse text-stone-500">Memuat jobs...</div>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
+                <tr>
+                  <th className="p-4 font-bold">Jenis Task</th>
+                  <th className="p-4 font-bold">Status</th>
+                  <th className="p-4 font-bold">Error Info</th>
+                  <th className="p-4 font-bold text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs?.map((job) => (
+                  <tr key={job.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
+                    <td className="p-4 font-bold text-stone-800 uppercase text-xs">{job.kind}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        job.status === 'failed' ? 'bg-red-100 text-red-600' : 
+                        job.status === 'running' ? 'bg-blue-100 text-blue-600' : 
+                        'bg-stone-100 text-stone-600'
+                      }`}>
+                        {job.status} ({job.attempts}x)
+                      </span>
+                    </td>
+                    <td className="p-4 text-xs text-stone-500 max-w-xs truncate" title={job.error || '-'}>
+                      {job.error || '-'}
+                    </td>
+                    <td className="p-4 text-right">
+                      {job.status === 'failed' && (
+                        <Button 
+                          variant="outline" 
+                          className="!text-xs !py-1 !px-3"
+                          onClick={() => retryJobMutation.mutate(job.id)}
+                          disabled={retryJobMutation.isPending}
+                        >
+                          Coba Ulang
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {jobs?.length === 0 && (
+                  <tr><td colSpan={4} className="p-8 text-center text-stone-500">Tidak ada task yang aktif atau gagal. Semuanya bersih!</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      <Toast visible={!!toast} message={toast} onClose={() => setToast('')} />
     </div>
   );
-};
-
-
-
+}

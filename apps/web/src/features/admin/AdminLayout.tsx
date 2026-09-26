@@ -53,6 +53,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const menu: SidebarItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: 'Activity', onClick: () => navigate('/admin/dashboard') },
+    { id: 'antrean', label: 'Antrean', icon: 'ListOrdered', onClick: () => navigate('/admin/antrean') },
+    { id: 'konten', label: 'Konten', icon: 'Library', onClick: () => navigate('/admin/konten') },
+    { id: 'gaya-ai', label: 'Gaya AI', icon: 'Sparkles', onClick: () => navigate('/admin/gaya-ai') },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'Settings', onClick: () => navigate('/admin/pengaturan') },
     { id: 'kelola', label: 'Kelola Admin', icon: 'Shield', onClick: () => navigate('/admin/kelola') },
     { id: 'kembali', label: 'Tutup Admin', icon: 'LogOut', isDanger: true, onClick: () => navigate('/') },
