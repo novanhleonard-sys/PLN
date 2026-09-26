@@ -28,7 +28,7 @@ export function useStories() {
         .from('stories')
         .select(`
           id, title, type, lat, lng,
-          tier, status, regions(name), story_versions(id, status, asset_status, body)
+          tier, status, regions(name), story_versions(id, status, asset_status, body, adaptations(status))
         `);
       if (error) throw error;
       
@@ -56,7 +56,7 @@ export function useStories() {
           region: Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name,
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
-          dongengReady: publishedVersion.asset_status === 'ready',
+          dongengReady: publishedVersion.asset_status === 'ready' || publishedVersion.adaptations?.some((a: any) => a.status === 'ready'),
           duration: duration
         });
       }
