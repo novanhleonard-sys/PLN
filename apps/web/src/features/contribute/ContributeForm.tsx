@@ -215,6 +215,11 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-stone-700">Lokasi Cerita (Opsional)</label>
+                  {detectedRegion && (
+                    <div className="mb-2 text-sm text-teal font-bold flex items-center gap-2 bg-teal/10 px-3 py-2 rounded-lg w-fit">
+                      <Icon name="MapPin" size={16} /> Daerah terdeteksi: {detectedRegion}
+                    </div>
+                  )}
                   <MapLocationPicker 
                     lat={formData.lat}
                     lng={formData.lng}
