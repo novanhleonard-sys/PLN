@@ -6,6 +6,7 @@ import { Input } from '../../ui/basic/Input';
 import { Icon } from '../../ui/basic/Icon';
 import { SimilarStoriesCheck } from './SimilarStoriesCheck';
 import { MapLocationPicker } from '../map/MapLocationPicker';
+
 import { ImageUploader } from '../../ui/form/ImageUploader';
 import { cn } from '../../utils/cn';
 
@@ -46,13 +47,12 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
   const [error, setError] = useState<string | null>(null);
   const [regions, setRegions] = useState<any[]>([]);
 
-  // Fetch regions
   useEffect(() => {
-    supabase.from('regions').select('id, name').order('name').then(({data}) => {
+    supabase.from('regions').select('id, name').then(({data}) => {
       if (data) setRegions(data);
     });
   }, []);
-
+  
   // Form State
   const [formData, setFormData] = useState<ContributeFormData>({
     target_story_id: initData?.target_story_id || undefined,
@@ -87,22 +87,15 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
       if (onSubmitOverride) {
         await onSubmitOverride(formData);
       } else {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit_contribution`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify(formData)
+        const { data, error } = await supabase.functions.invoke('submit_contribution', {
+          body: formData
         });
-        
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || 'Gagal mengirim');
+
+        if (error) throw new Error(error.message || 'Gagal mengirim');
+        if (data?.error) throw new Error(data.error);
         
         // Success
-        navigate(`/profil/kontribusi/${result.submission_id}`);
+        navigate(`/profil/kontribusi/${data.submission_id}`);
       }
     } catch (err: any) {
       setError(err.message);
@@ -178,7 +171,7 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                 />
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm font-bold text-stone-700">Jenis Cerita</label>
                   <select 
@@ -192,17 +185,7 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                     <option value="fabel">Fabel</option>
                   </select>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm font-bold text-stone-700">Daerah Asal (Opsional)</label>
-                  <select 
-                    value={formData.region_id} 
-                    onChange={e => handleChange('region_id', e.target.value)}
-                    className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal/20 focus:border-teal"
-                  >
-                    <option value="">Pilih Daerah</option>
-                    {regions.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                  </select>
-                </div>
+                
               </div>
 
               <Input
@@ -234,9 +217,13 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                   <MapLocationPicker 
                     lat={formData.lat}
                     lng={formData.lng}
-                    onChange={(lat, lng) => {
+                    onChange={(lat, lng, placeName) => {
                       handleChange('lat', lat);
                       handleChange('lng', lng);
+                      if (placeName && regions.length > 0) {
+                        const matched = regions.find(r => placeName.toLowerCase().includes(r.name.toLowerCase()));
+                        if (matched) handleChange('region_id', matched.id);
+                      }
                     }}
                   />
                 </div>
