@@ -129,7 +129,7 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-8 font-nunito max-w-4xl">
+    <div className="flex flex-col gap-8 font-nunito w-full">
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
         <div>
           <h2 className="text-2xl font-fredoka font-bold text-stone-800">Dashboard Operasional</h2>

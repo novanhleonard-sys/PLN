@@ -15,8 +15,7 @@ export function AdminKonten() {
       const { data, error } = await supabase
         .from('stories')
         .select(`
-          id, title, status, tier_locked,
-          story_stats(tier)
+          id, title, status, tier_locked, tier
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -72,7 +71,7 @@ export function AdminKonten() {
   });
 
   return (
-    <div className="flex flex-col gap-8 font-nunito pb-12 max-w-5xl">
+    <div className="flex flex-col gap-8 font-nunito pb-12 w-full">
       <div>
         <h2 className="text-2xl font-fredoka font-bold text-stone-800">Kelola Konten</h2>
         <p className="text-stone-500 text-sm mt-1">
@@ -119,8 +118,8 @@ export function AdminKonten() {
                       </span>
                     </td>
                     <td className="p-4 text-stone-600">
-                      Tier {(Array.isArray(story.story_stats) ? story.story_stats[0]?.tier : (story.story_stats as any)?.tier) || 1} 
-                      {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">??</span>}
+                      Tier {story.tier || 1} 
+                      {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">🔒</span>}
                     </td>
                     <td className="p-4 flex gap-2 justify-end">
                       <Button 
