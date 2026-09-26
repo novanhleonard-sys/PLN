@@ -4,60 +4,90 @@ import { supabase } from '../../lib/supabase';
 import { ContributeForm } from '../contribute/ContributeForm';
 import type { ContributeFormData } from '../contribute/ContributeForm';
 import { Toast } from '../../ui/basic/Toast';
+import { Trash } from 'lucide-react';
 
 export function AdminEditKonten() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  
   const [storyStatus, setStoryStatus] = useState<string>('');
   const [storyTier, setStoryTier] = useState<number>(4);
   const [isTogglingStatus, setIsTogglingStatus] = useState(false);
   const [isTogglingTier, setIsTogglingTier] = useState(false);
+  
+  const [versions, setVersions] = useState<any[]>([]);
+  const [selectedVersionId, setSelectedVersionId] = useState<string>('');
   const [initialData, setInitialData] = useState<ContributeFormData | null>(null);
+  const [storyData, setStoryData] = useState<any>(null);
+  
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const fetchStory = async () => {
-      if (!id) return;
-      try {
-        const { data: story, error: storyError } = await supabase
-          .from('stories')
-          .select('title, type, region_id, status, tier')
-          .eq('id', id)
-          .single();
-
-        if (storyError) throw storyError;
-
-        setStoryStatus(story.status);
-        setStoryTier(story.tier);
-
-        const { data: submission } = await supabase
-          .from('submissions')
-          .select('version_label, body, sources, rights_declared')
-          .eq('target_story_id', id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        setInitialData({
-          title: story.title,
-          type: story.type,
-          region_id: story.region_id || '',
-          version_label: submission?.version_label || 'Versi Admin',
-          body: submission?.body || 'Isi cerita belum tersedia dari data pengajuan. Silakan lengkapi di sini.',
-          sources: submission?.sources || [{ type: 'buku', citation: '', author: '' }],
-          rights_declared: submission?.rights_declared || false
-        });
-
-      } catch (err: unknown) {
-        console.error(err);
-        setToast((err as Error).message || 'Gagal memuat data cerita');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchStory();
   }, [id]);
+
+  const fetchStory = async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const { data: story, error: storyError } = await supabase
+        .from('stories')
+        .select('title, type, region_id, status, tier')
+        .eq('id', id)
+        .single();
+
+      if (storyError) throw storyError;
+      
+      setStoryData(story);
+      setStoryStatus(story.status);
+      setStoryTier(story.tier);
+
+      const { data: vers, error: versError } = await supabase
+        .from('story_versions')
+        .select('id, label, body, sources, created_at')
+        .eq('story_id', id)
+        .order('created_at', { ascending: false });
+        
+      if (versError) throw versError;
+      
+      setVersions(vers || []);
+      
+      if (vers && vers.length > 0) {
+        setSelectedVersionId(vers[0].id);
+        populateForm(story, vers[0]);
+      } else {
+        populateForm(story, null);
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      setToast((err as Error).message || 'Gagal memuat data cerita');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const populateForm = (story: any, version: any) => {
+    setInitialData({
+      title: story.title,
+      type: story.type,
+      region_id: story.region_id || '',
+      version_label: version?.label || 'Versi Admin',
+      body: version?.body || '',
+      sources: version?.sources || [{ type: 'buku', citation: '', author: '' }],
+      rights_declared: true
+    });
+  };
+
+  const handleVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const vId = e.target.value;
+    setSelectedVersionId(vId);
+    const ver = versions.find(v => v.id === vId);
+    if (ver && storyData) {
+      populateForm(storyData, ver);
+    }
+  };
 
   const toggleStatus = async () => {
     if (!id) return;
@@ -92,25 +122,58 @@ export function AdminEditKonten() {
 
   const handleSubmit = async (data: ContributeFormData) => {
     if (!id) return;
+    setIsSaving(true);
     try {
-      const { error: fnError } = await supabase.functions.invoke('submit_contribution', {
-        body: {
-          title: data.title,
-          type: data.type,
-          region_id: data.region_id || null,
-          version_label: data.version_label,
-          body: data.body,
-          sources: data.sources,
-          rights_declared: data.rights_declared,
-        }
-      });
-      if (fnError) throw new Error(fnError.message);
+      const { error: storyErr } = await supabase.from('stories').update({
+        title: data.title,
+        type: data.type,
+        region_id: data.region_id || null
+      }).eq('id', id);
+      if (storyErr) throw storyErr;
       
-      setToast('Perubahan berhasil dikirim ke antrean.');
+      if (selectedVersionId) {
+        const { error: verErr } = await supabase.from('story_versions').update({
+          label: data.version_label,
+          body: data.body,
+          sources: data.sources
+        }).eq('id', selectedVersionId);
+        if (verErr) throw verErr;
+      }
+      
+      setToast('Perubahan berhasil ditumpuk (overwrite) ke versi ini.');
       setTimeout(() => navigate('/admin/konten'), 2000);
     } catch (err: unknown) {
       console.error(err);
       setToast((err as Error).message || 'Terjadi kesalahan saat menyimpan');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    const isLastVersion = versions.length <= 1;
+    const msg = isLastVersion 
+      ? 'Hanya ada 1 versi. Yakin ingin MENGHAPUS KESELURUHAN CERITA INI secara permanen?' 
+      : 'Yakin ingin menghapus VERSI INI?';
+      
+    if (!confirm(msg)) return;
+    
+    try {
+      if (isLastVersion) {
+        const { error } = await supabase.from('stories').delete().eq('id', id);
+        if (error) throw error;
+        setToast('Cerita berhasil dihapus.');
+        navigate('/admin/konten');
+      } else {
+        if (!selectedVersionId) return;
+        const { error } = await supabase.from('story_versions').delete().eq('id', selectedVersionId);
+        if (error) throw error;
+        setToast('Versi berhasil dihapus.');
+        fetchStory();
+      }
+    } catch (err: unknown) {
+      setToast((err as Error).message || 'Gagal menghapus');
     }
   };
 
@@ -124,12 +187,30 @@ export function AdminEditKonten() {
         <div>
           <h2 className="text-2xl font-fredoka font-bold text-stone-800">Edit Cerita</h2>
           <p className="text-stone-500 text-sm mt-1">
-            Perbarui isi cerita. Mengirim form ini akan memasukkan revisi ke antrean sistem AI.
+            Revisi ini akan <strong>menumpuk (overwrite)</strong> konten yang ada.
           </p>
         </div>
-        <div className="shrink-0 flex items-center gap-3">
+        <div className="shrink-0 flex items-center flex-wrap gap-3">
           
-          <div className="flex items-center gap-2 mr-2">
+          {versions.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-stone-500">Pilih Versi:</label>
+              <div className="relative">
+                <select 
+                  value={selectedVersionId}
+                  onChange={handleVersionChange}
+                  className="bg-stone-50 border border-stone-200 text-stone-700 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-teal appearance-none pr-8 cursor-pointer"
+                >
+                  {versions.map(v => (
+                    <option key={v.id} value={v.id}>{v.label} ({new Date(v.created_at).toLocaleDateString()})</option>
+                  ))}
+                </select>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">▼</div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2">
             <label className="text-xs font-bold text-stone-500">Tier:</label>
             <div className="relative">
               <select 
@@ -157,12 +238,21 @@ export function AdminEditKonten() {
           >
             {storyStatus === 'published' ? 'Unpublish' : 'Publish'}
           </button>
+
+          <button 
+            onClick={handleDelete}
+            className="p-1.5 ml-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+            title={versions.length <= 1 ? "Hapus Cerita" : "Hapus Versi"}
+          >
+            <Trash size={18} />
+          </button>
         </div>
       </div>
 
       <div className="-mx-4 md:-mx-8">
         {initialData && (
           <ContributeForm 
+            key={selectedVersionId}
             initialData={initialData} 
             isEditMode={true} 
             onSubmitOverride={handleSubmit} 
@@ -170,6 +260,14 @@ export function AdminEditKonten() {
           />
         )}
       </div>
+
+      {isSaving && (
+        <div className="fixed inset-0 bg-white/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-stone-800 text-white px-6 py-3 rounded-2xl shadow-xl font-bold font-nunito animate-pulse">
+            Menyimpan perubahan...
+          </div>
+        </div>
+      )}
 
       <Toast visible={!!toast} message={toast} onClose={() => setToast('')} />
     </div>
