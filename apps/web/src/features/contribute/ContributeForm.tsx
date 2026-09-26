@@ -46,6 +46,7 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [regions, setRegions] = useState<any[]>([]);
+  const [detectedRegion, setDetectedRegion] = useState<string>('');
 
   useEffect(() => {
     supabase.from('regions').select('id, name').then(({data}) => {
@@ -220,9 +221,12 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                     onChange={(lat, lng, placeName) => {
                       handleChange('lat', lat);
                       handleChange('lng', lng);
-                      if (placeName && regions.length > 0) {
-                        const matched = regions.find(r => placeName.toLowerCase().includes(r.name.toLowerCase()));
-                        if (matched) handleChange('region_id', matched.id);
+                      if (placeName) {
+                        setDetectedRegion(placeName);
+                        if (regions.length > 0) {
+                          const matched = regions.find(r => placeName.toLowerCase().includes(r.name.toLowerCase()));
+                          if (matched) handleChange('region_id', matched.id);
+                        }
                       }
                     }}
                   />
