@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
@@ -9,6 +9,7 @@ import { Icon } from '../../ui/basic/Icon';
 const STEPS = ['Info', 'Teks', 'Sumber', 'Hak', 'Tinjau'];
 
 export interface ContributeFormData {
+  target_story_id?: string;
   title: string;
   type: string;
   region_id: string;
@@ -28,6 +29,8 @@ export interface ContributeFormProps {
 export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCancel }: ContributeFormProps = {}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initData = location.state?.initialData || initialData;
   
   const [step, setStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,13 +38,14 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
 
   // Form State
   const [formData, setFormData] = useState<ContributeFormData>({
-    title: initialData?.title || '',
-    type: initialData?.type || 'legenda',
-    region_id: initialData?.region_id || '',
-    version_label: initialData?.version_label || '',
-    body: initialData?.body || '',
-    sources: initialData?.sources || [{ type: 'buku', citation: '', author: '' }],
-    rights_declared: initialData?.rights_declared || false
+    target_story_id: initData?.target_story_id || undefined,
+    title: initData?.title || '',
+    type: initData?.type || 'legenda',
+    region_id: initData?.region_id || '',
+    version_label: initData?.version_label || '',
+    body: initData?.body || '',
+    sources: initData?.sources || [{ type: 'buku', citation: '', author: '' }],
+    rights_declared: initData?.rights_declared || false
   });
 
   const updateForm = (key: keyof ContributeFormData, value: any) => {
@@ -61,7 +65,7 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
       } else {
         const { data, error: fnError } = await supabase.functions.invoke('submit_contribution', {
           body: {
-            title: formData.title,
+            target_story_id: formData.target_story_id, title: formData.title,
             type: formData.type,
             region_id: formData.region_id || null,
             version_label: formData.version_label,

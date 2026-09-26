@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
-import { Chip } from '../../ui/basic/Chip';
-import { Toast } from '../../ui/basic/Toast';
 
 export function AdminLaporan() {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState('');
 
   const fetchReports = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('reports')
-      .select('*, profiles(full_name)')
-      .eq('status', 'pending')
+      .select('*, profiles(display_name)')
       .order('created_at', { ascending: false });
-    if (data) setReports(data);
+    if (!error && data) {
+      setReports(data);
+    }
     setLoading(false);
   };
 
@@ -24,69 +22,65 @@ export function AdminLaporan() {
     fetchReports();
   }, []);
 
-  const handleAction = async (reportId: string, action: 'ignore' | 'unpublish_version' | 'delete_adaptation', targetType: string, targetId: string) => {
-    try {
-      if (action === 'ignore') {
-        await supabase.from('reports').update({ status: 'ignored' }).eq('id', reportId);
-      } else if (action === 'unpublish_version') {
-        if (targetType === 'version') {
-          await supabase.from('story_versions').update({ status: 'draft' }).eq('id', targetId);
-        }
-        await supabase.from('reports').update({ status: 'resolved' }).eq('id', reportId);
-      } else if (action === 'delete_adaptation') {
-        if (targetType === 'adaptation') {
-          await supabase.from('adaptations').delete().eq('id', targetId);
-        }
-        await supabase.from('reports').update({ status: 'resolved' }).eq('id', reportId);
-      }
-      setToastMessage('Tindakan berhasil diterapkan');
-      fetchReports();
-    } catch (e: any) {
-      setToastMessage(e.message || 'Terjadi kesalahan');
-    }
+  const resolveReport = async (id: string) => {
+    await supabase.from('reports').update({ status: 'resolved' }).eq('id', id);
+    fetchReports();
   };
 
-  if (loading) return <div className="p-4 font-nunito">Memuat laporan...</div>;
-
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-2xl font-fredoka font-bold text-text-main">Laporan Konten</h2>
-      {reports.length === 0 ? (
-        <div className="p-8 text-center text-stone-500 bg-white rounded-xl border border-border-light">
-          Tidak ada laporan tertunda.
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {reports.map(report => (
-            <div key={report.id} className="bg-white border border-border-light rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Chip type={report.target_type === 'adaptation' ? 'region' : 'legenda'} label={report.target_type.toUpperCase()} className="h-6 px-2 text-xs" />
-                  <span className="text-xs text-stone-500 font-mono">{report.target_id}</span>
-                </div>
-                <p className="text-text-main font-semibold">"{report.reason}"</p>
-                <p className="text-xs text-text-light">Dilaporkan oleh: {report.profiles?.full_name || 'Pengguna'} pada {new Date(report.created_at).toLocaleString('id-ID')}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                <Button variant="secondary" onClick={() => handleAction(report.id, 'ignore', report.target_type, report.target_id)}>
-                  Abaikan
-                </Button>
-                {report.target_type === 'version' && (
-                  <Button variant="secondary" className="!text-status-error !border-status-error/30 hover:!bg-status-error/10" onClick={() => handleAction(report.id, 'unpublish_version', report.target_type, report.target_id)}>
-                    Unpublish Versi
-                  </Button>
-                )}
-                {report.target_type === 'adaptation' && (
-                  <Button variant="secondary" className="!text-status-error !border-status-error/30 hover:!bg-status-error/10" onClick={() => handleAction(report.id, 'delete_adaptation', report.target_type, report.target_id)}>
-                    Hapus Adaptasi
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {toastMessage && <Toast visible={!!toastMessage} message={toastMessage} onClose={() => setToastMessage('')} />}
+    <div className="w-full flex flex-col font-nunito gap-6">
+      <div>
+        <h2 className="text-2xl font-fredoka font-bold text-stone-800">Laporan Pengguna</h2>
+        <p className="text-stone-500 text-sm mt-1">Daftar laporan pelanggaran atau masalah konten dari pengguna.</p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-stone-500">Memuat laporan...</div>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="bg-stone-50 border-b border-stone-200 text-stone-500">
+              <tr>
+                <th className="px-6 py-4 font-bold">Tanggal</th>
+                <th className="px-6 py-4 font-bold">Pelapor</th>
+                <th className="px-6 py-4 font-bold">Target</th>
+                <th className="px-6 py-4 font-bold">Alasan</th>
+                <th className="px-6 py-4 font-bold">Status</th>
+                <th className="px-6 py-4 font-bold text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reports.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-stone-400">Tidak ada laporan.</td></tr>
+              )}
+              {reports.map(r => (
+                <tr key={r.id} className="border-b border-stone-100 hover:bg-stone-50/50">
+                  <td className="px-6 py-4">{new Date(r.created_at).toLocaleDateString('id-ID')}</td>
+                  <td className="px-6 py-4 font-semibold text-stone-700">{r.profiles?.display_name || 'Anonim'}</td>
+                  <td className="px-6 py-4">
+                    <div className="text-xs font-mono bg-stone-100 text-stone-600 px-2 py-1 rounded inline-block truncate max-w-[120px]">
+                      {r.target_type}: {r.target_id}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 max-w-[200px] truncate" title={r.reason}>{r.reason}</td>
+                  <td className="px-6 py-4">
+                    {r.status === 'pending' ? (
+                      <span className="text-orange-500 font-bold text-xs uppercase tracking-wider bg-orange-50 px-2 py-1 rounded-full">Pending</span>
+                    ) : (
+                      <span className="text-teal font-bold text-xs uppercase tracking-wider bg-teal/10 px-2 py-1 rounded-full">Resolved</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    {r.status === 'pending' && (
+                      <Button variant="ghost" size="sm" onClick={() => resolveReport(r.id)} className="text-teal hover:bg-teal/5">Resolve</Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
