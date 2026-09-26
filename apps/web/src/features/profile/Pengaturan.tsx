@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
-import { SidebarLayout, SidebarItem } from '../../ui/layout/SidebarLayout';
+import { SidebarLayout } from '../../ui/layout/SidebarLayout';
+import type { SidebarItem } from '../../ui/layout/SidebarLayout';
 import { Preferensi } from './Preferensi';
 
 export function Pengaturan() {
@@ -27,7 +28,7 @@ export function Pengaturan() {
   const menu: SidebarItem[] = [
     { id: 'preferensi', label: 'Preferensi', icon: 'Settings', onClick: () => navigate('#preferensi') },
     { id: 'logout', label: 'Logout', icon: 'LogOut', onClick: handleLogout },
-    { id: 'hapus-akun', label: 'Hapus akun', icon: 'Trash2', isDanger: true, onClick: () => navigate('#hapus-akun') },
+    { id: 'hapus-akun', label: 'Hapus akun', icon: 'Trash', isDanger: true, onClick: () => navigate('#hapus-akun') },
   ];
 
   return (

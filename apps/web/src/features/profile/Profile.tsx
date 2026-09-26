@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
-import { SidebarLayout, SidebarItem } from '../../ui/layout/SidebarLayout';
+import { SidebarLayout } from '../../ui/layout/SidebarLayout';
+import type { SidebarItem } from '../../ui/layout/SidebarLayout';
 
 import { Identitas } from './Identitas';
 import { Poin } from './Poin';
@@ -33,10 +34,10 @@ export function Profile() {
   const menu: SidebarItem[] = [
     { id: 'identitas', label: 'Identitas', icon: 'User', onClick: () => navigate('#identitas') },
     { id: 'poin', label: 'Poin', icon: 'Award', onClick: () => navigate('#poin') },
-    { id: 'lanjutkan', label: 'Lanjutkan', icon: 'PlayCircle', onClick: () => navigate('#lanjutkan') },
+    { id: 'lanjutkan', label: 'Lanjutkan', icon: 'Play', onClick: () => navigate('#lanjutkan') },
     { id: 'tersimpan', label: 'Tersimpan', icon: 'Bookmark', onClick: () => navigate('#tersimpan') },
-    { id: 'riwayat', label: 'Riwayat', icon: 'CheckCircle', onClick: () => navigate('#riwayat') },
-    { id: 'kontribusiku', label: 'Kontribusiku', icon: 'PenTool', onClick: () => navigate('#kontribusiku') },
+    { id: 'riwayat', label: 'Riwayat', icon: 'Check', onClick: () => navigate('#riwayat') },
+    { id: 'kontribusiku', label: 'Kontribusiku', icon: 'Pen', onClick: () => navigate('#kontribusiku') },
     { id: 'logout', label: 'Logout', icon: 'LogOut', isDanger: true, onClick: handleLogout },
   ];
 

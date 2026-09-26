@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 import { Icon } from '../basic/Icon';
 import { icons } from 'lucide-react';
