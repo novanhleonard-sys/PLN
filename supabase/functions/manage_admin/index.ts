@@ -45,6 +45,7 @@ serve(async (req) => {
       }
 
       await supabase.from('profiles').update({ role: 'admin' }).eq('id', targetUser.id);
+      await supabase.from('admin_audit_logs').insert({ actor_id: user.id, target_id: targetUser.id, action: 'add_admin' });
       return new Response(JSON.stringify({ success: true, message: "Berhasil menambahkan admin" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
@@ -60,6 +61,7 @@ serve(async (req) => {
       }
       
       await supabase.from('profiles').update({ role: 'user' }).eq('id', profileId);
+      await supabase.from('admin_audit_logs').insert({ actor_id: user.id, target_id: profileId, action: 'remove_admin' });
       return new Response(JSON.stringify({ success: true, message: "Berhasil mencabut admin" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
