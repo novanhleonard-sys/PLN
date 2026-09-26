@@ -1,19 +1,22 @@
 import { useEffect } from 'react';
-import { useNavigate, Routes, Route, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
-import { Button } from '../../ui/basic/Button';
-import { SegmentedControl } from '../../ui/basic/SegmentedControl';
-import { AvatarButton } from '../../ui/basic/Misc';
+import { SidebarLayout, SidebarItem } from '../../ui/layout/SidebarLayout';
 
-import { RiwayatBaca } from './RiwayatBaca';
+import { Identitas } from './Identitas';
+import { Poin } from './Poin';
+import { Lanjutkan } from './Lanjutkan';
 import { Tersimpan } from './Tersimpan';
-import { Preferensi } from './Preferensi';
+import { Riwayat } from './Riwayat';
+import { Kontribusiku } from './Kontribusiku';
 
 export function Profile() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const hash = location.hash.replace('#', '') || 'identitas';
+  
   useEffect(() => {
     if (!user) {
       navigate('/masuk', { replace: true });
@@ -27,58 +30,31 @@ export function Profile() {
     navigate('/');
   };
 
-  const displayName = user.user_metadata?.full_name || user.email || 'Pengguna';
-
-  const tabs = [
-    { label: 'Riwayat', path: '/profil/riwayat' },
-    { label: 'Tersimpan', path: '/profil/tersimpan' },
-    { label: 'Kontribusi saya', path: '/kontribusi/saya' },
-    { label: 'Preferensi', path: '/profil/preferensi' },
+  const menu: SidebarItem[] = [
+    { id: 'identitas', label: 'Identitas', icon: 'User', onClick: () => navigate('#identitas') },
+    { id: 'poin', label: 'Poin', icon: 'Award', onClick: () => navigate('#poin') },
+    { id: 'lanjutkan', label: 'Lanjutkan', icon: 'PlayCircle', onClick: () => navigate('#lanjutkan') },
+    { id: 'tersimpan', label: 'Tersimpan', icon: 'Bookmark', onClick: () => navigate('#tersimpan') },
+    { id: 'riwayat', label: 'Riwayat', icon: 'CheckCircle', onClick: () => navigate('#riwayat') },
+    { id: 'kontribusiku', label: 'Kontribusiku', icon: 'PenTool', onClick: () => navigate('#kontribusiku') },
+    { id: 'logout', label: 'Logout', icon: 'LogOut', isDanger: true, onClick: handleLogout },
   ];
 
+  const renderContent = () => {
+    switch (hash) {
+      case 'identitas': return <Identitas />;
+      case 'poin': return <Poin />;
+      case 'lanjutkan': return <Lanjutkan />;
+      case 'tersimpan': return <Tersimpan />;
+      case 'riwayat': return <Riwayat />;
+      case 'kontribusiku': return <Kontribusiku />;
+      default: return <Identitas />;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-cream flex flex-col items-center">
-      <div className="w-full max-w-4xl p-4 md:p-8 flex flex-col gap-8">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <AvatarButton initials={displayName.charAt(0).toUpperCase()} className="w-16 h-16 text-2xl pointer-events-none" />
-            <div>
-              <h1 className="text-2xl font-fredoka font-medium text-text-main">{displayName}</h1>
-              <p className="text-sm font-nunito text-text-muted">{user.email}</p>
-            </div>
-          </div>
-          <Button variant="secondary" onClick={handleLogout} leftIcon="LogOut">
-            Keluar
-          </Button>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex justify-center border-b border-border-light pb-4 overflow-x-auto">
-          <SegmentedControl 
-            options={tabs.map(t => t.label)} 
-            value={tabs.find(t => location.pathname.startsWith(t.path) || (location.pathname === '/profil' && t.path === '/profil/riwayat'))?.label || tabs[0].label} 
-            onChange={(val) => { const path = tabs.find(t => t.label === val)?.path; if (path) navigate(path); }} 
-          />
-        </div>
-
-        {/* Content */}
-        <div className="py-4">
-          <Routes>
-            <Route path="/" element={<RiwayatBaca />} />
-            <Route path="/riwayat" element={<RiwayatBaca />} />
-            <Route path="/tersimpan" element={<Tersimpan />} />
-            <Route path="/preferensi" element={<Preferensi />} />
-          </Routes>
-        </div>
-
-      </div>
-    </div>
+    <SidebarLayout title="Profil" items={menu} activeId={hash}>
+      {renderContent()}
+    </SidebarLayout>
   );
 }
-
-
-
-
-

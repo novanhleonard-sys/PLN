@@ -31,10 +31,7 @@ export const UserMenu = () => {
           <Link to="/profil" className="px-4 py-3 text-stone-700 hover:bg-stone-50 hover:text-teal font-bold transition-colors">
             Profil
           </Link>
-          <Link to="/kontribusi" className="px-4 py-3 text-stone-700 hover:bg-stone-50 hover:text-teal font-bold transition-colors border-t border-stone-100">
-            Kontribusi
-          </Link>
-          <Link to="/profil/preferensi" className="px-4 py-3 text-stone-700 hover:bg-stone-50 hover:text-teal font-bold transition-colors border-t border-stone-100">
+          <Link to="/pengaturan" className="px-4 py-3 text-stone-700 hover:bg-stone-50 hover:text-teal font-bold transition-colors border-t border-stone-100">
             Pengaturan
           </Link>
         </div>

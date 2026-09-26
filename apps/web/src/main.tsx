@@ -26,6 +26,7 @@ const AdminPengaturan = lazy(() => import('./features/admin/AdminPengaturan').th
 const AdminLaporan = lazy(() => import('./features/admin/AdminLaporan').then(m => ({ default: m.AdminLaporan })))
 const AdminDashboard = lazy(() => import('./features/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
+const Pengaturan = lazy(() => import('./features/profile/Pengaturan.tsx').then(m => ({ default: m.Pengaturan })))
 const ContributeForm = lazy(() => import('./features/contribute/ContributeForm').then(m => ({ default: m.ContributeForm })))
 const MyContributions = lazy(() => import('./features/contribute/MyContributions').then(m => ({ default: m.MyContributions })))
 const ContributionStatusDetail = lazy(() => import('./features/contribute/ContributionStatusDetail').then(m => ({ default: m.ContributionStatusDetail })))
@@ -47,6 +48,7 @@ const AppContent = () => {
         <Route path="/baca/:versionId" element={<Baca />} />
         <Route path="/masuk" element={<Login />} />
         <Route path="/profil/*" element={<Profile />} />
+        <Route path="/pengaturan/*" element={<Pengaturan />} />
         <Route path="/styleguide" element={<Styleguide />} />
         
         <Route path="/kontribusi" element={<RequireAuth><ContributeForm /></RequireAuth>} />
