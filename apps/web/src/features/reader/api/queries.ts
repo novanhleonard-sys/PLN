@@ -34,7 +34,7 @@ export const usePages = (adaptationId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('pages')
-        .select('*, scene:scenes(*)')
+        .select('*, scene:scenes(*), page_audio(*)')
         .eq('adaptation_id', adaptationId)
         .order('idx', { ascending: true });
         

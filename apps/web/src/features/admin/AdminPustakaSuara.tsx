@@ -21,7 +21,9 @@ export function AdminPustakaSuara() {
     source: '',
     license: '',
     region: '',
-    mood: ''
+    mood: '',
+    story_type: '',
+    region_group: ''
   };
 
   const [form, setForm] = useState(defaultForm);
@@ -55,6 +57,8 @@ export function AdminPustakaSuara() {
         license: form.license,
         region: form.region || null,
         mood: form.mood || null,
+        story_type: form.story_type || null,
+        region_group: form.region_group || null,
       };
 
       if (form.id) {
@@ -109,16 +113,44 @@ export function AdminPustakaSuara() {
             onChange={e => setForm({...form, name: e.target.value})} 
           />
 
+          <div className="grid grid-cols-2 gap-4 md:col-span-2">
+            <select 
+              className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" 
+              value={form.story_type} 
+              onChange={e => setForm({...form, story_type: e.target.value})}
+            >
+              <option value="">Semua Jenis Cerita</option>
+              <option value="legenda">Legenda</option>
+              <option value="mite">Mite</option>
+              <option value="fabel">Fabel</option>
+              <option value="dongeng">Dongeng</option>
+            </select>
+            <select 
+              className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" 
+              value={form.region_group || ''} 
+              onChange={e => setForm({...form, region_group: e.target.value})}
+            >
+              <option value="">Daerah: Global</option>
+              <option value="jawa">Jawa</option>
+              <option value="sumatra">Sumatra</option>
+              <option value="kalimantan">Kalimantan</option>
+              <option value="sulawesi">Sulawesi</option>
+              <option value="papua">Papua</option>
+              <option value="nusa_bali">Nusa Tenggara & Bali</option>
+              <option value="maluku">Maluku</option>
+            </select>
+          </div>
+          
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <input 
               className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark font-mono" 
-              placeholder="Wilayah (contoh: jawa, kalimantan)" 
+              placeholder="Tag Spesifik Wilayah (opsional)" 
               value={form.region} 
               onChange={e => setForm({...form, region: e.target.value})} 
             />
             <input 
               className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark font-mono" 
-              placeholder="Suasana/Mood (contoh: mistis, damai)" 
+              placeholder="Suasana/Mood (opsional)" 
               value={form.mood} 
               onChange={e => setForm({...form, mood: e.target.value})} 
             />
@@ -209,7 +241,9 @@ export function AdminPustakaSuara() {
                 </span>
               </div>
               <div className="flex flex-wrap gap-1 mb-2">
-                {item.region && <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">{item.region}</span>}
+                {item.story_type && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded uppercase">{item.story_type}</span>}
+                {item.region_group && <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">{item.region_group}</span>}
+                {item.region && <span className="text-[10px] bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded uppercase">{item.region}</span>}
                 {item.mood && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded uppercase">{item.mood}</span>}
               </div>
               {item.source && <p className="text-xs text-stone-500 line-clamp-1 mt-1 flex items-center gap-1"><Icon name="Link" size={10} /> {item.source}</p>}

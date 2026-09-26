@@ -1,31 +1,34 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { usePageAudio } from '../api/queries';
 import { Icon } from '../../../ui/basic/Icon';
 import { ProgressBar } from '../../../ui/basic/Misc';
 import { useComputedPrefs, getThemeClasses, getFontSizeClass } from '../store/useReaderStore';
 import { ReaderHeader } from '../baca/ReaderHeader';
 import { cn } from '../../../utils/cn';
+import { supabase } from '../../../lib/supabase';
 
 interface DongengModeProps {
   pages: any[];
   initialPage: number;
   versionTitle: string;
   onBack: () => void;
-    totalAdaptPages: number;
+  totalAdaptPages: number;
   onHitPaywall: () => void;
   versionId: string;
   storyId: string;
   onAdaptationReady: (id: string) => void;
+  
 }
 
 export const DongengMode: React.FC<DongengModeProps> = ({ 
-  pages, initialPage, versionTitle, onBack, totalAdaptPages, onHitPaywall, versionId, storyId, onAdaptationReady
+  pages, initialPage, versionTitle, onBack, totalAdaptPages, onHitPaywall, versionId, storyId, onAdaptationReady, 
 }) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -60,50 +63,66 @@ export const DongengMode: React.FC<DongengModeProps> = ({
     return Math.min(textChunks.length - 1, Math.floor(ratio * textChunks.length));
   }, [currentTime, duration, textChunks]);
 
+  // Handle auto-hiding controls
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      setControlsVisible(false);
+    }, 3000);
+  }, []);
+
   useEffect(() => {
-    if (audioData?.audio_url) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = audioData.audio_url;
-        audioRef.current.playbackRate = prefs.dongengSpeed;
-        audioRef.current.load();
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-      } else {
-        const audio = new Audio(audioData.audio_url);
-        audio.playbackRate = prefs.dongengSpeed;
-        audioRef.current = audio;
-        
-        audio.addEventListener('timeupdate', () => {
-          setCurrentTime(audio.currentTime);
-          setProgress((audio.currentTime / (audio.duration || 1)) * 100);
-        });
-        
-        audio.addEventListener('loadedmetadata', () => {
-          setDuration(audio.duration);
-        });
-        
-        audio.addEventListener('ended', () => {
-          handleNext();
-        });
-        
-        audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    showControls();
+    window.addEventListener('mousemove', showControls);
+    window.addEventListener('touchstart', showControls);
+    return () => {
+      window.removeEventListener('mousemove', showControls);
+      window.removeEventListener('touchstart', showControls);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, [showControls]);
+
+  // Calculate global progress
+  const globalProgressData = useMemo(() => {
+    let totalMs = 0;
+    let currentMs = 0;
+
+    for (let i = 0; i < pages.length; i++) {
+      const p = pages[i];
+      const pDuration = p.page_audio?.[0]?.duration_ms || 15000; // Fallback 15s if missing
+      totalMs += pDuration;
+      if (i < currentPage) {
+        currentMs += pDuration;
+      } else if (i === currentPage) {
+        currentMs += (currentTime * 1000);
       }
+    }
+
+    const totalSec = totalMs / 1000;
+    const currentSec = currentMs / 1000;
+    const progressPercent = totalSec > 0 ? (currentSec / totalSec) * 100 : 0;
+
+    return { totalSec, currentSec, progressPercent };
+  }, [pages, currentPage, currentTime]);
+
+  useEffect(() => {
+    if (audioData?.audio_url && audioRef.current) {
+      const audio = audioRef.current;
+      audio.src = audioData.audio_url;
+      audio.playbackRate = prefs.dongengSpeed;
+      audio.load();
+      audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     } else {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.src = "";
       }
       setIsPlaying(false);
-      setProgress(0);
       setCurrentTime(0);
       setDuration(0);
     }
-    
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-    };
-  }, [audioData, currentPage]);
+  }, [audioData, currentPage]); // Remove audioRef.current from dependencies
 
   useEffect(() => {
     if (audioRef.current) {
@@ -139,7 +158,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
   };
   
   const formatTime = (time: number) => {
-    if (isNaN(time)) return '0:00';
+    if (isNaN(time) || !isFinite(time)) return '0:00';
     const m = Math.floor(time / 60);
     const s = Math.floor(time % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
@@ -147,24 +166,36 @@ export const DongengMode: React.FC<DongengModeProps> = ({
 
   return (
     <div className={cn("flex flex-col h-[100dvh] overflow-hidden relative transition-colors duration-300", themeClasses.bg)}>
-      <div className="absolute top-0 left-0 w-full z-50">
+      
+      {/* Audio Element in DOM for mobile compatibility */}
+      <audio 
+        ref={audioRef}
+        className="hidden"
+        onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onEnded={handleNext}
+      />
+
+      <div className={cn("absolute top-0 left-0 w-full z-50 transition-opacity duration-500", controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none")}>
         <ProgressBar progress={((currentPage + 1) / totalAdaptPages) * 100} />
       </div>
       
-      <ReaderHeader 
-        title={versionTitle}
-        mode="Dongeng"
-        onModeChange={(m: any) => { if (m === 'Baca') onBack(); }}
-        themeClasses={themeClasses}
-        versionId={versionId}
-                storyId={storyId}
-        onAdaptationReady={onAdaptationReady}
-      />
+      <div className={cn("absolute top-0 w-full z-50 transition-opacity duration-500", controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none")}>
+        <ReaderHeader 
+          title={versionTitle}
+          mode="Dongeng"
+          onModeChange={(m: any) => { if (m === 'Baca') onBack(); }}
+          themeClasses={themeClasses}
+          versionId={versionId}
+          storyId={storyId}
+          onAdaptationReady={onAdaptationReady}
+        />
+      </div>
       
-      <main className="flex-1 flex flex-col relative overflow-hidden">
+      <main className="flex-1 flex flex-col relative overflow-hidden" onClick={showControls}>
         {prefs.dongengImageMode === 'dengan' && page.scene?.image_status === 'ready' && page.scene.image_path ? (
           <img 
-            src={page.scene.image_path} 
+            src={supabase.storage.from('images').getPublicUrl(page.scene.image_path).data.publicUrl}
             alt="Ilustrasi"
             className={cn("absolute inset-0 w-full h-full object-cover transition-all duration-500", themeClasses.imageFilter)}
           />
@@ -193,21 +224,24 @@ export const DongengMode: React.FC<DongengModeProps> = ({
         </div>
       </main>
       
-      <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 bg-gradient-to-t from-black to-transparent">
+      <div className={cn("absolute bottom-0 left-0 w-full p-4 md:p-8 bg-gradient-to-t from-black to-transparent z-50 transition-transform duration-500", controlsVisible ? "translate-y-0" : "translate-y-full")}>
         <div className="max-w-xl mx-auto bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-2xl flex flex-col gap-4">
           <div className="flex items-center gap-3">
-             <span className="text-xs font-nunito text-white/70 font-mono w-10 text-right">{formatTime(currentTime)}</span>
+             <span className="text-xs font-nunito text-white/70 font-mono w-10 text-right">{formatTime(globalProgressData.currentSec)}</span>
              <div className="flex-1 h-2 bg-white/20 rounded-full overflow-hidden relative cursor-pointer"
                onClick={(e) => {
                  if (!audioRef.current || !duration) return;
+                 // Since global progress logic is complex (spanning pages), clicking to seek is simplified:
+                 // We will just seek within the CURRENT page proportionally for now.
                  const rect = e.currentTarget.getBoundingClientRect();
                  const pos = (e.clientX - rect.left) / rect.width;
+                 // It's safer to only seek in the current page to prevent jumping pages via a simple click.
                  audioRef.current.currentTime = pos * duration;
                }}
              >
-               <div className="absolute top-0 left-0 h-full bg-teal transition-all duration-100 ease-linear" style={{ width: `${progress}%` }} />
+               <div className="absolute top-0 left-0 h-full bg-teal transition-all duration-100 ease-linear" style={{ width: `${globalProgressData.progressPercent}%` }} />
              </div>
-             <span className="text-xs font-nunito text-white/70 font-mono w-10">{formatTime(duration)}</span>
+             <span className="text-xs font-nunito text-white/70 font-mono w-10">{formatTime(globalProgressData.totalSec)}</span>
           </div>
           
           <div className="flex items-center justify-center gap-6">
