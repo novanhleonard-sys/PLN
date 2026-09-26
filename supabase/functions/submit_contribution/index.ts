@@ -60,10 +60,16 @@ serve(async (req) => {
       // Wait, my setup_users script used `email_confirm: true`, so they are confirmed!
     }
 
-    const payload = await req.json();
+        const payload = await req.json();
+    
+    // Clean up empty strings for UUIDs
+    if (payload.region_id === '') payload.region_id = null;
+    if (payload.target_story_id === '') payload.target_story_id = null;
+    
     const result = contributionSchema.safeParse(payload);
     
     if (!result.success) {
+      console.error('Validation error:', JSON.stringify(result.error.errors, null, 2));
       return new Response(JSON.stringify({ error: 'Invalid payload', details: result.error.errors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
