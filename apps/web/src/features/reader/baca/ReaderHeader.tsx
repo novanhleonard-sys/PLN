@@ -10,14 +10,13 @@ interface ReaderHeaderProps {
   mode: 'Baca' | 'Dongeng';
   onModeChange: (mode: 'Baca' | 'Dongeng') => void;
   themeClasses: { navBg: string; border: string; textMain: string };
-  // Context for Menu
-    versionId: string;
-  adaptationId: string;
-  onAdaptationReady: (id: string) => void;
+  versionId: string;
+  storyId: string;
+    onAdaptationReady: (id: string) => void;
 }
 
 export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
-  title, mode, onModeChange, themeClasses, versionId, adaptationId, onAdaptationReady
+  title, mode, onModeChange, themeClasses, versionId, storyId, onAdaptationReady
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -70,9 +69,10 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
             mode={mode}
-            buttonRef={buttonRef}
-                        versionId={versionId}
-            adaptationId={adaptationId}
+            
+            versionId={versionId}
+            
+            storyId={storyId}
             onAdaptationReady={onAdaptationReady}
           />
         </div>

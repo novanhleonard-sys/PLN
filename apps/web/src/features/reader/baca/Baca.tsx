@@ -3,14 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import { useStoryVersions, usePages, useReadHistory } from '../api/queries';
 import { useAuth } from '../../auth/AuthStore';
 import { supabase } from '../../../lib/supabase';
-import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { GateModal } from '../../auth/GateModal';
 import { ProgressBar } from '../../../ui/basic/Misc';
 import { DongengMode } from '../dongeng/DongengMode';
 import { Button } from '../../../ui/basic/Button';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
 import { useReadSessionTracker } from '../../analytics/useReadSessionTracker';
-import { useReaderStore, getThemeClasses } from '../store/useReaderStore';
+import { useReaderStore, useComputedPrefs, getThemeClasses, getFontSizeClass } from '../store/useReaderStore';
 import { useAmbientSound } from './useAmbientSound';
 import { ReaderHeader } from './ReaderHeader';
 import { cn } from '../../../utils/cn';
@@ -26,17 +25,19 @@ export const Baca: React.FC = () => {
   const [gateOpen, setGateOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   
-  const isDesktop = useMediaQuery('(min-width: 768px)');
-  
-  // Versions view (if user hits a link that has multiple bands and no history)
-  const [showVersions, setShowVersions] = useState(false);
+    const [showVersions, setShowVersions] = useState(false);
 
-  // Store 
-  const { theme, fontSize } = useReaderStore();
-  const themeClasses = getThemeClasses(theme);
+  const { setActiveStoryId } = useReaderStore();
 
-  // Ambient sound hook
-  useAmbientSound(mode);
+  useEffect(() => {
+    setActiveStoryId(versionData?.version?.story_id || null);
+  }, [versionData?.version?.story_id, setActiveStoryId]);
+
+  const prefs = useComputedPrefs();
+  const themeClasses = getThemeClasses(prefs.theme);
+  const fontClass = getFontSizeClass(prefs.fontSizeBaca);
+
+  useAmbientSound(mode, versionData?.version?.story_id);
 
   useEffect(() => {
     if (versionData?.adaptations && !selectedAdaptation) {
@@ -57,10 +58,8 @@ export const Baca: React.FC = () => {
   const isCompleted = pages && pages.length > 0 && currentPage >= pages.length - 1;
   useReadSessionTracker(versionData?.version?.story_id, versionId, selectedAdaptation || undefined, mode, isCompleted);
 
-  // Read History Debounce Upsert
   useEffect(() => {
     if (!user || !selectedAdaptation || !pages || pages.length === 0) return;
-    
     const pageId = pages[currentPage]?.id;
     if (!pageId) return;
     
@@ -144,10 +143,6 @@ export const Baca: React.FC = () => {
     setMode(newMode);
   };
 
-  const fontSizeClass = fontSize === 'small' ? (isDesktop ? 'text-[18px]' : 'text-[16px]') :
-                        fontSize === 'large' ? (isDesktop ? 'text-[24px]' : 'text-[22px]') :
-                        (isDesktop ? 'text-[20px]' : 'text-[18px]');
-
   if (mode === 'Dongeng') {
     return (
       <DongengMode 
@@ -155,10 +150,10 @@ export const Baca: React.FC = () => {
         initialPage={currentPage} 
         versionTitle={versionData.version.story.title} 
         onBack={() => setMode('Baca')} 
-        adaptation={currentAdapt} 
-        totalAdaptPages={totalAdaptPages} 
+                totalAdaptPages={totalAdaptPages} 
         onHitPaywall={() => setGateOpen(true)} 
-                versionId={versionId!}
+        versionId={versionId!}
+        storyId={versionData.version.story_id}
         onAdaptationReady={setSelectedAdaptation}
       />
     );
@@ -166,7 +161,6 @@ export const Baca: React.FC = () => {
   
   return (
     <div className={cn("flex flex-col h-[100dvh] overflow-hidden relative transition-colors duration-300", themeClasses.bg)}>
-      {/* Progress bar */}
       <div className="absolute top-0 left-0 w-full z-50">
         <ProgressBar progress={((currentPage + 1) / totalAdaptPages) * 100} />
       </div>
@@ -176,9 +170,8 @@ export const Baca: React.FC = () => {
         mode={mode}
         onModeChange={handleModeChange}
         themeClasses={themeClasses}
-        
         versionId={versionId!}
-        adaptationId={selectedAdaptation || ''}
+                storyId={versionData.version.story_id}
         onAdaptationReady={(id) => { setSelectedAdaptation(id); setCurrentPage(0); }}
       />
       
@@ -193,7 +186,6 @@ export const Baca: React.FC = () => {
       )}
       
       <main className="flex-1 flex flex-col sm:max-[768px]:flex-col md:max-h-[calc(100vh-4rem)] min-[768px]:portrait:flex-col min-[768px]:landscape:flex-row overflow-hidden relative">
-        {/* Visual / Image Area */}
         <div className="flex-1 relative flex items-center justify-center bg-black/5 min-h-[30vh]">
           {page.scene?.image_status === 'ready' && page.scene.image_path ? (
             <img 
@@ -213,15 +205,13 @@ export const Baca: React.FC = () => {
           </div>
         </div>
         
-        {/* Text Area */}
         <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300", themeClasses.surface)}>
           <div className="flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative">
-            <p className={cn("font-nunito leading-relaxed max-w-2xl mx-auto w-full transition-all duration-300", fontSizeClass, themeClasses.textMain)}>
+            <p className={cn("font-nunito max-w-2xl mx-auto w-full transition-all duration-300", fontClass, themeClasses.textMain)}>
               {page.text}
             </p>
           </div>
           
-          {/* Controls */}
           <div className={cn("flex-none p-4 flex items-center justify-between border-t transition-colors duration-300", themeClasses.navBg, themeClasses.border)}>
             <Button variant="secondary" className="!bg-black/5 !border-transparent hover:!bg-black/10 text-inherit" disabled={currentPage === 0} onClick={() => setCurrentPage((p: number) => Math.max(0, p - 1))}>Sebelumnya</Button>
             <div className={cn("font-nunito text-sm font-bold", themeClasses.textMuted)}>

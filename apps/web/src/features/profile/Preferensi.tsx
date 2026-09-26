@@ -10,7 +10,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mapStyle, setMapStyle] = useState('kartun');
-  const { fontSize, setFontSize, dongengSpeed, setDongengSpeed } = useReaderStore();
+  const { globalPrefs, updateGlobal } = useReaderStore();
   const [loadingMap, setLoadingMap] = useState(false);
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -118,7 +118,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Ukuran Teks</div>
                 <div className="text-sm text-stone-500">Sesuaikan besarnya teks saat membaca cerita</div>
               </div>
-              <select value={fontSize} onChange={(e) => setFontSize(e.target.value as any)} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.fontSizeBaca} onChange={(e) => updateGlobal({ fontSizeBaca: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value="small">Kecil</option>
                 <option value="normal">Sedang</option>
                 <option value="large">Besar</option>
@@ -130,7 +130,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Kecepatan Narasi</div>
                 <div className="text-sm text-stone-500">Atur kecepatan pembacaan audio dongeng</div>
               </div>
-              <select value={dongengSpeed} onChange={(e) => setDongengSpeed(Number(e.target.value))} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.dongengSpeed} onChange={(e) => updateGlobal({ dongengSpeed: Number(e.target.value) })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value={0.75}>0.75x</option>
                 <option value={1}>1x (Normal)</option>
                 <option value={1.25}>1.25x</option>

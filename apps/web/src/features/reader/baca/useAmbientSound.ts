@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { useReaderStore } from '../store/useReaderStore';
+import { useComputedPrefs } from '../store/useReaderStore';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 
 // Helper hook to manage ambient sound playing
 export const useAmbientSound = (mode: 'Baca' | 'Dongeng', storyType?: string, currentTags?: string[]) => {
-  const { backgroundAudio } = useReaderStore();
+  const prefs = useComputedPrefs();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch ambient sounds and rules
@@ -26,7 +26,7 @@ export const useAmbientSound = (mode: 'Baca' | 'Dongeng', storyType?: string, cu
   });
 
   useEffect(() => {
-    if (mode === 'Dongeng' || backgroundAudio === 'mati' || !sounds || !rules) {
+    if (mode === 'Dongeng' || !prefs.bgAudioOn || !sounds || !rules) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -38,7 +38,7 @@ export const useAmbientSound = (mode: 'Baca' | 'Dongeng', storyType?: string, cu
     let targetVolume = 1.0;
     let targetLoop = true;
 
-    if (backgroundAudio === 'otomatis') {
+    if (!prefs.bgAudioSoundId) {
       // Find matching rule
       const matchingRule = rules.find((r: any) => {
         if (r.story_type && r.story_type === storyType) return true;
@@ -61,9 +61,9 @@ export const useAmbientSound = (mode: 'Baca' | 'Dongeng', storyType?: string, cu
         targetVolume = sounds[0].volume;
         targetLoop = sounds[0].is_looping;
       }
-    } else if (backgroundAudio !== 'pilih') {
+    } else if (true) {
       // It's a specific sound ID
-      const sound = sounds.find((s: any) => s.id === backgroundAudio);
+      const sound = sounds.find((s: any) => s.id === prefs.bgAudioSoundId);
       if (sound) {
         targetSoundUrl = sound.audio_url;
         targetVolume = sound.volume;
@@ -94,7 +94,7 @@ export const useAmbientSound = (mode: 'Baca' | 'Dongeng', storyType?: string, cu
     return () => {
       // cleanup on unmount
     };
-  }, [mode, backgroundAudio, sounds, rules, storyType, currentTags]);
+  }, [mode, prefs.bgAudioOn, prefs.bgAudioSoundId, sounds, rules, storyType, currentTags]);
   
   // Cleanup on global unmount
   useEffect(() => {

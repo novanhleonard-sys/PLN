@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
-import { Icon } from '../../ui/basic/Icon';
+
 
 export const AdminPustakaSuara: React.FC = () => {
   const [sounds, setSounds] = useState<any[]>([]);
-  const [, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentSound, setCurrentSound] = useState<any>({});
 
   const fetchSounds = async () => {
     setLoading(true);
@@ -18,6 +21,115 @@ export const AdminPustakaSuara: React.FC = () => {
     fetchSounds();
   }, []);
 
+  const handleSave = async () => {
+    setLoading(true);
+    if (currentSound.id) {
+      await supabase.from('ambient_sounds').update(currentSound).eq('id', currentSound.id);
+    } else {
+      await supabase.from('ambient_sounds').insert([currentSound]);
+    }
+    await fetchSounds();
+    setIsEditing(false);
+    setLoading(false);
+  };
+
+  const handleEdit = (sound: any) => {
+    setCurrentSound(sound);
+    setIsEditing(true);
+  };
+
+  const handleNew = () => {
+    setCurrentSound({
+      name: '',
+      audio_url: '',
+      volume: 1.0,
+      is_active: true,
+      source: '',
+      license: ''
+    });
+    setIsEditing(true);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="p-6 max-w-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold font-fredoka">{currentSound.id ? 'Edit Suara' : 'Tambah Suara'}</h1>
+          <Button variant="secondary" onClick={() => setIsEditing(false)}>Kembali</Button>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-bold mb-1">Nama Suara</label>
+            <input 
+              type="text" 
+              className="w-full border rounded-lg p-2" 
+              value={currentSound.name || ''} 
+              onChange={e => setCurrentSound({...currentSound, name: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1">URL Audio (.mp3/.ogg)</label>
+            <input 
+              type="text" 
+              className="w-full border rounded-lg p-2" 
+              value={currentSound.audio_url || ''} 
+              onChange={e => setCurrentSound({...currentSound, audio_url: e.target.value})} 
+            />
+            {currentSound.audio_url && (
+              <audio controls src={currentSound.audio_url} className="mt-2 h-8 w-full" />
+            )}
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-bold mb-1">Volume (0.1 - 2.0)</label>
+              <input 
+                type="number" 
+                step="0.1" 
+                className="w-full border rounded-lg p-2" 
+                value={currentSound.volume || 1} 
+                onChange={e => setCurrentSound({...currentSound, volume: Number(e.target.value)})} 
+              />
+            </div>
+            <div className="flex items-end mb-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={currentSound.is_active || false} 
+                  onChange={e => setCurrentSound({...currentSound, is_active: e.target.checked})} 
+                />
+                <span className="font-bold">Aktif</span>
+              </label>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1">Sumber</label>
+            <input 
+              type="text" 
+              className="w-full border rounded-lg p-2" 
+              value={currentSound.source || ''} 
+              onChange={e => setCurrentSound({...currentSound, source: e.target.value})} 
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1">Lisensi</label>
+            <input 
+              type="text" 
+              className="w-full border rounded-lg p-2" 
+              value={currentSound.license || ''} 
+              onChange={e => setCurrentSound({...currentSound, license: e.target.value})} 
+            />
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button variant="primary" onClick={handleSave} disabled={loading}>
+              {loading ? 'Menyimpan...' : 'Simpan Suara'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -25,7 +137,7 @@ export const AdminPustakaSuara: React.FC = () => {
           <h1 className="text-2xl font-bold font-fredoka">Pustaka Suara</h1>
           <p className="text-stone-500">Kelola suara latar untuk Mode Baca.</p>
         </div>
-        <Button variant="primary">Tambah Suara</Button>
+        <Button variant="primary" onClick={handleNew}>Tambah Suara</Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
@@ -58,11 +170,12 @@ export const AdminPustakaSuara: React.FC = () => {
                   <td className="p-4">
                     <audio controls src={sound.audio_url} className="h-8 w-40" />
                   </td>
-                  <td className="p-4 text-sm text-stone-500">{sound.source || '-'}</td>
+                  <td className="p-4 text-sm text-stone-500">
+                    {sound.source} <br/>
+                    <span className="text-xs">{sound.license}</span>
+                  </td>
                   <td className="p-4 text-right">
-                    <Button variant="secondary" size="sm" className="!p-2">
-                      <Icon name="Settings2" size={16} />
-                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => handleEdit(sound)}>Edit</Button>
                   </td>
                 </tr>
               ))
