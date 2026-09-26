@@ -17,6 +17,7 @@ export interface StoryPin {
   versionId?: string;
   versionCount: number;
   dongengReady: boolean;
+  duration: number;
 }
 
 export function useStories() {
@@ -27,7 +28,7 @@ export function useStories() {
         .from('stories')
         .select(`
           id, title, type, lat, lng,
-          tier, status, regions(name), story_versions(id, status, asset_status)
+          tier, status, regions(name), story_versions(id, status, asset_status, body)
         `);
       if (error) throw error;
       
@@ -38,6 +39,10 @@ export function useStories() {
         const publishedVersion = story.story_versions?.find((v: any) => v.status === 'published');
         if (!publishedVersion) continue;
         
+        // Asumsi kecepatan baca rata-rata 200 kata per menit
+        const wordCount = publishedVersion.body?.split(/\s+/).length || 0;
+        const duration = Math.max(1, Math.ceil(wordCount / 200));
+
         pins.push({
           id: story.id,
           slug: story.id, // using id as slug for now, or we can use title
@@ -51,13 +56,11 @@ export function useStories() {
           region: Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name,
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
-          dongengReady: publishedVersion.asset_status === 'ready'
+          dongengReady: publishedVersion.asset_status === 'ready',
+          duration: duration
         });
       }
       return pins;
     }
   });
 }
-
-
-

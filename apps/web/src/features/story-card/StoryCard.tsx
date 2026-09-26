@@ -55,7 +55,7 @@ function VersionPicker({ story, versions, onBack }: { story: StoryPin; versions:
             </div>
             <div className="flex items-center gap-1 text-xs text-stone-400 shrink-0 mt-0.5">
               <Icon name="Clock" size={13} />
-              <span>10 menit</span>
+              <span>{story.duration} menit</span>
             </div>
           </button>
         ))}
@@ -248,7 +248,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-stone-500 flex items-center gap-2 font-nunito"><Icon name="Clock" size={16} className="text-stone-400" /> Durasi</span>
-              <span className="text-stone-700 font-bold font-nunito">10 menit baca</span>
+              <span className="text-stone-700 font-bold font-nunito">{story.duration} menit baca</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-stone-500 flex items-center gap-2 font-nunito"><Icon name="Headphones" size={16} className="text-stone-400" /> Mode Dongeng</span>
