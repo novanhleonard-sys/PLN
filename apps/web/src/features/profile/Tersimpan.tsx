@@ -51,31 +51,32 @@ export function Tersimpan() {
           <p className="text-stone-500">Belum ada cerita yang disimpan.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {saved.map(item => {
             const story = item.story as any;
             return (
-              <div key={item.id} className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-teal transition-colors" onClick={() => navigate(`/cerita/${story?.id}`)}>
-                <div className="aspect-[4/3] bg-stone-100 flex items-center justify-center relative">
-                   <Button variant="ghost" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeMutation.mutate(story?.id);
-                      }}
-                      className="absolute top-2 right-2 p-2 bg-white/80 hover:bg-white rounded-full text-coral shadow-sm backdrop-blur-sm"
-                   >
-                     <Bookmark size={16} className="fill-current" />
-                   </Button>
-                </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <div className="flex items-center gap-2 mb-2">
+              <div key={item.id} className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-teal transition-colors" onClick={() => navigate(`/cerita/${story?.id}`)}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] font-bold text-coral bg-coral/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
                       {story?.type || 'cerita'}
                     </span>
                   </div>
-                  <h3 className="font-fredoka font-bold text-stone-800 leading-tight line-clamp-2">
+                  <h3 className="font-fredoka font-bold text-stone-800 text-lg truncate">
                     {story?.title}
                   </h3>
+                </div>
+                
+                <div className="shrink-0 ml-4">
+                  <Button variant="ghost" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeMutation.mutate(story?.id);
+                    }}
+                    className="p-2 bg-stone-100 hover:bg-stone-200 rounded-full text-coral shadow-sm"
+                  >
+                    <Bookmark size={20} className="fill-current" />
+                  </Button>
                 </div>
               </div>
             );

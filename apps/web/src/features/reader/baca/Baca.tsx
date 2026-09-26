@@ -43,7 +43,7 @@ export const Baca: React.FC = () => {
     if (versionData?.adaptations && !selectedAdaptation) {
       if (readHistory && readHistory.adaptation_id) {
         setSelectedAdaptation(readHistory.adaptation_id);
-        setCurrentPage(Math.max(0, readHistory.last_page_idx - 1));
+        setCurrentPage(Math.max(0, (readHistory.last_page || 1) - 1));
       } else if (versionData.adaptations.length > 1) {
         setShowVersions(true);
       } else {
@@ -69,9 +69,13 @@ export const Baca: React.FC = () => {
         story_id: versionData!.version.story_id,
         version_id: versionId!,
         adaptation_id: selectedAdaptation,
-        last_page_id: pageId,
-        last_page_idx: currentPage + 1
-      }).then();
+        last_page: currentPage + 1,
+          total_pages: pages.length,
+          mode: mode,
+          last_read_at: new Date().toISOString()
+      }, { onConflict: 'user_id, adaptation_id' }).then((res) => {
+          if (res.error) console.error("Upsert read_history error:", res.error);
+        });
     }, 2000);
     
     return () => clearTimeout(timer);
