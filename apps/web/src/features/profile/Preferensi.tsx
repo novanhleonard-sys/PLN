@@ -27,7 +27,6 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
     loadPref();
   }, [user]);
 
-  // Open modal if tab is hapus-akun
   useEffect(() => {
     if (activeTab === 'hapus-akun') {
       setShowDeleteModal(true);
@@ -53,10 +52,10 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No session');
 
-      const res = await fetch(\\/functions/v1/delete_account\, {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete_account`, {
         method: 'POST',
         headers: {
-          'Authorization': \Bearer \\,
+          'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -88,23 +87,23 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
               <Button variant="ghost" 
                 disabled={loadingMap}
                 onClick={() => updateMapStyle('kartun')}
-                className={\lex flex-col items-center gap-2 p-2 border-2 rounded-2xl transition-all \\}
+                className={`flex flex-col items-center gap-2 p-2 border-2 rounded-2xl transition-all ${mapStyle === 'kartun' ? 'border-teal bg-teal/10' : 'border-stone-200 bg-white hover:border-teal/50'}`}
               >
                 <div className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden flex items-center justify-center">
                   <span className="text-stone-400 font-semibold text-xs uppercase tracking-wider">Thumbnail Kartun</span>
                 </div>
-                <span className={\ont-semibold \\}>Kartun</span>
+                <span className={`font-semibold ${mapStyle === 'kartun' ? 'text-teal' : 'text-stone-700'}`}>Kartun</span>
               </Button>
               
               <Button variant="ghost" 
                 disabled={loadingMap}
                 onClick={() => updateMapStyle('lukisan')}
-                className={\lex flex-col items-center gap-2 p-2 border-2 rounded-2xl transition-all \\}
+                className={`flex flex-col items-center gap-2 p-2 border-2 rounded-2xl transition-all ${mapStyle === 'lukisan' ? 'border-teal bg-teal/10' : 'border-stone-200 bg-white hover:border-teal/50'}`}
               >
                 <div className="w-full aspect-video bg-stone-100 rounded-xl overflow-hidden flex items-center justify-center">
                    <span className="text-stone-400 font-semibold text-xs uppercase tracking-wider">Thumbnail Lukisan</span>
                 </div>
-                <span className={\ont-semibold \\}>Lukisan</span>
+                <span className={`font-semibold ${mapStyle === 'lukisan' ? 'text-teal' : 'text-stone-700'}`}>Lukisan</span>
               </Button>
             </div>
           </section>

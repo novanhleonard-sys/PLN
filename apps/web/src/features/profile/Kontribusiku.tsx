@@ -47,7 +47,7 @@ export function Kontribusiku() {
             </Link>
           </div>
           {submissions.map(sub => (
-            <Link key={sub.id} to={\/kontribusi/\\} className="block">
+            <Link key={sub.id} to={`/kontribusi/${sub.id}`} className="block">
               <Card className="p-4 hover:border-teal transition-colors shadow-sm">
                 <div className="flex justify-between items-start mb-2">
                   <div>

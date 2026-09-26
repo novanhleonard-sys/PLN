@@ -58,7 +58,7 @@ export function Riwayat() {
               </div>
               
               <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                <Button variant="secondary" onClick={() => navigate(\/baca/\\)} className="w-full sm:w-auto">
+                <Button variant="secondary" onClick={() => navigate(`/baca/${item.version_id}`)} className="w-full sm:w-auto">
                   Baca Lagi
                 </Button>
               </div>

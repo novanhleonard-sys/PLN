@@ -57,14 +57,14 @@ export function Lanjutkan() {
                   </h3>
                   <div className="flex items-center gap-3 mt-3">
                     <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-teal" style={{ width: \\%\ }} />
+                      <div className="h-full bg-teal" style={{ width: `${progress}%` }} />
                     </div>
                     <span className="text-xs font-bold text-teal min-w-[40px]">{progress}%</span>
                   </div>
                 </div>
                 
                 <div className="shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                  <Button onClick={() => navigate(\/baca/\\)} className="w-full sm:w-auto">
+                  <Button onClick={() => navigate(`/baca/${item.version_id}`)} className="w-full sm:w-auto">
                     Lanjutkan
                   </Button>
                 </div>

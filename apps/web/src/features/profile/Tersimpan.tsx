@@ -55,7 +55,7 @@ export function Tersimpan() {
           {saved.map(item => {
             const story = item.story as any;
             return (
-              <div key={item.id} className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-teal transition-colors" onClick={() => navigate(\/cerita/\\)}>
+              <div key={item.id} className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-teal transition-colors" onClick={() => navigate(`/cerita/${story?.id}`)}>
                 <div className="aspect-[4/3] bg-stone-100 flex items-center justify-center relative">
                    <Button variant="ghost" 
                       onClick={(e) => {
