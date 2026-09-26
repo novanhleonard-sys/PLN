@@ -95,20 +95,20 @@ export function AdminGayaAI() {
 
       <div ref={formRef} className="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm">
         {tab === 'styles' ? (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="flex flex-col gap-4">
             <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-2">{styleForm.id ? 'Edit Gaya' : 'Buat Gaya'}</h3>
             <input className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama (Misal: Wayang)" value={styleForm.name} onChange={e => setStyleForm({...styleForm, name: e.target.value})} />
-            <div className="grid grid-cols-2 gap-4">
-              <select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.story_type} onChange={e => setStyleForm({...styleForm, story_type: e.target.value})}>
+            <div className="flex gap-4">
+              <select className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.story_type} onChange={e => setStyleForm({...styleForm, story_type: e.target.value})}>
                 <option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option>
               </select>
-              <select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.region_group || ''} onChange={e => setStyleForm({...styleForm, region_group: e.target.value})}>
+              <select className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.region_group || ''} onChange={e => setStyleForm({...styleForm, region_group: e.target.value})}>
                 <option value="">Daerah: Global</option><option value="jawa">Jawa</option><option value="sumatra">Sumatra</option><option value="kalimantan">Kalimantan</option><option value="sulawesi">Sulawesi</option><option value="papua">Papua</option><option value="nusa_bali">Nusa Tenggara & Bali</option><option value="maluku">Maluku</option>
               </select>
             </div>
             <textarea className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[80px]" placeholder="Prompt (Cat minyak, surealis...)" value={styleForm.descriptor} onChange={e => setStyleForm({...styleForm, descriptor: e.target.value})} />
             
-            <div className="md:col-span-2 flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
+            <div className="flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
               <div className="flex justify-between items-center"><span className="text-sm font-bold text-stone-700">Gambar Referensi (Multiple)</span><div className="w-32"><FileUploader bucket="admin-assets" folder="styles" accept="image/*" multiple label="Unggah" onUploadSuccess={p => setStyleForm(s => ({...s, reference_paths: [...s.reference_paths, ...p]}))} /></div></div>
               <div className="flex gap-2 overflow-x-auto">
                 {styleForm.reference_paths.map((p, i) => (
