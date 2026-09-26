@@ -1,12 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-
-
 import { cn } from '../../utils/cn';
 import { Link } from 'react-router-dom';
+import { Icon } from '../../ui/basic/Icon';
 
 export function AdminDashboard() {
-  const [period, setPeriod] = useState<'today'|'7days'|'30days'|'all'>('7days');
+  const today = new Date();
+  const [dateRange, setDateRange] = useState({
+    start: new Date(today.getFullYear(), today.getMonth(), 1),
+    end: new Date(today.getFullYear(), today.getMonth() + 1, 0)
+  });
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [tempStart, setTempStart] = useState<Date | null>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
   const [loading, setLoading] = useState(true);
 
   // Data states
@@ -17,31 +24,42 @@ export function AdminDashboard() {
   const [contributions, setContributions] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const [jobs, setJobs] = useState({ running: 0, failed: 0, deferred: 0 });
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setIsPickerOpen(false);
+        setTempStart(null);
+      }
+    };
+    if (isPickerOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isPickerOpen]);
+
+  const getDaysInMonth = () => {
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const days = new Date(y, m + 1, 0).getDate();
+    return Array.from({length: days}, (_, i) => new Date(y, m, i + 1));
+  };
+
   const fetchData = async () => {
     setLoading(true);
 
-    const now = new Date();
-    let startDate = new Date(0); // all
-    if (period === 'today') {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    } else if (period === '7days') {
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    } else if (period === '30days') {
-      startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    }
-
-    const startIso = startDate.toISOString();
+    const startIso = dateRange.start.toISOString();
+    const endDateObj = new Date(dateRange.end);
+    endDateObj.setHours(23, 59, 59, 999);
+    const endIso = endDateObj.toISOString();
 
     try {
       // 1. Visitors
-      const { data: appSess } = await supabase.from('app_sessions').select('user_id').gte('started_at', startIso);
+      const { data: appSess } = await supabase.from('app_sessions').select('user_id').gte('started_at', startIso).lte('started_at', endIso);
       if (appSess) {
         const activeUserIds = new Set(appSess.filter(s => s.user_id).map(s => s.user_id));
         setVisitorStats({ sessions: appSess.length, activeUsers: activeUserIds.size });
       }
 
       // 2. Reading
-      const { data: readSess } = await supabase.from('read_sessions').select('*').gte('started_at', startIso);
+      const { data: readSess } = await supabase.from('read_sessions').select('*').gte('started_at', startIso).lte('started_at', endIso);
       if (readSess) {
         const completed = readSess.filter(s => s.is_completed).length;
         const total = readSess.length;
@@ -70,7 +88,7 @@ export function AdminDashboard() {
       }
 
       // 3. AI Cost
-      const { data: usage } = await supabase.from('ai_usage').select('stage, cost_usd').gte('created_at', startIso);
+      const { data: usage } = await supabase.from('ai_usage').select('stage, cost_usd').gte('created_at', startIso).lte('created_at', endIso);
       if (usage) {
         let total = 0;
         const byStage: Record<string, number> = {};
@@ -81,8 +99,12 @@ export function AdminDashboard() {
         setAiCost({ total, byStage });
       }
 
-      // 4. Contributions
-      const { data: subs } = await supabase.from('submissions').select('status').gte('created_at', startIso);
+      // 4. Top Stories
+      const { data: top } = await supabase.from('story_stats').select('reads_count, saves_count, story:stories(id, title)').order('reads_count', { ascending: false }).limit(5);
+      if (top) setTopStories(top);
+
+      // 5. Contributions (Global)
+      const { data: subs } = await supabase.from('submissions').select('status');
       if (subs) {
         setContributions({
           total: subs.length,
@@ -92,34 +114,26 @@ export function AdminDashboard() {
         });
       }
 
-      // 5. Jobs
-      const { data: jbs } = await supabase.from('jobs').select('status').gte('created_at', startIso);
-      if (jbs) {
+      // 6. Jobs (Global)
+      const { data: dbJobs } = await supabase.from('jobs').select('status');
+      if (dbJobs) {
         setJobs({
-          running: jbs.filter(j => j.status === 'processing' || j.status === 'queued').length,
-          failed: jbs.filter(j => j.status === 'failed').length,
-          deferred: jbs.filter(j => j.status === 'deferred').length
+          running: dbJobs.filter(j => j.status === 'running').length,
+          failed: dbJobs.filter(j => j.status === 'failed').length,
+          deferred: dbJobs.filter(j => j.status === 'deferred').length
         });
       }
 
-      // 6. Top Stories (Stats table doesn't have timestamps, so we use global top)
-      const { data: top } = await supabase.from('story_stats').select('reads_count, saves_count, story:stories(id, title, region_id)').order('reads_count', { ascending: false }).limit(5);
-      if (top) {
-        setTopStories(top.map(t => ({
-          ...t,
-          story: t.story as any
-        })));
-      }
-
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
-  }, [period]);
+  }, [dateRange]);
 
   const formatSec = (sec: number) => {
     if (sec === 0) return 'Belum ada data';
@@ -136,24 +150,71 @@ export function AdminDashboard() {
           <p className="text-stone-500 text-sm mt-1">Ringkasan aktivitas platform dan penggunaan metrik operasional.</p>
         </div>
         
-        <div className="flex bg-stone-100 p-1 rounded-xl">
-          {(['today', '7days', '30days', 'all'] as const).map(p => (
-            <button 
-              key={p} 
-              onClick={() => setPeriod(p)}
-              className={cn(
-                "px-4 py-2 text-sm font-bold rounded-lg transition-colors",
-                period === p ? "bg-white text-teal shadow-sm" : "text-stone-500 hover:text-stone-700"
-              )}
-            >
-              {p === 'today' ? 'Hari ini' : p === '7days' ? '7 Hari' : p === '30days' ? '30 Hari' : 'Semua'}
-            </button>
-          ))}
+        <div className="relative z-50" ref={pickerRef}>
+          <button 
+            onClick={() => {
+              if (!isPickerOpen) setTempStart(null);
+              setIsPickerOpen(!isPickerOpen);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-200 rounded-xl shadow-sm text-sm font-bold text-stone-700 hover:border-teal transition-colors"
+          >
+            <Icon name="Calendar" size={16} className="text-teal" />
+            {dateRange.start.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - {dateRange.end.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </button>
+          
+          {isPickerOpen && (
+            <div className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-lg p-4 w-72">
+              <div className="text-sm font-bold text-stone-800 mb-2 text-center">
+                {today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+              </div>
+              <div className="text-xs text-stone-500 mb-4 text-center">
+                {!tempStart ? 'Pilih Tanggal Mulai' : 'Pilih Tanggal Selesai'}
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-stone-400 mb-2">
+                <div>M</div><div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div>
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({length: new Date(today.getFullYear(), today.getMonth(), 1).getDay()}).map((_, i) => (
+                  <div key={`empty-${i}`} />
+                ))}
+                {getDaysInMonth().map((d, i) => {
+                  const t = d.getTime();
+                  const s = dateRange.start.getTime();
+                  const e = dateRange.end.getTime();
+                  
+                  const isSelected = (!tempStart && t >= s && t <= e) || (tempStart && t === tempStart.getTime());
+                  
+                  return (
+                    <button 
+                      key={i}
+                      onClick={() => {
+                        if (!tempStart) {
+                          setTempStart(d);
+                        } else {
+                          const newStart = d < tempStart ? d : tempStart;
+                          const newEnd = d < tempStart ? tempStart : d;
+                          setDateRange({ start: newStart, end: newEnd });
+                          setIsPickerOpen(false);
+                          setTempStart(null);
+                        }
+                      }}
+                      className={cn(
+                        "h-8 rounded-full flex items-center justify-center text-sm transition-colors",
+                        isSelected ? "bg-teal text-white font-bold" : "hover:bg-stone-100 text-stone-700"
+                      )}
+                    >
+                      {d.getDate()}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {loading ? (
-        <div className="py-20 text-center text-stone-400 font-bold animate-pulse">Memuat metrik...</div>
+        <div className="p-12 text-center text-stone-500 animate-pulse">Memuat data dashboard...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
@@ -217,7 +278,7 @@ export function AdminDashboard() {
               <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(aiCost.byStage).map(([stage, cost]) => (
                   <div key={stage} className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                    <div className="text-sm font-black text-stone-700">${cost.toFixed(4)}</div>
+                    <div className="text-sm font-black text-stone-700">$${cost.toFixed(4)}</div>
                     <div className="text-[10px] font-bold text-stone-500 uppercase tracking-wider truncate">{stage}</div>
                   </div>
                 ))}

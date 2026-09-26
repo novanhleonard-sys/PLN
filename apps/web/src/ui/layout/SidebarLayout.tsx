@@ -71,7 +71,7 @@ export function SidebarLayout({ title, items, activeId, children }: SidebarLayou
             <h1 className="text-xl font-fredoka font-bold text-teal hidden md:block">{title}</h1>
             <div className="w-px h-6 bg-stone-300 hidden md:block"></div>
             <Link to="/" className="flex items-center gap-2 text-sm font-bold text-stone-500 hover:text-teal transition-colors">
-              Kembali ke Peta
+              Kembali
               <Icon name="ArrowRight" size={16} />
             </Link>
           </div>

@@ -85,8 +85,8 @@ export function AdminPengaturan() {
                 value={localSettings['moderation']?.autoPublish ? 'true' : 'false'}
                 onChange={(e) => updateLocal('moderation', 'autoPublish', e.target.value === 'true')}
               >
-                <option value="true">Aktif (Langsung tayang jika lolos)</option>
-                <option value="false">Mati (Wajib review admin)</option>
+                <option value="true">Aktif</option>
+                <option value="false">Mati</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">

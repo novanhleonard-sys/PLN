@@ -58,7 +58,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { id: 'gaya-ai', label: 'Gaya AI', icon: 'Sparkles', onClick: () => navigate('/admin/gaya-ai') },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'Settings', onClick: () => navigate('/admin/pengaturan') },
     { id: 'kelola', label: 'Kelola Admin', icon: 'Shield', onClick: () => navigate('/admin/kelola') },
-    { id: 'kembali', label: 'Tutup Admin', icon: 'LogOut', isDanger: true, onClick: () => navigate('/') },
+    
   ];
 
   return (
