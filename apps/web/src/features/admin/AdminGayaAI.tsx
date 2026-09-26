@@ -220,7 +220,7 @@ export function AdminGayaAI() {
                 <label className="text-sm font-bold text-stone-700">Parameter: Daerah (Opsional)</label>
                 <select 
                   className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl outline-none"
-                  value={form.region_group}
+                  value={form.region_group || ''}
                   onChange={e => setForm({...form, region_group: e.target.value})}
                 >
                   <option value="">Semua Daerah (Global)</option>
@@ -328,7 +328,7 @@ export function AdminGayaAI() {
                             if (confirm('Yakin ingin menghapus gaya ini?')) deleteMutation.mutate(item.id);
                           }}
                         >
-                          <Icon name="Trash2" size={18} />
+                          <Icon name="Trash" size={18} />
                         </button>
                       </div>
                     </div>
