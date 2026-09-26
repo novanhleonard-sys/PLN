@@ -241,17 +241,15 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
             <p className="text-sm text-stone-500 mb-6">Apakah Anda ingin memperbaiki versi yang mana?</p>
             <div className="flex flex-col gap-3">
               {storyVersions.length > 0 ? (
-                <>
-                  {storyVersions.map((v) => (
-                    <Button key={v.id} onClick={() => goToEdit(v.id)} variant="primary" className="w-full h-auto py-2">
-                      Edit Versi {v.label || new Date(v.created_at).toLocaleDateString('id-ID')}{v.status === 'published' ? ' (Aktif)' : ''}
-                    </Button>
-                  ))}
-                  <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
-                </>
+                storyVersions.map((v) => (
+                  <Button key={v.id} onClick={() => goToEdit(v.id)} variant="primary" className="w-full h-auto py-2">
+                    Edit Versi {v.label || new Date(v.created_at).toLocaleDateString('id-ID')}
+                  </Button>
+                ))
               ) : (
                 <Button onClick={() => goToEdit(story!.versionId ?? null)} variant="primary" className="w-full">Edit Versi Ini</Button>
               )}
+              <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
               <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full mt-2">Batal</Button>
             </div>
           </div>
