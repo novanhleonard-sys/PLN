@@ -1,14 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
+import { Icon } from '../../ui/basic/Icon';
+import { FileUploader } from '../../ui/basic/FileUploader';
+import { Toast } from '../../ui/basic/Toast';
 
-
-export const AdminPustakaSuara: React.FC = () => {
+export function AdminPustakaSuara() {
   const [sounds, setSounds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState('');
   
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentSound, setCurrentSound] = useState<any>({});
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const defaultForm = {
+    id: undefined as string | undefined,
+    name: '',
+    audio_url: '',
+    volume: 1.0,
+    is_active: true,
+    source: '',
+    license: '',
+    region: '',
+    mood: ''
+  };
+
+  const [form, setForm] = useState(defaultForm);
 
   const fetchSounds = async () => {
     setLoading(true);
@@ -21,168 +37,202 @@ export const AdminPustakaSuara: React.FC = () => {
     fetchSounds();
   }, []);
 
+  const getUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    return supabase.storage.from('admin-assets').getPublicUrl(path).data.publicUrl;
+  };
+
   const handleSave = async () => {
     setLoading(true);
-    if (currentSound.id) {
-      await supabase.from('ambient_sounds').update(currentSound).eq('id', currentSound.id);
-    } else {
-      await supabase.from('ambient_sounds').insert([currentSound]);
+    try {
+      const payload = {
+        name: form.name,
+        audio_url: form.audio_url,
+        volume: form.volume,
+        is_active: form.is_active,
+        source: form.source,
+        license: form.license,
+        region: form.region || null,
+        mood: form.mood || null,
+      };
+
+      if (form.id) {
+        await supabase.from('ambient_sounds').update(payload).eq('id', form.id);
+        setToast('Berhasil memperbarui suara.');
+      } else {
+        await supabase.from('ambient_sounds').insert([payload]);
+        setToast('Berhasil menambahkan suara.');
+      }
+      setForm(defaultForm);
+      await fetchSounds();
+    } catch (e) {
+      setToast('Terjadi kesalahan saat menyimpan.');
+    } finally {
+      setLoading(false);
     }
-    await fetchSounds();
-    setIsEditing(false);
-    setLoading(false);
   };
 
   const handleEdit = (sound: any) => {
-    setCurrentSound(sound);
-    setIsEditing(true);
-  };
-
-  const handleNew = () => {
-    setCurrentSound({
-      name: '',
-      audio_url: '',
-      volume: 1.0,
-      is_active: true,
-      source: '',
-      license: ''
+    setForm({
+      ...sound,
+      region: sound.region || '',
+      mood: sound.mood || '',
     });
-    setIsEditing(true);
+    formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (isEditing) {
-    return (
-      <div className="p-6 max-w-2xl">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold font-fredoka">{currentSound.id ? 'Edit Suara' : 'Tambah Suara'}</h1>
-          <Button variant="secondary" onClick={() => setIsEditing(false)}>Kembali</Button>
-        </div>
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Yakin ingin menghapus suara ini?')) return;
+    await supabase.from('ambient_sounds').delete().eq('id', id);
+    setToast('Suara berhasil dihapus.');
+    await fetchSounds();
+  };
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-bold mb-1">Nama Suara</label>
+  return (
+    <div className="font-nunito max-w-5xl">
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <h1 className="text-2xl font-bold font-fredoka text-stone-800">Pustaka Suara</h1>
+          <p className="text-stone-500 text-sm mt-1">Kelola suara latar (ambient) untuk Mode Baca dan aturan kecocokannya.</p>
+        </div>
+      </div>
+
+      <div ref={formRef} className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 mb-8">
+        <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-4">{form.id ? 'Edit Suara Latar' : 'Tambah Suara Latar'}</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input 
+            className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark md:col-span-2" 
+            placeholder="Nama Suara (contoh: Angin Malam, Hutan Jati)" 
+            value={form.name} 
+            onChange={e => setForm({...form, name: e.target.value})} 
+          />
+
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <input 
-              type="text" 
-              className="w-full border rounded-lg p-2" 
-              value={currentSound.name || ''} 
-              onChange={e => setCurrentSound({...currentSound, name: e.target.value})} 
+              className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark font-mono" 
+              placeholder="Wilayah (contoh: jawa, kalimantan)" 
+              value={form.region} 
+              onChange={e => setForm({...form, region: e.target.value})} 
+            />
+            <input 
+              className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark font-mono" 
+              placeholder="Suasana/Mood (contoh: mistis, damai)" 
+              value={form.mood} 
+              onChange={e => setForm({...form, mood: e.target.value})} 
             />
           </div>
-          <div>
-            <label className="block text-sm font-bold mb-1">URL Audio (.mp3/.ogg)</label>
-            <input 
-              type="text" 
-              className="w-full border rounded-lg p-2" 
-              value={currentSound.audio_url || ''} 
-              onChange={e => setCurrentSound({...currentSound, audio_url: e.target.value})} 
-            />
-            {currentSound.audio_url && (
-              <audio controls src={currentSound.audio_url} className="mt-2 h-8 w-full" />
-            )}
+
+          <div className="md:col-span-2 flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-bold text-stone-700">File Audio Latar (.mp3/.ogg)</span>
+              <div className="w-32">
+                <FileUploader 
+                  bucket="admin-assets" 
+                  folder="ambient" 
+                  accept="audio/*" 
+                  label="Unggah" 
+                  isAudio 
+                  onUploadSuccess={p => setForm(s => ({...s, audio_url: getUrl(p[0])}))} 
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-stone-500 font-bold shrink-0">Atau Tempel URL:</span>
+              <input 
+                className="flex-1 px-3 py-1.5 bg-white border border-stone-200 rounded-lg text-sm outline-none font-mono" 
+                placeholder="https://..." 
+                value={form.audio_url} 
+                onChange={e => setForm({...form, audio_url: e.target.value})} 
+              />
+            </div>
+            {form.audio_url && <audio controls className="w-full h-8 mt-2" src={form.audio_url} />}
           </div>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block text-sm font-bold mb-1">Volume (0.1 - 2.0)</label>
+
+          <div className="grid grid-cols-2 gap-4 md:col-span-2">
+            <div>
+              <label className="block text-xs font-bold text-stone-500 mb-1">Volume Bawaan (0.1 - 2.0)</label>
               <input 
                 type="number" 
                 step="0.1" 
-                className="w-full border rounded-lg p-2" 
-                value={currentSound.volume || 1} 
-                onChange={e => setCurrentSound({...currentSound, volume: Number(e.target.value)})} 
+                className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" 
+                value={form.volume} 
+                onChange={e => setForm({...form, volume: Number(e.target.value)})} 
               />
             </div>
-            <div className="flex items-end mb-2">
+            <div className="flex items-center justify-end mt-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
-                  checked={currentSound.is_active || false} 
-                  onChange={e => setCurrentSound({...currentSound, is_active: e.target.checked})} 
+                  checked={form.is_active} 
+                  onChange={e => setForm({...form, is_active: e.target.checked})} 
+                  className="w-4 h-4 text-teal focus:ring-teal border-stone-300 rounded"
                 />
-                <span className="font-bold">Aktif</span>
+                <span className="font-bold text-stone-700 text-sm">Aktif di Pustaka</span>
               </label>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-bold mb-1">Sumber</label>
-            <input 
-              type="text" 
-              className="w-full border rounded-lg p-2" 
-              value={currentSound.source || ''} 
-              onChange={e => setCurrentSound({...currentSound, source: e.target.value})} 
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-bold mb-1">Lisensi</label>
-            <input 
-              type="text" 
-              className="w-full border rounded-lg p-2" 
-              value={currentSound.license || ''} 
-              onChange={e => setCurrentSound({...currentSound, license: e.target.value})} 
-            />
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button variant="primary" onClick={handleSave} disabled={loading}>
-              {loading ? 'Menyimpan...' : 'Simpan Suara'}
+
+          <input 
+            className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" 
+            placeholder="Sumber (opsional)" 
+            value={form.source} 
+            onChange={e => setForm({...form, source: e.target.value})} 
+          />
+          <input 
+            className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" 
+            placeholder="Lisensi (opsional)" 
+            value={form.license} 
+            onChange={e => setForm({...form, license: e.target.value})} 
+          />
+
+          <div className="md:col-span-2 flex gap-2 justify-end pt-2">
+            {form.id && <Button variant="secondary" onClick={() => setForm(defaultForm)}>Batal</Button>}
+            <Button disabled={!form.name || !form.audio_url || loading} onClick={handleSave}>
+              {loading ? 'Menyimpan...' : (form.id ? 'Simpan' : 'Tambahkan')}
             </Button>
           </div>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold font-fredoka">Pustaka Suara</h1>
-          <p className="text-stone-500">Kelola suara latar untuk Mode Baca.</p>
-        </div>
-        <Button variant="primary" onClick={handleNew}>Tambah Suara</Button>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {loading && sounds.length === 0 ? (
+          <div className="animate-pulse text-stone-400 text-sm md:col-span-2 lg:col-span-3">Memuat pustaka...</div>
+        ) : sounds.map((item: any) => (
+          <div key={item.id} className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col gap-3 justify-between hover:border-teal-light transition-colors">
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-bold text-stone-800 line-clamp-1" title={item.name}>{item.name}</h4>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${item.is_active ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'}`}>
+                  {item.is_active ? 'Aktif' : 'Nonaktif'}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1 mb-2">
+                {item.region && <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">{item.region}</span>}
+                {item.mood && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded uppercase">{item.mood}</span>}
+              </div>
+              {item.source && <p className="text-xs text-stone-500 line-clamp-1 mt-1 flex items-center gap-1"><Icon name="Link" size={10} /> {item.source}</p>}
+            </div>
+            
+            <audio controls src={item.audio_url} className="w-full h-7 mb-1" />
+
+            <div className="flex gap-2 pt-2 border-t border-stone-100">
+              <Button className="flex-1 !py-1 !text-xs" variant="secondary" onClick={() => handleEdit(item)}>Edit</Button>
+              <button className="px-2 text-stone-400 hover:text-red-500 transition-colors" onClick={() => handleDelete(item.id)}>
+                <Icon name="Trash" size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {sounds.length === 0 && !loading && (
+          <div className="text-stone-500 text-sm md:col-span-2 lg:col-span-3 p-8 text-center bg-white rounded-2xl border border-stone-200 border-dashed">
+            Belum ada suara di pustaka.
+          </div>
+        )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-stone-50 text-stone-600 text-sm">
-            <tr>
-              <th className="p-4 font-semibold">Nama Suara</th>
-              <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold">Preview</th>
-              <th className="p-4 font-semibold">Sumber</th>
-              <th className="p-4 font-semibold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stone-100">
-            {sounds.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-8 text-center text-stone-500">
-                  Belum ada suara di pustaka.
-                </td>
-              </tr>
-            ) : (
-              sounds.map((sound) => (
-                <tr key={sound.id} className="hover:bg-stone-50">
-                  <td className="p-4 font-medium">{sound.name}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${sound.is_active ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>
-                      {sound.is_active ? 'Aktif' : 'Nonaktif'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <audio controls src={sound.audio_url} className="h-8 w-40" />
-                  </td>
-                  <td className="p-4 text-sm text-stone-500">
-                    {sound.source} <br/>
-                    <span className="text-xs">{sound.license}</span>
-                  </td>
-                  <td className="p-4 text-right">
-                    <Button variant="secondary" size="sm" onClick={() => handleEdit(sound)}>Edit</Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Toast visible={!!toast} message={toast} onClose={() => setToast('')} />
     </div>
   );
-};
+}

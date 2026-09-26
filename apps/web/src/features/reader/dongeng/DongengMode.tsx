@@ -61,15 +61,15 @@ export const DongengMode: React.FC<DongengModeProps> = ({
   }, [currentTime, duration, textChunks]);
 
   useEffect(() => {
-    if (audioData?.audio_path) {
+    if (audioData?.audio_url) {
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current.src = audioData.audio_path;
+        audioRef.current.src = audioData.audio_url;
         audioRef.current.playbackRate = prefs.dongengSpeed;
         audioRef.current.load();
         audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       } else {
-        const audio = new Audio(audioData.audio_path);
+        const audio = new Audio(audioData.audio_url);
         audio.playbackRate = prefs.dongengSpeed;
         audioRef.current = audio;
         
@@ -181,7 +181,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
              <div className="max-w-3xl mx-auto w-full text-center min-h-[120px] flex items-center justify-center">
                 {isLoadingAudio ? (
                   <p className="text-white/70 font-nunito italic animate-pulse">Memuat narasi...</p>
-                ) : !audioData?.audio_path ? (
+                ) : !audioData?.audio_url ? (
                   <p className="text-white/70 font-nunito italic">Audio narasi belum tersedia untuk halaman ini.</p>
                 ) : (
                   <p className={cn("text-white whitespace-pre-wrap font-semibold drop-shadow-md", fontClass)}>
@@ -221,7 +221,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
             
             <button 
               onClick={togglePlay}
-              disabled={isLoadingAudio || !audioData?.audio_path}
+              disabled={isLoadingAudio || !audioData?.audio_url}
               className="w-16 h-16 flex items-center justify-center rounded-full bg-teal text-white hover:bg-teal-light hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 transition-all shadow-lg"
             >
               <Icon name={isPlaying ? "Pause" : "Play"} size={32} className={isPlaying ? "" : "ml-1"} />
