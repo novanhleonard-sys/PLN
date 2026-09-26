@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from './ErrorBoundary.tsx'
 import { useAuth } from './features/auth/AuthStore.ts'
 import { RequireAdmin } from './features/auth/RequireAdmin.tsx'
-import { RequireAuth } from './features/auth/RequireAuth.tsx'
+import { RequireAuth } from './features/auth/RequireAuth.tsx';
+import { SessionTracker } from './features/analytics/SessionTracker';
 
 import '@fontsource/fredoka/400.css'
 import '@fontsource/fredoka/500.css'
@@ -20,11 +21,11 @@ const Styleguide = lazy(() => import('./routes/styleguide.tsx'))
 const Home = lazy(() => import('./routes/Home.tsx'))
 const Baca = lazy(() => import('./features/reader/baca/Baca').then(m => ({ default: m.Baca })))
 const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Login })))
-const AdminAntrean = lazy(() => import('./features/admin/AdminAntrean').then(m => ({ default: m.AdminAntrean })))
-const AdminKonten = lazy(() => import('./features/admin/AdminKonten').then(m => ({ default: m.AdminKonten })))
-const AdminPengaturan = lazy(() => import('./features/admin/AdminPengaturan').then(m => ({ default: m.AdminPengaturan })))
-const AdminLaporan = lazy(() => import('./features/admin/AdminLaporan').then(m => ({ default: m.AdminLaporan })))
-const AdminDashboard = lazy(() => import('./features/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
+const AdminCenter = lazy(() => import('./features/admin/AdminCenter').then(m => ({ default: m.AdminCenter })))
+
+
+
+
 const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
 const Pengaturan = lazy(() => import('./features/profile/Pengaturan.tsx').then(m => ({ default: m.Pengaturan })))
 const ContributeForm = lazy(() => import('./features/contribute/ContributeForm').then(m => ({ default: m.ContributeForm })))
@@ -54,11 +55,11 @@ const AppContent = () => {
         <Route path="/kontribusi" element={<RequireAuth><ContributeForm /></RequireAuth>} />
         <Route path="/kontribusi/saya" element={<RequireAuth><MyContributions /></RequireAuth>} />
         <Route path="/kontribusi/:id" element={<RequireAuth><ContributionStatusDetail /></RequireAuth>} />
-        <Route path="/admin/antrean" element={<RequireAdmin><AdminAntrean /></RequireAdmin>} />
-        <Route path="/admin/konten" element={<RequireAdmin><AdminKonten /></RequireAdmin>} />
-        <Route path="/admin/pengaturan" element={<RequireAdmin><AdminPengaturan /></RequireAdmin>} />
-        <Route path="/admin/laporan" element={<RequireAdmin><AdminLaporan /></RequireAdmin>} />
-        <Route path="/admin/dashboard" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+        <Route path="/admin/*" element={<AdminCenter />} />
+        
+        
+        
+        
       </Routes>
     </Suspense>
   );
@@ -79,7 +80,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ErrorBoundary>
-          <AppContent />
+          <SessionTracker /><AppContent />
         </ErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>

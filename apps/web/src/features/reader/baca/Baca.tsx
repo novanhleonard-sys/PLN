@@ -12,6 +12,7 @@ import { ReportButton } from '../../report/ReportButton';
 import { AdaptationModal } from '../adapt/AdaptationModal';
 import { Button } from '../../../ui/basic/Button';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
+import { useReadSessionTracker } from '../../analytics/useReadSessionTracker';
 
 
 export const Baca: React.FC = () => {
@@ -46,6 +47,9 @@ export const Baca: React.FC = () => {
   }, [versionData, selectedAdaptation, readHistory]);
 
   const { data: pages, isLoading: isLoadingPages } = usePages(selectedAdaptation || '');
+
+  const isCompleted = pages && pages.length > 0 && currentPage >= pages.length - 1;
+  useReadSessionTracker(versionData?.story_id, versionId, selectedAdaptation || undefined, mode, isCompleted);
 
   // Read History Debounce Upsert
   useEffect(() => {
