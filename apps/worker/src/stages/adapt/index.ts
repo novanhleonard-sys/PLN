@@ -92,6 +92,9 @@ ${originalPagesJSON}
   const { error: insertError } = await ctx.supabase.from("pages").insert(pagesToInsert);
   if (insertError) throw insertError;
 
+  const { error: updateError } = await ctx.supabase.from("adaptations").update({ total_pages: pagesToInsert.length }).eq("id", adaptation.id);
+  if (updateError) throw updateError;
+
   // Enqueue adapt_check
   const { error: jobError } = await ctx.supabase.from("jobs").insert({
       kind: "adapt_check",
