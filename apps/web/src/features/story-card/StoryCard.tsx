@@ -252,7 +252,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-stone-500 flex items-center gap-2 font-nunito"><Icon name="Headphones" size={16} className="text-stone-400" /> Mode Dongeng</span>
-              <span className="text-stone-700 font-bold font-nunito">{story.dongengReady ? 'Ready' : 'Belum'}</span>
+              <span className="text-stone-700 font-bold font-nunito">{story.dongengReady ? 'Siap' : 'Belum'}</span>
             </div>
           </div>
 
