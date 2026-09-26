@@ -1,17 +1,18 @@
-
 import { Link } from 'react-router-dom';
 import { useAuth } from './AuthStore';
-import { Button } from '../../ui/basic/Button';
+import { Icon } from '../../ui/basic/Icon';
 
 export const UserMenu = () => {
   const { user } = useAuth();
 
   if (!user) {
     return (
-      <Link to="/masuk">
-        <Button variant="primary" size="md" className="font-bold shadow-md rounded-full px-6 text-sm">
-          Masuk
-        </Button>
+      <Link 
+        to="/masuk" 
+        className="w-12 h-12 rounded-full shadow-md bg-teal hover:bg-teal-dark transition-all flex items-center justify-center text-white"
+        title="Masuk"
+      >
+        <Icon name="LogIn" size={20} />
       </Link>
     );
   }

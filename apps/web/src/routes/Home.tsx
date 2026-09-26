@@ -60,7 +60,7 @@ export default function Home() {
           />
           
           <MapStyleToggle isPainting={styleType === 'A'} onChange={(isA) => handleStyleChange(isA ? 'A' : 'B')} className="absolute bottom-6 left-6 z-20" />
-          <div className="absolute top-6 right-6 z-40">
+          <div className="absolute top-4 right-4 z-40">
             <UserMenu />
           </div>
         </>
