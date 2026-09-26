@@ -127,6 +127,14 @@ export const Baca: React.FC = () => {
     setCurrentPage((p: number) => Math.min(pages.length - 1, p + 1));
   };
 
+  const handleModeChange = (newMode: string) => {
+    if (newMode === 'Dongeng' && !user) {
+      setGateOpen(true);
+      return;
+    }
+    setMode(newMode);
+  };
+
   const fontSize = isDesktop ? 'text-[20px]' : 'text-[18px]';
 
   if (mode === 'Dongeng') {
@@ -147,7 +155,7 @@ export const Baca: React.FC = () => {
         </div>
         <div className="flex items-center gap-4 self-end md:self-auto">
           <Button size="sm" variant="secondary" onClick={() => setAdaptModalOpen(true)} className="!bg-teal/10 !text-teal !border-transparent hover:!bg-teal/20">Sesuaikan</Button>
-          <SegmentedControl options={['Baca', 'Dongeng']} value={mode} onChange={setMode} />
+          <SegmentedControl options={['Baca', 'Dongeng']} value={mode} onChange={handleModeChange} />
         </div>
       </header>
       
