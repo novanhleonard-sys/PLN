@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from './ErrorBoundary.tsx'
 import { useAuth } from './features/auth/AuthStore.ts'
-import { RequireAdmin } from './features/auth/RequireAdmin.tsx'
+
 import { RequireAuth } from './features/auth/RequireAuth.tsx';
 import { SessionTracker } from './features/analytics/SessionTracker';
 

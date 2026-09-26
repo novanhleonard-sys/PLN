@@ -1,7 +1,9 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthStore';
-import { SidebarLayout, SidebarItem } from '../../ui/layout/SidebarLayout';
+import { SidebarLayout } from '../../ui/layout/SidebarLayout';
+import type { SidebarItem } from '../../ui/layout/SidebarLayout';
 import { supabase } from '../../lib/supabase';
 
 interface AdminLayoutProps {
@@ -50,7 +52,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const activeId = location.pathname.split('/').pop() || 'dashboard';
 
   const menu: SidebarItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'BarChart', onClick: () => navigate('/admin/dashboard') },
+    { id: 'dashboard', label: 'Dashboard', icon: 'Activity', onClick: () => navigate('/admin/dashboard') },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'Settings', onClick: () => navigate('/admin/pengaturan') },
     { id: 'kelola', label: 'Kelola Admin', icon: 'Shield', onClick: () => navigate('/admin/kelola') },
     { id: 'kembali', label: 'Tutup Admin', icon: 'LogOut', isDanger: true, onClick: () => navigate('/') },

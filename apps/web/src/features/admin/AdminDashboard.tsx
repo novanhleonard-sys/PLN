@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Button } from '../../ui/basic/Button';
-import { Icon } from '../../ui/basic/Icon';
+
+
 import { cn } from '../../utils/cn';
 import { Link } from 'react-router-dom';
 

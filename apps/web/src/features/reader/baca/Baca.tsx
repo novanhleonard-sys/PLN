@@ -49,7 +49,7 @@ export const Baca: React.FC = () => {
   const { data: pages, isLoading: isLoadingPages } = usePages(selectedAdaptation || '');
 
   const isCompleted = pages && pages.length > 0 && currentPage >= pages.length - 1;
-  useReadSessionTracker(versionData?.story_id, versionId, selectedAdaptation || undefined, mode, isCompleted);
+  useReadSessionTracker(versionData?.version?.story_id, versionId, selectedAdaptation || undefined, mode, isCompleted);
 
   // Read History Debounce Upsert
   useEffect(() => {
