@@ -110,18 +110,78 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
             </div>
           </section>
 
+          
           <section className="space-y-6">
             <h3 className="text-lg font-fredoka font-bold text-stone-700 border-b border-stone-200 pb-2">Pengalaman Membaca</h3>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-stone-800">Tema Default</div>
+                <div className="text-sm text-stone-500">Tema yang digunakan saat pertama kali membuka cerita</div>
+              </div>
+              <select value={globalPrefs.theme} onChange={(e) => updateGlobal({ theme: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+                <option value="terang">Terang</option>
+                <option value="hangat">Hangat</option>
+                <option value="gelap">Gelap</option>
+              </select>
+            </div>
             
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-bold text-stone-800">Ukuran Teks</div>
-                <div className="text-sm text-stone-500">Sesuaikan besarnya teks saat membaca cerita</div>
+                <div className="font-bold text-stone-800">Ukuran Teks (Baca)</div>
+                <div className="text-sm text-stone-500">Besarnya teks untuk mode Baca</div>
               </div>
               <select value={globalPrefs.fontSizeBaca} onChange={(e) => updateGlobal({ fontSizeBaca: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
-                <option value="small">Kecil</option>
-                <option value="normal">Sedang</option>
-                <option value="large">Besar</option>
+                <option value="kecil">Kecil</option>
+                <option value="sedang">Sedang</option>
+                <option value="besar">Besar</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-stone-800">Suara Latar (Baca)</div>
+                <div className="text-sm text-stone-500">Putar suara latar/ambiens secara otomatis di mode Baca</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" checked={globalPrefs.bgAudioOn} onChange={(e) => updateGlobal({ bgAudioOn: e.target.checked })} />
+                <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+              </label>
+            </div>
+
+            <h3 className="text-lg font-fredoka font-bold text-stone-700 border-b border-stone-200 pb-2 mt-6">Mode Dongeng</h3>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-stone-800">Ukuran Teks Narasi</div>
+                <div className="text-sm text-stone-500">Besarnya subtitle yang muncul di mode Dongeng</div>
+              </div>
+              <select value={globalPrefs.fontSizeDongeng} onChange={(e) => updateGlobal({ fontSizeDongeng: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+                <option value="kecil">Kecil</option>
+                <option value="sedang">Sedang</option>
+                <option value="besar">Besar</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-stone-800">Tampilkan Teks Narasi</div>
+                <div className="text-sm text-stone-500">Tampilkan teks subtitle secara default</div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" checked={globalPrefs.dongengShowText} onChange={(e) => updateGlobal({ dongengShowText: e.target.checked })} />
+                <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-bold text-stone-800">Gambar Ilustrasi</div>
+                <div className="text-sm text-stone-500">Tampilkan ilustrasi di latar belakang narasi</div>
+              </div>
+              <select value={globalPrefs.dongengImageMode} onChange={(e) => updateGlobal({ dongengImageMode: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+                <option value="dengan">Dengan Gambar</option>
+                <option value="tanpa">Tanpa Gambar</option>
               </select>
             </div>
 
@@ -137,17 +197,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <option value={1.5}>1.5x</option>
               </select>
             </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-bold text-stone-800">Kurangi Animasi</div>
-                <div className="text-sm text-stone-500">Matikan efek gerak berlebih pada antarmuka</div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" />
-                <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
-              </label>
-            </div>
+
           </section>
         </>
       )}
