@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { PanInfo } from 'framer-motion';
 
 import { Icon } from '../basic/Icon';
 
@@ -13,10 +14,6 @@ export interface SheetProps {
 }
 
 export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }: SheetProps) {
-  // Simple implementation of bottom sheet without complex drag physics for now
-  // In a real app we might use react-use-gesture or vaul
-  
-  // Close on Escape
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -24,6 +21,12 @@ export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }:
     if (isOpen) window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isOpen, onClose]);
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
+      onClose();
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -37,14 +40,18 @@ export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }:
             className="fixed inset-0 bg-[#2E2A26]/40 z-40"
           />
           <motion.div
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
             initial={{ y: '100%' }}
             animate={{ y: '0%' }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed bottom-0 left-0 right-0 h-[55vh] max-h-[92vh] bg-white rounded-t-3xl shadow-warm-lg z-50 flex flex-col"
           >
-            <div className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing">
-              <div className="w-12 h-1.5 bg-border-light rounded-pill" />
+            <div className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing group">
+              <div className="w-12 h-1.5 bg-stone-300 group-active:bg-stone-500 group-hover:bg-stone-400 rounded-full transition-colors" />
             </div>
             
             {!hideCloseButton && (

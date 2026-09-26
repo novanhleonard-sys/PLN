@@ -30,6 +30,10 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditPromptOpen, setIsEditPromptOpen] = useState(false);
   const [storyVersions, setStoryVersions] = useState<any[]>([]);
+  
+  const [isReportPromptOpen, setIsReportPromptOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,7 +94,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     if (!user) return setIsGateOpen(true);
     
     if (story && story.versionCount > 1) {
-      const { data } = await supabase.from('story_versions').select('id, created_at, status').eq('story_id', story.id).order('created_at', { ascending: false });
+      const { data } = await supabase.from('story_versions').select('id, created_at, status, label').eq('story_id', story.id).order('created_at', { ascending: false });
       if (data) setStoryVersions(data);
     } else {
       setStoryVersions([]);
@@ -131,16 +135,20 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   const handleReport = () => {
     setIsMenuOpen(false);
     if (!user) return setIsGateOpen(true);
-    // Ideally we'd open a report dialog, for now let's just create one or prompt
-    const reason = window.prompt("Alasan melaporkan cerita ini?");
-    if (reason) {
-      supabase.from('reports').insert({
-        user_id: user.id,
-        target_type: 'story',
-        target_id: story?.id,
-        reason: reason
-      }).then(() => setToastMessage('Laporan berhasil dikirim'));
-    }
+    setReportReason("");
+    setIsReportPromptOpen(true);
+  };
+
+  const submitReport = async () => {
+    if (!user || !story || !reportReason.trim()) return;
+    await supabase.from('reports').insert({
+      user_id: user.id,
+      target_type: 'story',
+      target_id: story.id,
+      reason: reportReason.trim()
+    });
+    setIsReportPromptOpen(false);
+    setToastMessage('Laporan berhasil dikirim');
   };
 
   const content = story ? (
@@ -236,7 +244,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
                 <>
                   {storyVersions.map((v) => (
                     <Button key={v.id} onClick={() => goToEdit(v.id)} variant="primary" className="w-full h-auto py-2">
-                      Edit Versi {new Date(v.created_at).toLocaleDateString()} {v.status === 'published' ? '(Aktif)' : ''}
+                      Edit Versi {v.label || new Date(v.created_at).toLocaleDateString()} {v.status === 'published' ? '(Aktif)' : ''}
                     </Button>
                   ))}
                   <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
@@ -248,6 +256,27 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
                 </>
               )}
               <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full mt-2">Batal</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Dialog */}
+      {isReportPromptOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="font-fredoka font-bold text-lg text-stone-800 mb-2">Laporkan Cerita</h3>
+            <p className="text-sm text-stone-500 mb-4">Alasan melaporkan cerita ini?</p>
+            <textarea 
+              className="w-full border border-stone-200 rounded-xl p-3 text-sm focus:outline-none focus:border-teal resize-none mb-4" 
+              rows={3} 
+              value={reportReason} 
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Masukkan alasan..."
+            />
+            <div className="flex gap-2">
+              <Button onClick={() => setIsReportPromptOpen(false)} variant="ghost" className="flex-1">Batal</Button>
+              <Button onClick={submitReport} variant="primary" className="flex-1 bg-coral hover:bg-coral/90 border-none text-white">Kirim</Button>
             </div>
           </div>
         </div>
