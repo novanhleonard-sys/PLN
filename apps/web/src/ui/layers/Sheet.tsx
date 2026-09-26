@@ -8,9 +8,11 @@ export interface SheetProps {
   onClose: () => void;
   children: React.ReactNode;
   snapPoints?: string[]; // e.g. ['30vh', '55vh', '92vh']
+  noPadding?: boolean;
+  hideCloseButton?: boolean;
 }
 
-export function Sheet({ isOpen, onClose, children }: SheetProps) {
+export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }: SheetProps) {
   // Simple implementation of bottom sheet without complex drag physics for now
   // In a real app we might use react-use-gesture or vaul
   
@@ -45,13 +47,15 @@ export function Sheet({ isOpen, onClose, children }: SheetProps) {
               <div className="w-12 h-1.5 bg-border-light rounded-pill" />
             </div>
             
-            <div className="absolute top-4 right-4">
-              <button onClick={onClose} aria-label="Tutup" className="p-2 bg-cream text-text-muted hover:text-text-main rounded-full">
-                <Icon name="X" size={20} />
-              </button>
-            </div>
+            {!hideCloseButton && (
+              <div className="absolute top-4 right-4">
+                <button onClick={onClose} aria-label="Tutup" className="p-2 bg-cream text-text-muted hover:text-text-main rounded-full">
+                  <Icon name="X" size={20} />
+                </button>
+              </div>
+            )}
             
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className={`flex-1 overflow-y-auto ${noPadding ? '' : 'p-6'}`}>
               {children}
             </div>
           </motion.div>

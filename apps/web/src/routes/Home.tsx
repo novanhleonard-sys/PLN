@@ -17,14 +17,14 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (slug) {
+    if (slug && stories.length > 0) {
       const story = stories.find(s => s.slug === slug || s.id === slug);
       if (story) {
         setSelectedStory(story);
         setSearchedLocation([story.lng, story.lat]);
       }
     }
-  }, [slug]);
+  }, [slug, stories]);
   const [styleType, setStyleType] = useState<'A' | 'B'>(() => {
     const saved = localStorage.getItem('pln_map_style');
     return (saved === 'A' || saved === 'B') ? saved : 'A';

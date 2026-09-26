@@ -29,6 +29,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditPromptOpen, setIsEditPromptOpen] = useState(false);
+  const [storyVersions, setStoryVersions] = useState<any[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -84,20 +85,42 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     }
   };
 
-  const goToEdit = async (isNewVersion: boolean) => {
+  const handleOpenEditPrompt = async () => {
+    setIsMenuOpen(false);
+    if (!user) return setIsGateOpen(true);
+    
+    if (story && story.versionCount > 1) {
+      const { data } = await supabase.from('story_versions').select('id, created_at, status').eq('story_id', story.id).order('created_at', { ascending: false });
+      if (data) setStoryVersions(data);
+    } else {
+      setStoryVersions([]);
+    }
+    setIsEditPromptOpen(true);
+  };
+
+  const goToEdit = async (versionId: string | null) => {
     setIsEditPromptOpen(false);
     if (!user) return setIsGateOpen(true);
     
     // Fetch current story data to prefill
-    const { data: dbStory } = await supabase.from('stories').select('title, type, region_id, story_versions(body)').eq('id', story?.id).single();
+    const { data: dbStory } = await supabase.from('stories').select('title, type, region_id').eq('id', story?.id).single();
     
+    let bodyText = '';
+    let versionLabel = '';
+    
+    if (versionId) {
+      const { data: dbVersion } = await supabase.from('story_versions').select('body').eq('id', versionId).single();
+      bodyText = dbVersion?.body || '';
+      versionLabel = 'Revisi ' + (new Date().toISOString().split('T')[0]);
+    }
+
     const initialData = {
       target_story_id: story?.id,
       title: dbStory?.title || story?.title,
       type: dbStory?.type || story?.type,
       region_id: dbStory?.region_id || '',
-      version_label: isNewVersion ? '' : 'Revisi ' + (new Date().toISOString().split('T')[0]),
-      body: isNewVersion ? '' : (dbStory?.story_versions?.[0]?.body || ''),
+      version_label: versionLabel,
+      body: bodyText,
       sources: [{ type: 'buku', citation: '', author: '' }],
       rights_declared: false
     };
@@ -128,11 +151,6 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
         <div className="z-10 font-fredoka font-bold text-[#8fbab8] text-xl opacity-70">
           Cover Image
         </div>
-        {!isDesktop && (
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/10 rounded-full text-stone-600 hover:bg-black/20 z-20">
-            <Icon name="X" size={16} />
-          </button>
-        )}
       </div>
       
       {/* Content Card */}
@@ -153,7 +171,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
             {isMenuOpen && (
               <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-stone-100 rounded-xl shadow-lg py-1 z-50">
                 <button 
-                  onClick={() => { setIsMenuOpen(false); setIsEditPromptOpen(true); }}
+                  onClick={handleOpenEditPrompt}
                   className="w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2"
                 >
                   <Icon name="Pen" size={16} className="text-stone-400" /> Edit cerita
@@ -212,10 +230,23 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <h3 className="font-fredoka font-bold text-lg text-stone-800 mb-2">Edit Cerita</h3>
-            <p className="text-sm text-stone-500 mb-6">Apakah Anda ingin memperbaiki versi ini atau menulis versi alternatif yang baru?</p>
+            <p className="text-sm text-stone-500 mb-6">Apakah Anda ingin memperbaiki versi yang mana?</p>
             <div className="flex flex-col gap-3">
-              <Button onClick={() => goToEdit(false)} variant="primary" className="w-full">Edit versi ini</Button>
-              <Button onClick={() => goToEdit(true)} variant="secondary" className="w-full">Buat versi lain</Button>
+              {storyVersions.length > 1 ? (
+                <>
+                  {storyVersions.map((v) => (
+                    <Button key={v.id} onClick={() => goToEdit(v.id)} variant="primary" className="w-full h-auto py-2">
+                      Edit Versi {new Date(v.created_at).toLocaleDateString()} {v.status === 'published' ? '(Aktif)' : ''}
+                    </Button>
+                  ))}
+                  <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
+                </>
+              ) : (
+                <>
+                  <Button onClick={() => goToEdit(story!.versionId || 'default')} variant="primary" className="w-full">Edit versi ini</Button>
+                  <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
+                </>
+              )}
               <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full mt-2">Batal</Button>
             </div>
           </div>
@@ -229,7 +260,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
   if (isDesktop) {
     return (
-      <SidePanel isOpen={!!story} className="absolute top-0 bottom-0 left-0 z-30 h-full !w-[380px] border-r border-stone-200">
+      <SidePanel isOpen={!!story} className="absolute top-0 bottom-0 left-0 z-30 h-full border-r border-stone-200">
         <div className="h-full flex flex-col relative">
           <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 text-stone-600 hover:bg-black/20 z-20">
             <Icon name="X" size={16} />
@@ -241,7 +272,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   }
 
   return (
-    <Sheet isOpen={!!story} onClose={onClose}>
+    <Sheet isOpen={!!story} onClose={onClose} noPadding hideCloseButton>
       {content}
     </Sheet>
   );
