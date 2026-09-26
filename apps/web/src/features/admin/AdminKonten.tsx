@@ -17,7 +17,8 @@ export function AdminKonten() {
       const { data, error } = await supabase
         .from('stories')
         .select(`
-          id, title, status, tier_locked, tier
+          id, title, status, tier_locked, tier,
+          story_stats(reads_count)
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -43,17 +44,6 @@ export function AdminKonten() {
   const toggleLockMutation = useMutation({
     mutationFn: async ({ id, locked }: { id: string, locked: boolean }) => {
       const { error } = await supabase.from('stories').update({ tier_locked: locked }).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin_stories'] });
-    }
-  });
-
-  const toggleStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string, status: string }) => {
-      const newStatus = status === 'published' ? 'unpublished' : 'published';
-      const { error } = await supabase.from('stories').update({ status: newStatus }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,60 +91,61 @@ export function AdminKonten() {
           {loadingStories ? (
             <div className="p-8 text-center animate-pulse text-stone-500">Memuat cerita...</div>
           ) : (
-            <table className="w-full text-left text-sm">
-              <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
-                <tr>
-                  <th className="p-4 font-bold">Judul Cerita</th>
-                  <th className="p-4 font-bold">Status</th>
-                  <th className="p-4 font-bold">Tier</th>
-                  <th className="p-4 font-bold text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stories?.map((story) => (
-                  <tr key={story.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
-                    <td className="p-4 font-bold text-stone-800">{story.title}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${story.status === 'published' ? 'bg-teal-100 text-teal-dark' : 'bg-stone-200 text-stone-600'}`}>
-                        {story.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-stone-600">
-                      Tier {story.tier || 1} 
-                      {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">🔒</span>}
-                    </td>
-                    <td className="p-4 flex gap-2 justify-end">
-                      <Button 
-                        variant="secondary" 
-                        className="!text-xs !py-1 !px-3"
-                        onClick={() => navigate(`/admin/konten/edit/${story.id}`)}
-                      >
-                        Edit
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        className="!text-xs !py-1 !px-3"
-                        onClick={() => toggleLockMutation.mutate({ id: story.id, locked: !story.tier_locked })}
-                        disabled={toggleLockMutation.isPending}
-                      >
-                        {story.tier_locked ? 'Buka Tier' : 'Kunci Tier'}
-                      </Button>
-                      <Button 
-                        variant={story.status === 'published' ? 'secondary' : 'primary'}
-                        className="!text-xs !py-1 !px-3"
-                        onClick={() => toggleStatusMutation.mutate({ id: story.id, status: story.status })}
-                        disabled={toggleStatusMutation.isPending}
-                      >
-                        {story.status === 'published' ? 'Unpublish' : 'Publish'}
-                      </Button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[700px]">
+                <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
+                  <tr>
+                    <th className="p-4 font-bold">Judul Cerita</th>
+                    <th className="p-4 font-bold">Status</th>
+                    <th className="p-4 font-bold">Selesai Dibaca</th>
+                    <th className="p-4 font-bold">Tier</th>
+                    <th className="p-4 font-bold text-right">Aksi</th>
                   </tr>
-                ))}
-                {stories?.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-stone-500">Belum ada cerita.</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {stories?.map((story) => {
+                    const readCount = Array.isArray(story.story_stats) ? story.story_stats[0]?.reads_count : (story.story_stats as any)?.reads_count;
+                    return (
+                      <tr key={story.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
+                        <td className="p-4 font-bold text-stone-800">{story.title}</td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${story.status === 'published' ? 'bg-teal-100 text-teal-dark' : 'bg-stone-200 text-stone-600'}`}>
+                            {story.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-stone-600 font-mono">
+                          {readCount || 0} kali
+                        </td>
+                        <td className="p-4 text-stone-600">
+                          Tier {story.tier || 1} 
+                          {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">🔒</span>}
+                        </td>
+                        <td className="p-4 flex gap-2 justify-end">
+                          <Button 
+                            variant="secondary" 
+                            className="!text-xs !py-1 !px-3"
+                            onClick={() => navigate(`/admin/konten/edit/${story.id}`)}
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            variant={story.tier_locked ? "primary" : "secondary"}
+                            className={`!text-xs !py-1 !px-3 ${story.tier_locked ? '!bg-amber-500 hover:!bg-amber-600 !border-amber-600' : ''}`}
+                            onClick={() => toggleLockMutation.mutate({ id: story.id, locked: !story.tier_locked })}
+                            disabled={toggleLockMutation.isPending}
+                          >
+                            {story.tier_locked ? 'Buka Tier (Terkunci)' : 'Kunci Tier'}
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {stories?.length === 0 && (
+                    <tr><td colSpan={5} className="p-8 text-center text-stone-500">Belum ada cerita.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
@@ -164,50 +155,52 @@ export function AdminKonten() {
           {loadingJobs ? (
             <div className="p-8 text-center animate-pulse text-stone-500">Memuat jobs...</div>
           ) : (
-            <table className="w-full text-left text-sm">
-              <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
-                <tr>
-                  <th className="p-4 font-bold">Jenis Task</th>
-                  <th className="p-4 font-bold">Status</th>
-                  <th className="p-4 font-bold">Error Info</th>
-                  <th className="p-4 font-bold text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs?.map((job) => (
-                  <tr key={job.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
-                    <td className="p-4 font-bold text-stone-800 uppercase text-xs">{job.kind}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                        job.status === 'failed' ? 'bg-red-100 text-red-600' : 
-                        job.status === 'running' ? 'bg-blue-100 text-blue-600' : 
-                        'bg-stone-100 text-stone-600'
-                      }`}>
-                        {job.status} ({job.attempts}x)
-                      </span>
-                    </td>
-                    <td className="p-4 text-xs text-stone-500 max-w-xs truncate" title={job.error || '-'}>
-                      {job.error || '-'}
-                    </td>
-                    <td className="p-4 text-right">
-                      {job.status === 'failed' && (
-                        <Button 
-                          variant="secondary" 
-                          className="!text-xs !py-1 !px-3"
-                          onClick={() => retryJobMutation.mutate(job.id)}
-                          disabled={retryJobMutation.isPending}
-                        >
-                          Coba Ulang
-                        </Button>
-                      )}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[700px]">
+                <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
+                  <tr>
+                    <th className="p-4 font-bold">Jenis Task</th>
+                    <th className="p-4 font-bold">Status</th>
+                    <th className="p-4 font-bold">Error Info</th>
+                    <th className="p-4 font-bold text-right">Aksi</th>
                   </tr>
-                ))}
-                {jobs?.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-stone-500">Tidak ada task yang aktif atau gagal. Semuanya bersih!</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {jobs?.map((job) => (
+                    <tr key={job.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
+                      <td className="p-4 font-bold text-stone-800 uppercase text-xs">{job.kind}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          job.status === 'failed' ? 'bg-red-100 text-red-600' : 
+                          job.status === 'running' ? 'bg-blue-100 text-blue-600' : 
+                          'bg-stone-100 text-stone-600'
+                        }`}>
+                          {job.status} ({job.attempts}x)
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs text-stone-500 max-w-xs truncate" title={job.error || '-'}>
+                        {job.error || '-'}
+                      </td>
+                      <td className="p-4 text-right">
+                        {job.status === 'failed' && (
+                          <Button 
+                            variant="secondary" 
+                            className="!text-xs !py-1 !px-3"
+                            onClick={() => retryJobMutation.mutate(job.id)}
+                            disabled={retryJobMutation.isPending}
+                          >
+                            Coba Ulang
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {jobs?.length === 0 && (
+                    <tr><td colSpan={4} className="p-8 text-center text-stone-500">Tidak ada task yang aktif atau gagal. Semuanya bersih!</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
