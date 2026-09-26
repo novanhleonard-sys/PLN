@@ -77,7 +77,7 @@ export function Search({ stories, onSelectStory, onSelectLocation }: SearchProps
   const showResults = (query.trim().length > 0 || isFilterActive) && !showFilters;
 
   return (
-    <div ref={wrapRef} className="absolute top-4 left-4 z-20 flex flex-col gap-2 font-nunito">
+    <div ref={wrapRef} className="absolute top-4 left-4 z-[60] flex flex-col gap-2 font-nunito">
       {/* Collapsed = pill with icons. Expanded = input bar */}
       <div className="flex items-center gap-2">
         <motion.div

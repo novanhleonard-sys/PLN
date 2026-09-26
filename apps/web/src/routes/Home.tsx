@@ -59,8 +59,13 @@ export default function Home() {
             onClose={() => { setSelectedStory(null); navigate('/'); }} 
           />
           
-          <MapStyleToggle isPainting={styleType === 'A'} onChange={(isA) => handleStyleChange(isA ? 'A' : 'B')} className="absolute bottom-6 left-6 z-20" />
-          <div className="absolute top-4 right-4 z-40">
+          {/* Bottom-left: map style toggle — z-30 so it stays above the sheet backdrop (z-40) but behind sheet panel (z-50) */}
+          <div className="absolute bottom-6 left-4 z-30">
+            <MapStyleToggle isPainting={styleType === 'A'} onChange={(isA) => handleStyleChange(isA ? 'A' : 'B')} />
+          </div>
+
+          {/* Top-right: user menu */}
+          <div className="absolute top-4 right-4 z-[60]">
             <UserMenu />
           </div>
         </>
