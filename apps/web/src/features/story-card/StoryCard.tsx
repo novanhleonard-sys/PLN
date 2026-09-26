@@ -316,7 +316,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
   if (isDesktop) {
     return (
-      <SidePanel isOpen={!!story} className="absolute top-0 bottom-0 left-0 z-30 h-full border-r border-stone-200">
+      <SidePanel isOpen={!!story} className="absolute top-0 bottom-0 left-0 z-[70] h-full border-r border-stone-200">
         <div className="h-full flex flex-col relative">
           <button onClick={onClose} aria-label="Tutup" className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/10 text-stone-600 hover:bg-black/20 z-20">
             <Icon name="X" size={16} />
