@@ -73,7 +73,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   const [isGateOpen, setIsGateOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [readHistory, setReadHistory] = useState<any>(null);
+  
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditPromptOpen, setIsEditPromptOpen] = useState(false);
@@ -98,8 +98,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     if (!user || !story) return;
     supabase.from('saved_stories').select('*').eq('user_id', user.id).eq('story_id', story.id).single()
       .then(({ data }) => setIsSaved(!!data));
-    supabase.from('read_history').select('*').eq('user_id', user.id).eq('version_id', story.versionId).single()
-      .then(({ data }) => setReadHistory(data));
+    
   }, [user, story]);
 
   useEffect(() => {
@@ -259,7 +258,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
           <div className="mt-auto pt-2 flex gap-3">
             <Button onClick={handleRead} variant="primary" className="flex-1 bg-[#1a7f84] hover:bg-[#136367] text-white font-bold h-12 rounded-xl text-base">
-              {readHistory ? `Lanjut baca` : story.versionCount > 1 ? 'Pilih versi' : 'Lanjut baca'}
+              {'Lanjut baca'}
             </Button>
             <button onClick={handleShare} className="w-12 h-12 flex-none flex items-center justify-center rounded-xl border border-stone-200 text-teal hover:bg-stone-50 transition-colors">
               <Icon name="Share2" size={20} />

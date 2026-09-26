@@ -3,17 +3,16 @@ import { useParams, Link } from 'react-router-dom';
 import { useStoryVersions, usePages, useReadHistory } from '../api/queries';
 import { useAuth } from '../../auth/AuthStore';
 import { supabase } from '../../../lib/supabase';
-import { SegmentedControl } from '../../../ui/basic/SegmentedControl';
 import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { GateModal } from '../../auth/GateModal';
 import { ProgressBar } from '../../../ui/basic/Misc';
 import { DongengMode } from '../dongeng/DongengMode';
-import { ReportButton } from '../../report/ReportButton';
-import { AdaptationModal } from '../adapt/AdaptationModal';
 import { Button } from '../../../ui/basic/Button';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
 import { useReadSessionTracker } from '../../analytics/useReadSessionTracker';
-
+import { useReaderStore, getThemeClasses } from '../store/useReaderStore';
+import { ReaderHeader } from './ReaderHeader';
+import { cn } from '../../../utils/cn';
 
 export const Baca: React.FC = () => {
   const { versionId } = useParams<{ versionId: string }>();
@@ -22,15 +21,18 @@ export const Baca: React.FC = () => {
   const { user } = useAuth();
   
   const [selectedAdaptation, setSelectedAdaptation] = useState<string | null>(null);
-  const [mode, setMode] = useState('Baca');
+  const [mode, setMode] = useState<'Baca' | 'Dongeng'>('Baca');
   const [gateOpen, setGateOpen] = useState(false);
-  const [adaptModalOpen, setAdaptModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   
   const isDesktop = useMediaQuery('(min-width: 768px)');
   
-  // Versions view (S05)
+  // Versions view (if user hits a link that has multiple bands and no history)
   const [showVersions, setShowVersions] = useState(false);
+
+  // Store 
+  const { theme, fontSize } = useReaderStore();
+  const themeClasses = getThemeClasses(theme);
 
   useEffect(() => {
     if (versionData?.adaptations && !selectedAdaptation) {
@@ -73,13 +75,13 @@ export const Baca: React.FC = () => {
   }, [currentPage, user, selectedAdaptation, versionData, versionId, pages]);
 
   if (isLoadingVersion || (selectedAdaptation && isLoadingPages)) {
-    return <div className="flex items-center justify-center h-screen bg-[#FDF9F1] font-nunito text-text-muted">Memuat cerita...</div>;
+    return <div className={cn("flex items-center justify-center h-screen font-nunito", themeClasses.bg, themeClasses.textMuted)}>Memuat cerita...</div>;
   }
 
   if (!versionData) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#FDF9F1] font-nunito">
-        <h2 className="text-2xl font-bold font-fredoka text-text-main mb-4">Cerita tidak ditemukan</h2>
+      <div className={cn("flex flex-col items-center justify-center h-screen font-nunito", themeClasses.bg)}>
+        <h2 className={cn("text-2xl font-bold font-fredoka mb-4", themeClasses.textMain)}>Cerita tidak ditemukan</h2>
         <Link to="/" className="px-4 py-2 bg-stone-800 text-stone-100 rounded-full">Kembali ke Peta</Link>
       </div>
     );
@@ -87,8 +89,8 @@ export const Baca: React.FC = () => {
   
   if (showVersions) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#FDF9F1] font-nunito p-4">
-        <h2 className="text-2xl font-bold font-fredoka text-text-main mb-8">Pilih Versi Bacaan</h2>
+      <div className={cn("flex flex-col items-center justify-center h-screen font-nunito p-4", themeClasses.bg)}>
+        <h2 className={cn("text-2xl font-bold font-fredoka mb-8", themeClasses.textMain)}>Pilih Versi Bacaan</h2>
         <div className="flex flex-col gap-4 w-full max-w-sm">
           {versionData.adaptations.map(ad => (
             <button 
@@ -97,7 +99,7 @@ export const Baca: React.FC = () => {
                 setSelectedAdaptation(ad.id);
                 setShowVersions(false);
               }}
-              className="px-6 py-4 bg-white border-2 border-border-light rounded-xl font-bold text-text-main hover:border-teal transition-colors"
+              className={cn("px-6 py-4 border-2 rounded-xl font-bold transition-colors hover:border-teal", themeClasses.surface, themeClasses.border, themeClasses.textMain)}
             >
               Versi {ad.age_band}
             </button>
@@ -109,8 +111,8 @@ export const Baca: React.FC = () => {
 
   if (!pages || pages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#FDF9F1] font-nunito">
-        <h2 className="text-xl text-text-muted">Halaman belum tersedia.</h2>
+      <div className={cn("flex flex-col items-center justify-center h-screen font-nunito", themeClasses.bg)}>
+        <h2 className={cn("text-xl", themeClasses.textMuted)}>Halaman belum tersedia.</h2>
         <Link to="/" className="mt-4 px-4 py-2 bg-stone-800 text-stone-100 rounded-full">Kembali</Link>
       </div>
     );
@@ -119,9 +121,8 @@ export const Baca: React.FC = () => {
   const page = pages[currentPage];
   if (!page) return null;
   
-  // Gate check (if pages is truncated by RLS)
   const currentAdapt = versionData.adaptations.find(a => a.id === selectedAdaptation);
-  const totalAdaptPages = currentAdapt?.total_pages || pages.length; // Fallback to pages.length
+  const totalAdaptPages = currentAdapt?.total_pages || pages.length; 
   
   const handleNext = () => {
     if (currentPage + 1 >= pages.length && pages.length < totalAdaptPages) {
@@ -131,7 +132,7 @@ export const Baca: React.FC = () => {
     setCurrentPage((p: number) => Math.min(pages.length - 1, p + 1));
   };
 
-  const handleModeChange = (newMode: string) => {
+  const handleModeChange = (newMode: 'Baca' | 'Dongeng') => {
     if (newMode === 'Dongeng' && !user) {
       setGateOpen(true);
       return;
@@ -139,47 +140,68 @@ export const Baca: React.FC = () => {
     setMode(newMode);
   };
 
-  const fontSize = isDesktop ? 'text-[20px]' : 'text-[18px]';
+  const fontSizeClass = fontSize === 'small' ? (isDesktop ? 'text-[18px]' : 'text-[16px]') :
+                        fontSize === 'large' ? (isDesktop ? 'text-[24px]' : 'text-[22px]') :
+                        (isDesktop ? 'text-[20px]' : 'text-[18px]');
 
   if (mode === 'Dongeng') {
-    return <DongengMode pages={pages} initialPage={currentPage} versionTitle={versionData.version.story.title} onBack={() => setMode('Baca')} adaptation={currentAdapt} totalAdaptPages={totalAdaptPages} onHitPaywall={() => setGateOpen(true)} />;
+    return (
+      <DongengMode 
+        pages={pages} 
+        initialPage={currentPage} 
+        versionTitle={versionData.version.story.title} 
+        onBack={() => setMode('Baca')} 
+        adaptation={currentAdapt} 
+        totalAdaptPages={totalAdaptPages} 
+        onHitPaywall={() => setGateOpen(true)} 
+                versionId={versionId!}
+        onAdaptationReady={setSelectedAdaptation}
+      />
+    );
   }
   
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#FDF9F1] overflow-hidden relative">
-      <header className="flex-none p-4 flex flex-col md:flex-row items-start md:items-center justify-between border-b border-border-light gap-4 bg-white z-10 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link to="/" aria-label="Kembali ke Beranda" className="w-10 h-10 flex items-center justify-center rounded-full bg-cream text-text-main hover:bg-stone-200">
-            &larr;
-          </Link>
-          <h1 className="font-fredoka text-lg md:text-xl font-bold text-text-main line-clamp-1">
-              {versionData.version.story.title}
-            </h1>
-            <ReportButton targetType={selectedAdaptation ? 'adaptation' : 'version'} targetId={selectedAdaptation || versionId || ''} />
-        </div>
-        <div className="flex items-center gap-4 self-end md:self-auto">
-          <Button size="sm" variant="secondary" onClick={() => setAdaptModalOpen(true)} className="!bg-teal/10 !text-teal !border-transparent hover:!bg-teal/20">Sesuaikan</Button>
-          <SegmentedControl options={['Baca', 'Dongeng']} value={mode} onChange={handleModeChange} />
-        </div>
-      </header>
-      
-      <AdaptationBanner 
-        band={currentAdapt?.age_band || 'asli'} 
-        onViewOriginal={() => {
-           const asli = versionData.adaptations.find(a => a.age_band === 'asli') || versionData.adaptations[0];
-           if (asli) setSelectedAdaptation(asli.id);
-        }} 
+    <div className={cn("flex flex-col h-[100dvh] overflow-hidden relative transition-colors duration-300", themeClasses.bg)}>
+      {/* Progress bar */}
+      <div className="absolute top-0 left-0 w-full z-50">
+        <ProgressBar progress={((currentPage + 1) / totalAdaptPages) * 100} />
+      </div>
+
+      <ReaderHeader 
+        title={versionData.version.story.title}
+        mode={mode}
+        onModeChange={handleModeChange}
+        themeClasses={themeClasses}
+        
+        versionId={versionId!}
+        adaptationId={selectedAdaptation || ''}
+        onAdaptationReady={(id) => { setSelectedAdaptation(id); setCurrentPage(0); }}
       />
       
-      <main className="flex-1 flex flex-col sm:max-[768px]:flex-col md:max-h-full min-[768px]:portrait:flex-col min-[768px]:landscape:flex-row overflow-hidden relative">
+      {currentAdapt?.age_band && currentAdapt.age_band !== 'asli' && (
+        <AdaptationBanner 
+          band={currentAdapt.age_band} 
+          onViewOriginal={() => {
+             const asli = versionData.adaptations.find(a => a.age_band === 'asli') || versionData.adaptations[0];
+             if (asli) setSelectedAdaptation(asli.id);
+          }} 
+        />
+      )}
+      
+      <main className="flex-1 flex flex-col sm:max-[768px]:flex-col md:max-h-[calc(100vh-4rem)] min-[768px]:portrait:flex-col min-[768px]:landscape:flex-row overflow-hidden relative">
         {/* Visual / Image Area */}
-        <div className="flex-1 relative flex items-center justify-center bg-stone-100 min-h-[30vh]">
+        <div className="flex-1 relative flex items-center justify-center bg-black/5 min-h-[30vh]">
           {page.scene?.image_status === 'ready' && page.scene.image_path ? (
-            <img src={page.scene.image_path} alt={page.scene.description || 'Ilustrasi cerita'} loading="lazy" className="w-full h-full object-cover" />
+            <img 
+              src={page.scene.image_path} 
+              alt={page.scene.description || 'Ilustrasi cerita'} 
+              loading="lazy" 
+              className={cn("w-full h-full object-cover transition-all duration-500", themeClasses.imageFilter)} 
+            />
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-200/50">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10">
                 <img src={`/assets/fallback_bg_${(versionData.version.story.id.charCodeAt(0) % 5) + 1}.svg`} alt="Sedang disiapkan" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
-                <span className="text-sm font-nunito text-text-muted mb-2 relative z-10 bg-white/80 px-3 py-1 rounded-full">Ilustrasi sedang disiapkan</span>
+                <span className="text-sm font-nunito text-stone-500 mb-2 relative z-10 bg-white/80 px-3 py-1 rounded-full">Ilustrasi sedang disiapkan</span>
               </div>
           )}
           <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 backdrop-blur text-white/90 text-xs rounded-md font-nunito font-semibold">
@@ -188,17 +210,17 @@ export const Baca: React.FC = () => {
         </div>
         
         {/* Text Area */}
-        <div className="flex-1 flex flex-col min-h-[30vh] bg-white">
+        <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300", themeClasses.surface)}>
           <div className="flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative">
-            <p className={`font-nunito ${fontSize} text-text-main leading-relaxed max-w-2xl mx-auto w-full`}>
+            <p className={cn("font-nunito leading-relaxed max-w-2xl mx-auto w-full transition-all duration-300", fontSizeClass, themeClasses.textMain)}>
               {page.text}
             </p>
           </div>
           
           {/* Controls */}
-          <div className="flex-none p-4 flex items-center justify-between border-t border-border-light bg-cream">
-            <Button variant="secondary" disabled={currentPage === 0} onClick={() => setCurrentPage((p: number) => Math.max(0, p - 1))}>Sebelumnya</Button>
-            <div className="font-nunito text-sm text-text-muted font-bold">
+          <div className={cn("flex-none p-4 flex items-center justify-between border-t transition-colors duration-300", themeClasses.navBg, themeClasses.border)}>
+            <Button variant="secondary" className="!bg-black/5 !border-transparent hover:!bg-black/10 text-inherit" disabled={currentPage === 0} onClick={() => setCurrentPage((p: number) => Math.max(0, p - 1))}>Sebelumnya</Button>
+            <div className={cn("font-nunito text-sm font-bold", themeClasses.textMuted)}>
               {currentPage + 1} / {totalAdaptPages}
             </div>
             <Button variant="primary" disabled={currentPage === pages.length - 1 && pages.length === totalAdaptPages} onClick={handleNext}>Selanjutnya</Button>
@@ -206,29 +228,11 @@ export const Baca: React.FC = () => {
         </div>
       </main>
       
-      {/* Progress bar */}
-        <div className="absolute top-0 left-0 w-full z-50">
-          <ProgressBar progress={((currentPage + 1) / totalAdaptPages) * 100} />
-        </div>
-        
-        <GateModal 
+      <GateModal 
         isOpen={gateOpen} 
-        onClose={() => setGateOpen(false)} 
-        message="Anda telah mencapai batas halaman gratis untuk sesi ini. Silakan masuk untuk membaca sampai tamat."
-      />
-      
-      <AdaptationModal
-        isOpen={adaptModalOpen}
-        onClose={() => setAdaptModalOpen(false)}
-        versionId={versionId!}
-        onAdaptationReady={(id) => setSelectedAdaptation(id)}
+        onClose={() => setGateOpen(false)}
+        message="Daftar atau masuk untuk membaca seluruh cerita ini."
       />
     </div>
   );
 };
-
-
-
-
-
-
