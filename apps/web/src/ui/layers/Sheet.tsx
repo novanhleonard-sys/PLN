@@ -42,12 +42,12 @@ export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }:
           <motion.div
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={0.2}
+            dragElastic={0.35}
             onDragEnd={handleDragEnd}
             initial={{ y: '100%' }}
             animate={{ y: '0%' }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            transition={{ type: 'spring', damping: 18, stiffness: 140 }}
             className="fixed bottom-0 left-0 right-0 h-[55vh] max-h-[92vh] bg-white rounded-t-3xl shadow-warm-lg z-50 flex flex-col"
           >
             <div className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing group">

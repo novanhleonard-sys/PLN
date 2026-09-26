@@ -240,20 +240,17 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
             <h3 className="font-fredoka font-bold text-lg text-stone-800 mb-2">Edit Cerita</h3>
             <p className="text-sm text-stone-500 mb-6">Apakah Anda ingin memperbaiki versi yang mana?</p>
             <div className="flex flex-col gap-3">
-              {storyVersions.length > 1 ? (
+              {storyVersions.length > 0 ? (
                 <>
                   {storyVersions.map((v) => (
                     <Button key={v.id} onClick={() => goToEdit(v.id)} variant="primary" className="w-full h-auto py-2">
-                      Edit Versi {v.label || new Date(v.created_at).toLocaleDateString()} {v.status === 'published' ? '(Aktif)' : ''}
+                      Edit Versi {v.label || new Date(v.created_at).toLocaleDateString('id-ID')}{v.status === 'published' ? ' (Aktif)' : ''}
                     </Button>
                   ))}
                   <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
                 </>
               ) : (
-                <>
-                  <Button onClick={() => goToEdit(story!.versionId || 'default')} variant="primary" className="w-full">Edit versi ini</Button>
-                  <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
-                </>
+                <Button onClick={() => goToEdit(story!.versionId ?? null)} variant="primary" className="w-full">Edit Versi Ini</Button>
               )}
               <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full mt-2">Batal</Button>
             </div>
@@ -276,7 +273,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
             />
             <div className="flex gap-2">
               <Button onClick={() => setIsReportPromptOpen(false)} variant="ghost" className="flex-1">Batal</Button>
-              <Button onClick={submitReport} variant="primary" className="flex-1 bg-coral hover:bg-coral/90 border-none text-white">Kirim</Button>
+              <Button onClick={submitReport} variant="primary" className="flex-1 !bg-red-500 hover:!bg-red-600 !border-red-500 text-white">Kirim</Button>
             </div>
           </div>
         </div>
