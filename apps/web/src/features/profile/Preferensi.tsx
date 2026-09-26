@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
+import { useReaderStore } from '../reader/store/useReaderStore';
 import { Modal } from '../../ui/layers/Modal';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mapStyle, setMapStyle] = useState('kartun');
+  const { fontSize, setFontSize, dongengSpeed, setDongengSpeed } = useReaderStore();
   const [loadingMap, setLoadingMap] = useState(false);
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -116,11 +118,10 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Ukuran Teks</div>
                 <div className="text-sm text-stone-500">Sesuaikan besarnya teks saat membaca cerita</div>
               </div>
-              <select className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
-                <option>Kecil</option>
-                <option selected>Sedang</option>
-                <option>Besar</option>
-                <option>Ekstra Besar</option>
+              <select value={fontSize} onChange={(e) => setFontSize(e.target.value as any)} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+                <option value="small">Kecil</option>
+                <option value="normal">Sedang</option>
+                <option value="large">Besar</option>
               </select>
             </div>
 
@@ -129,11 +130,11 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Kecepatan Narasi</div>
                 <div className="text-sm text-stone-500">Atur kecepatan pembacaan audio dongeng</div>
               </div>
-              <select className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
-                <option>0.75x</option>
-                <option selected>1x (Normal)</option>
-                <option>1.25x</option>
-                <option>1.5x</option>
+              <select value={dongengSpeed} onChange={(e) => setDongengSpeed(Number(e.target.value))} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+                <option value={0.75}>0.75x</option>
+                <option value={1}>1x (Normal)</option>
+                <option value={1.25}>1.25x</option>
+                <option value={1.5}>1.5x</option>
               </select>
             </div>
             

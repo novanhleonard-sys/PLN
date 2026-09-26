@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase } from '../../../lib/supabase';
 
 export type ReaderTheme = 'terang' | 'hangat' | 'gelap';
 export type FontSize = 'small' | 'normal' | 'large';
@@ -21,13 +22,29 @@ interface ReaderState {
   setDongengShowText: (show: boolean) => void;
   setDongengSpeed: (speed: number) => void;
   
-  // For syncing with DB preferences when user logs in
   syncPreferences: (prefs: Partial<ReaderState>) => void;
 }
 
+const syncToDB = async (state: any) => {
+  const { data } = await supabase.auth.getSession();
+  const user = data?.session?.user;
+  if (!user) return;
+  
+  const prefs = {
+    theme: state.theme,
+    fontSize: state.fontSize,
+    backgroundAudio: state.backgroundAudio,
+    dongengImageMode: state.dongengImageMode,
+    dongengShowText: state.dongengShowText,
+    dongengSpeed: state.dongengSpeed
+  };
+  
+  await supabase.from('profiles').update({ reading_preferences: prefs }).eq('id', user.id);
+};
+
 export const useReaderStore = create<ReaderState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       theme: 'terang',
       fontSize: 'normal',
       backgroundAudio: 'mati',
@@ -35,12 +52,12 @@ export const useReaderStore = create<ReaderState>()(
       dongengShowText: true,
       dongengSpeed: 1,
       
-      setTheme: (theme) => set({ theme }),
-      setFontSize: (fontSize) => set({ fontSize }),
-      setBackgroundAudio: (backgroundAudio) => set({ backgroundAudio }),
-      setDongengImageMode: (dongengImageMode) => set({ dongengImageMode }),
-      setDongengShowText: (dongengShowText) => set({ dongengShowText }),
-      setDongengSpeed: (dongengSpeed) => set({ dongengSpeed }),
+      setTheme: (theme) => { set({ theme }); syncToDB(get()); },
+      setFontSize: (fontSize) => { set({ fontSize }); syncToDB(get()); },
+      setBackgroundAudio: (backgroundAudio) => { set({ backgroundAudio }); syncToDB(get()); },
+      setDongengImageMode: (dongengImageMode) => { set({ dongengImageMode }); syncToDB(get()); },
+      setDongengShowText: (dongengShowText) => { set({ dongengShowText }); syncToDB(get()); },
+      setDongengSpeed: (dongengSpeed) => { set({ dongengSpeed }); syncToDB(get()); },
       
       syncPreferences: (prefs) => set((state) => ({ ...state, ...prefs })),
     }),

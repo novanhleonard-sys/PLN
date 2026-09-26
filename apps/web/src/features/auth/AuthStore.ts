@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../../lib/supabase';
+import { useReaderStore } from '../reader/store/useReaderStore';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthState {
@@ -19,6 +20,14 @@ export const useAuth = create<AuthState>((set) => ({
   initialize: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     set({ user: session?.user || null, session, isInitialized: true });
+    if (session?.user) {
+      supabase.from('profiles').select('reading_preferences').eq('id', session.user.id).single()
+        .then(({ data }) => {
+           if (data && data.reading_preferences && Object.keys(data.reading_preferences).length > 0) {
+             useReaderStore.getState().syncPreferences(data.reading_preferences);
+           }
+        });
+    }
     if (session?.user) { supabase.from('profiles').select('preferred_map_style').eq('id', session.user.id).single().then(({ data }) => { if (data?.preferred_map_style) localStorage.setItem('pln_map_style', data.preferred_map_style); }); }
     
     supabase.auth.onAuthStateChange((_event, session) => {
