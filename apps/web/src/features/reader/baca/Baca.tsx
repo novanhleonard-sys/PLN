@@ -11,6 +11,7 @@ import { Button } from '../../../ui/basic/Button';
 import { AdaptationBanner } from '../adapt/AdaptationBanner';
 import { useReadSessionTracker } from '../../analytics/useReadSessionTracker';
 import { useReaderStore, getThemeClasses } from '../store/useReaderStore';
+import { useAmbientSound } from './useAmbientSound';
 import { ReaderHeader } from './ReaderHeader';
 import { cn } from '../../../utils/cn';
 
@@ -33,6 +34,9 @@ export const Baca: React.FC = () => {
   // Store 
   const { theme, fontSize } = useReaderStore();
   const themeClasses = getThemeClasses(theme);
+
+  // Ambient sound hook
+  useAmbientSound(mode);
 
   useEffect(() => {
     if (versionData?.adaptations && !selectedAdaptation) {
