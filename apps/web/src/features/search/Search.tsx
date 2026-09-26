@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import MiniSearch from 'minisearch';
 import type { StoryPin } from '../map/useStories';
 import { Input } from '../../ui/basic/Input';
@@ -121,7 +121,7 @@ export function Search({ stories, onSelectStory, onSelectLocation }: SearchProps
               className="w-4 h-4 text-teal rounded focus:ring-teal cursor-pointer"
             />
             <label htmlFor="filter-audio" className="text-sm text-stone-700 cursor-pointer select-none">
-              Hanya yang memiliki Audio
+              Memiliki audio
             </label>
           </div>
         </div>
@@ -153,7 +153,7 @@ export function Search({ stories, onSelectStory, onSelectLocation }: SearchProps
                 </div>
                 <div className="text-left">
                   <div className="text-sm font-semibold text-stone-900">{res.title}</div>
-                  <div className="text-xs text-stone-500">{res.region} &bull; {res.type} {res.dongengReady ? ' � ??' : ''}</div>
+                  <div className="text-xs text-stone-500">{res.region} &bull; {res.type} {res.dongengReady ? ' • ??' : ''}</div>
                 </div>
               </Button>
             ))
