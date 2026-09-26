@@ -1,9 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from './AuthStore';
 import { Icon } from '../../ui/basic/Icon';
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
 
 export const UserMenu = () => {
   const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data }) => {
+        if (data?.role === 'admin') setIsAdmin(true);
+      });
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -34,6 +45,11 @@ export const UserMenu = () => {
           <Link to="/kontribusi" className="px-4 py-3 text-stone-700 hover:bg-stone-50 hover:text-teal font-bold transition-colors border-t border-stone-100">
             Kontribusi
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="px-4 py-3 text-teal hover:bg-stone-50 hover:text-teal-dark font-bold transition-colors border-t border-stone-100 flex items-center gap-2">
+              <Icon name="Shield" size={16} /> Admin Center
+            </Link>
+          )}
           <Link to="/pengaturan" className="px-4 py-3 text-stone-700 hover:bg-stone-50 hover:text-teal font-bold transition-colors border-t border-stone-100">
             Pengaturan
           </Link>
