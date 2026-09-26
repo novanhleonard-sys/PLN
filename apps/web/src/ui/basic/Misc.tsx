@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { cn } from '../../utils/cn';
+import { Icon } from './Icon';
 
 
 export function ProgressBar({ progress, label, className }: { progress: number, label?: string, className?: string }) {
@@ -91,7 +92,12 @@ export function MapPin({ type, title, imageUrl, onClick, className }: {
                 onError={() => setImgError(true)}
               />
             ) : (
-              <div className="w-full h-full bg-black/20" />
+              <div className="w-full h-full flex items-center justify-center text-white opacity-90">
+                {type === 'dongeng' && <Icon name="BookOpenText" size={12} />}
+                {type === 'fabel' && <Icon name="PawPrint" size={12} />}
+                {type === 'mite' && <Icon name="Moon" size={12} />}
+                {type === 'legenda' && <Icon name="Mountain" size={12} />}
+              </div>
             )}
           </div>
         </div>
