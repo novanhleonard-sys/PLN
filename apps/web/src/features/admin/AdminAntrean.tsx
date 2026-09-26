@@ -132,7 +132,7 @@ export function AdminAntrean() {
                   className="w-full border border-stone-300 rounded-xl px-4 py-2 focus:border-red-500 outline-none text-sm"
                 />
                 <Button 
-                  variant="outline" 
+                  variant="secondary" 
                   className="!text-red-600 !border-red-200 hover:!bg-red-50 w-full"
                   disabled={!rejectReason.trim() || rejectMutation.isPending}
                   onClick={() => rejectMutation.mutate(selectedSub.id)}

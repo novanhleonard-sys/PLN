@@ -119,12 +119,12 @@ export function AdminKonten() {
                       </span>
                     </td>
                     <td className="p-4 text-stone-600">
-                      Tier {story.story_stats?.tier || 1} 
+                      Tier {(Array.isArray(story.story_stats) ? story.story_stats[0]?.tier : (story.story_stats as any)?.tier) || 1} 
                       {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">??</span>}
                     </td>
                     <td className="p-4 flex gap-2 justify-end">
                       <Button 
-                        variant="outline" 
+                        variant="secondary" 
                         className="!text-xs !py-1 !px-3"
                         onClick={() => toggleLockMutation.mutate({ id: story.id, locked: !story.tier_locked })}
                         disabled={toggleLockMutation.isPending}
@@ -184,7 +184,7 @@ export function AdminKonten() {
                     <td className="p-4 text-right">
                       {job.status === 'failed' && (
                         <Button 
-                          variant="outline" 
+                          variant="secondary" 
                           className="!text-xs !py-1 !px-3"
                           onClick={() => retryJobMutation.mutate(job.id)}
                           disabled={retryJobMutation.isPending}
