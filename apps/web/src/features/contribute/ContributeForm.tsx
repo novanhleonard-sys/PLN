@@ -8,7 +8,24 @@ import { Icon } from '../../ui/basic/Icon';
 
 const STEPS = ['Info', 'Teks', 'Sumber', 'Hak', 'Tinjau'];
 
-export const ContributeForm = () => {
+export interface ContributeFormData {
+  title: string;
+  type: string;
+  region_id: string;
+  version_label: string;
+  body: string;
+  sources: any[];
+  rights_declared: boolean;
+}
+
+export interface ContributeFormProps {
+  initialData?: Partial<ContributeFormData>;
+  onSubmitOverride?: (data: ContributeFormData) => Promise<void>;
+  isEditMode?: boolean;
+  onCancel?: () => void;
+}
+
+export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCancel }: ContributeFormProps = {}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -17,17 +34,17 @@ export const ContributeForm = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Form State
-  const [formData, setFormData] = useState({
-    title: '',
-    type: 'legenda',
-    region_id: '',
-    version_label: '',
-    body: '',
-    sources: [{ type: 'buku', citation: '', author: '' }],
-    rights_declared: false
+  const [formData, setFormData] = useState<ContributeFormData>({
+    title: initialData?.title || '',
+    type: initialData?.type || 'legenda',
+    region_id: initialData?.region_id || '',
+    version_label: initialData?.version_label || '',
+    body: initialData?.body || '',
+    sources: initialData?.sources || [{ type: 'buku', citation: '', author: '' }],
+    rights_declared: initialData?.rights_declared || false
   });
 
-  const updateForm = (key: string, value: any) => {
+  const updateForm = (key: keyof ContributeFormData, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
@@ -39,23 +56,27 @@ export const ContributeForm = () => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('submit_contribution', {
-        body: {
-          title: formData.title,
-          type: formData.type,
-          region_id: formData.region_id || null,
-          version_label: formData.version_label,
-          body: formData.body,
-          sources: formData.sources,
-          rights_declared: formData.rights_declared
-        }
-      });
+      if (onSubmitOverride) {
+        await onSubmitOverride(formData);
+      } else {
+        const { data, error: fnError } = await supabase.functions.invoke('submit_contribution', {
+          body: {
+            title: formData.title,
+            type: formData.type,
+            region_id: formData.region_id || null,
+            version_label: formData.version_label,
+            body: formData.body,
+            sources: formData.sources,
+            rights_declared: formData.rights_declared
+          }
+        });
 
-      if (fnError) throw new Error(fnError.message);
-      if (data?.error) throw new Error(data.error);
+        if (fnError) throw new Error(fnError.message);
+        if (data?.error) throw new Error(data.error);
 
-      // Success
-      navigate('/profil/kontribusi');
+        // Success
+        navigate('/profil/kontribusi');
+      }
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan');
     } finally {
@@ -201,7 +222,7 @@ export const ContributeForm = () => {
 
         {/* Footer Actions */}
         <div className="border-t border-border-light p-4 bg-stone-50 flex justify-between">
-          <Button variant="secondary" onClick={step === 0 ? () => navigate(-1) : handlePrev} disabled={isSubmitting}>
+          <Button variant="secondary" onClick={step === 0 ? (onCancel || (() => navigate(-1))) : handlePrev} disabled={isSubmitting}>
             {step === 0 ? 'Batal' : 'Kembali'}
           </Button>
           
@@ -209,7 +230,7 @@ export const ContributeForm = () => {
             <Button variant="primary" onClick={handleNext}>Lanjut</Button>
           ) : (
             <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting || !formData.rights_declared}>
-              {isSubmitting ? 'Mengirim...' : 'Kirim Kontribusi'}
+              {isSubmitting ? 'Menyimpan...' : (isEditMode ? 'Simpan Perubahan' : 'Kirim Kontribusi')}
             </Button>
           )}
         </div>

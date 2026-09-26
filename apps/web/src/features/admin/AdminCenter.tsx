@@ -5,6 +5,7 @@ import { AdminPengaturan } from './AdminPengaturan';
 import { AdminKelola } from './AdminKelola';
 import { AdminAntrean } from './AdminAntrean';
 import { AdminKonten } from './AdminKonten';
+import { AdminEditKonten } from './AdminEditKonten';
 import { AdminGayaAI } from './AdminGayaAI';
 
 export function AdminCenter() {
@@ -15,6 +16,7 @@ export function AdminCenter() {
         <Route path="/dashboard" element={<AdminDashboard />} />
         <Route path="/antrean" element={<AdminAntrean />} />
         <Route path="/konten" element={<AdminKonten />} />
+        <Route path="/konten/edit/:id" element={<AdminEditKonten />} />
         <Route path="/gaya-ai" element={<AdminGayaAI />} />
         <Route path="/pengaturan" element={<AdminPengaturan />} />
         <Route path="/kelola" element={<AdminKelola />} />

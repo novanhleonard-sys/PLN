@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
 import { Toast } from '../../ui/basic/Toast';
 
 export function AdminKonten() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [toast, setToast] = useState('');
   const [tab, setTab] = useState<'stories' | 'jobs'>('stories');
@@ -122,6 +124,13 @@ export function AdminKonten() {
                       {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">🔒</span>}
                     </td>
                     <td className="p-4 flex gap-2 justify-end">
+                      <Button 
+                        variant="secondary" 
+                        className="!text-xs !py-1 !px-3"
+                        onClick={() => navigate(`/admin/konten/edit/${story.id}`)}
+                      >
+                        Edit
+                      </Button>
                       <Button 
                         variant="secondary" 
                         className="!text-xs !py-1 !px-3"
