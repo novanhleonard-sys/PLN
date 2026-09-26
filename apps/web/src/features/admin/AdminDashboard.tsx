@@ -12,6 +12,7 @@ export function AdminDashboard() {
   });
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [tempStart, setTempStart] = useState<Date | null>(null);
+  const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const pickerRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(true);
@@ -36,10 +37,20 @@ export function AdminDashboard() {
   }, [isPickerOpen]);
 
   const getDaysInMonth = () => {
-    const y = today.getFullYear();
-    const m = today.getMonth();
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
     const days = new Date(y, m + 1, 0).getDate();
     return Array.from({length: days}, (_, i) => new Date(y, m, i + 1));
+  };
+
+  const prevMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+  
+  const nextMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
   };
 
   const fetchData = async () => {
@@ -153,7 +164,10 @@ export function AdminDashboard() {
         <div className="relative z-50" ref={pickerRef}>
           <button 
             onClick={() => {
-              if (!isPickerOpen) setTempStart(null);
+              if (!isPickerOpen) {
+                setTempStart(null);
+                setViewDate(new Date(dateRange.start.getFullYear(), dateRange.start.getMonth(), 1));
+              }
               setIsPickerOpen(!isPickerOpen);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-stone-200 rounded-xl shadow-sm text-sm font-bold text-stone-700 hover:border-teal transition-colors"
@@ -164,8 +178,16 @@ export function AdminDashboard() {
           
           {isPickerOpen && (
             <div className="absolute right-0 top-full mt-2 bg-white border border-stone-200 rounded-xl shadow-lg p-4 w-72">
-              <div className="text-sm font-bold text-stone-800 mb-2 text-center">
-                {today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+              <div className="flex justify-between items-center mb-2">
+                <button onClick={prevMonth} className="p-1 hover:bg-stone-100 rounded text-stone-500 transition-colors">
+                  <Icon name="ChevronLeft" size={16} />
+                </button>
+                <div className="text-sm font-bold text-stone-800 text-center">
+                  {viewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                </div>
+                <button onClick={nextMonth} className="p-1 hover:bg-stone-100 rounded text-stone-500 transition-colors">
+                  <Icon name="ChevronRight" size={16} />
+                </button>
               </div>
               <div className="text-xs text-stone-500 mb-4 text-center">
                 {!tempStart ? 'Pilih Tanggal Mulai' : 'Pilih Tanggal Selesai'}
@@ -174,7 +196,7 @@ export function AdminDashboard() {
                 <div>M</div><div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div>
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {Array.from({length: new Date(today.getFullYear(), today.getMonth(), 1).getDay()}).map((_, i) => (
+                {Array.from({length: new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay()}).map((_, i) => (
                   <div key={`empty-${i}`} />
                 ))}
                 {getDaysInMonth().map((d, i) => {
@@ -278,7 +300,7 @@ export function AdminDashboard() {
               <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(aiCost.byStage).map(([stage, cost]) => (
                   <div key={stage} className="bg-stone-50 p-3 rounded-xl border border-stone-100">
-                    <div className="text-sm font-black text-stone-700">$${cost.toFixed(4)}</div>
+                    <div className="text-sm font-black text-stone-700">${cost.toFixed(4)}</div>
                     <div className="text-[10px] font-bold text-stone-500 uppercase tracking-wider truncate">{stage}</div>
                   </div>
                 ))}
