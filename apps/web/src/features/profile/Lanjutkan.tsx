@@ -17,7 +17,7 @@ export function Lanjutkan() {
         .from('read_history')
         .select('*, story:stories(id, title, type), version:story_versions(id, label)')
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false });
+        .order('last_read_at', { ascending: false });
         
       if (error) throw error;
       // Filter uncompleted stories (last_page < total_pages)

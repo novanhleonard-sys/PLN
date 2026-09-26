@@ -128,7 +128,7 @@ export function AdminGayaAI() {
             <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-2">{voiceForm.id ? 'Edit Persona' : 'Buat Persona'}</h3>
             <div className="grid grid-cols-2 gap-4">
               <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (Bapak Tua)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
-              <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark font-mono" placeholder="Voice ID (id-ID-Wavenet-B)" value={voiceForm.voice_name} onChange={e => setVoiceForm({...voiceForm, voice_name: e.target.value})} />
+              <div className="relative"><input className="w-full px-4 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-sm outline-none text-stone-500 font-mono" placeholder="Voice ID (Otomatis)" value={voiceForm.voice_name} readOnly /><span className="absolute right-3 top-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-bold">AUTO</span></div>
             </div>
             <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.region_group || ''} onChange={e => setVoiceForm({...voiceForm, region_group: e.target.value})}><option value="">Daerah: Global</option><option value="jawa">Jawa</option><option value="sumatra">Sumatra</option><option value="kalimantan">Kalimantan</option><option value="sulawesi">Sulawesi</option><option value="papua">Papua</option><option value="nusa_bali">Nusa Tenggara & Bali</option><option value="maluku">Maluku</option></select></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Deskripsi karakter (Suara berat, pelan...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
             
@@ -151,7 +151,8 @@ export function AdminGayaAI() {
             <div>
               <div className="flex justify-between mb-1">
                 <h4 className="font-bold text-stone-800">{item.name}</h4>
-                <span className="text-xs bg-stone-100 px-2 py-0.5 rounded text-stone-600 uppercase">{tab === 'styles' ? item.story_type : item.voice_name}</span>
+                <span className="text-xs bg-stone-100 px-2 py-0.5 rounded text-stone-600 uppercase">{tab === 'styles' ? item.story_type : item.story_type}</span>
+                {item.region_group && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded uppercase">{item.region_group}</span>}
               </div>
               <p className="text-xs text-stone-500 line-clamp-2">{tab === 'styles' ? item.descriptor : item.style_prompt}</p>
             </div>
