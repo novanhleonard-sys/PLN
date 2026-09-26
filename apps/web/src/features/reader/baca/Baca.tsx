@@ -130,7 +130,7 @@ export const Baca: React.FC = () => {
   const fontSize = isDesktop ? 'text-[20px]' : 'text-[18px]';
 
   if (mode === 'Dongeng') {
-    return <DongengMode pages={pages} initialPage={currentPage} versionTitle={versionData.version.story.title} onBack={() => setMode('Baca')} adaptation={currentAdapt} />;
+    return <DongengMode pages={pages} initialPage={currentPage} versionTitle={versionData.version.story.title} onBack={() => setMode('Baca')} adaptation={currentAdapt} totalAdaptPages={totalAdaptPages} onHitPaywall={() => setGateOpen(true)} />;
   }
   
   return (

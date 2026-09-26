@@ -6,6 +6,7 @@ import { Search } from '../features/search/Search';
 import { StoryCard } from '../features/story-card/StoryCard';
 import { useStories, type StoryPin } from '../features/map/useStories';
 import { MapStyleToggle } from '../ui/basic/Misc';
+import { UserMenu } from '../features/auth/UserMenu';
 
 export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
@@ -59,6 +60,9 @@ export default function Home() {
           />
           
           <MapStyleToggle isPainting={styleType === 'A'} onChange={(isA) => handleStyleChange(isA ? 'A' : 'B')} className="absolute bottom-6 left-6 z-20" />
+          <div className="absolute top-6 right-6 z-40">
+            <UserMenu />
+          </div>
         </>
       )}
     </div>

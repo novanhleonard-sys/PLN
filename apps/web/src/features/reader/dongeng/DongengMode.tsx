@@ -5,7 +5,7 @@ import { usePageAudio } from '../api/queries';
 import { supabase } from '../../../lib/supabase';
 import { Icon } from '../../../ui/basic/Icon';
 
-export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptation }: any) => {
+export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptation, totalAdaptPages, onHitPaywall }: any) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showSubtitles, setShowSubtitles] = useState(true);
@@ -28,6 +28,14 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
       }
     }
   }, [isPlaying, speed, currentPage, audioData]);
+
+  const handleNext = () => {
+    if (currentPage + 1 >= pages.length && pages.length < (totalAdaptPages || pages.length)) {
+      if (onHitPaywall) onHitPaywall();
+      return;
+    }
+    setCurrentPage((p: number) => Math.min(pages.length - 1, p + 1));
+  };
 
   const handleAudioEnded = () => {
     if (currentPage < pages.length - 1) {
@@ -161,8 +169,8 @@ export const DongengMode = ({ pages, initialPage, versionTitle, onBack, adaptati
           </button>
           
           <button
-            disabled={currentPage === pages.length - 1}
-            onClick={() => setCurrentPage((p: number) => p + 1)}
+            disabled={currentPage === pages.length - 1 && pages.length === (totalAdaptPages || pages.length)}
+            onClick={handleNext}
             aria-label="Selanjutnya"
             className="w-12 h-12 rounded-full flex items-center justify-center transition-all bg-white/20 text-white hover:bg-white/30 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100"
           >
