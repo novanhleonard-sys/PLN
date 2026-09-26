@@ -8,7 +8,7 @@ import { Icon } from '../../ui/basic/Icon';
 import { Modal } from '../../ui/layers/Modal';
 
 type StyleConfig = { id?: string; name: string; story_type: string; region_group: string | null; descriptor: string; reference_paths: string[]; };
-type VoicePersona = { id?: string; name: string; voice_name: string; style_prompt: string; sample_path: string; };
+type VoicePersona = { id?: string; name: string; story_type: string; region_group: string | null; voice_name: string; style_prompt: string; sample_path: string; };
 
 const SCENE_TEMPLATES = [
   { id: 'custom', label: 'Tulis Sendiri...', text: '' },
@@ -27,7 +27,7 @@ export function AdminGayaAI() {
 
   // States
   const [styleForm, setStyleForm] = useState<StyleConfig>({ name: '', story_type: 'legenda', region_group: '', descriptor: '', reference_paths: [] });
-  const [voiceForm, setVoiceForm] = useState<VoicePersona>({ name: '', voice_name: '', style_prompt: '', sample_path: '' });
+  const [voiceForm, setVoiceForm] = useState<VoicePersona>({ name: '', story_type: 'legenda', region_group: '', voice_name: '', style_prompt: '', sample_path: '' });
   
   // Test Modal State
   const [testModal, setTestModal] = useState<{ open: boolean, kind: 'image' | 'audio', refId: string, name: string } | null>(null);
@@ -52,8 +52,8 @@ export function AdminGayaAI() {
   // Mutations (Voices)
   const saveVoice = useMutation({
     mutationFn: async (p: VoicePersona) => {
-      if (p.id) await supabase.from('voice_personas').update(p).eq('id', p.id).throwOnError();
-      else await supabase.from('voice_personas').insert(p).throwOnError();
+      const payload = { name: p.name, story_type: p.story_type, region_group: p.region_group || null, voice_name: p.voice_name, style_prompt: p.style_prompt, sample_path: p.sample_path }; if (p.id) await supabase.from('voice_personas').update(payload).eq('id', p.id).throwOnError();
+      else await supabase.from('voice_personas').insert(payload).throwOnError();
     },
     onSuccess: () => { setToast('Persona disimpan.'); queryClient.invalidateQueries({ queryKey: ['admin_voices'] }); resetVoice(); }
   });
@@ -78,7 +78,7 @@ export function AdminGayaAI() {
   });
 
   const resetStyle = () => setStyleForm({ name: '', story_type: 'legenda', region_group: '', descriptor: '', reference_paths: [] });
-  const resetVoice = () => setVoiceForm({ name: '', voice_name: '', style_prompt: '', sample_path: '' });
+  const resetVoice = () => setVoiceForm({ name: '', story_type: 'legenda', region_group: '', voice_name: '', style_prompt: '', sample_path: '' });
   const getUrl = (path: string) => `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/admin-assets/${path}`;
 
   return (
@@ -130,7 +130,7 @@ export function AdminGayaAI() {
               <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (Bapak Tua)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
               <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark font-mono" placeholder="Voice ID (id-ID-Wavenet-B)" value={voiceForm.voice_name} onChange={e => setVoiceForm({...voiceForm, voice_name: e.target.value})} />
             </div>
-            <textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Deskripsi karakter (Suara berat, pelan...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
+            <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.region_group || '} onChange={e => setVoiceForm({...voiceForm, region_group: e.target.value})}><option value="">Daerah: Global</option><option value="jawa">Jawa</option><option value="sumatra">Sumatra</option><option value="kalimantan">Kalimantan</option><option value="sulawesi">Sulawesi</option><option value="papua">Papua</option><option value="nusa_bali">Nusa Tenggara & Bali</option><option value="maluku">Maluku</option></select></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Deskripsi karakter (Suara berat, pelan...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
             
             <div className="flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
               <div className="flex justify-between items-center"><span className="text-sm font-bold text-stone-700">Sampel Audio (MP3)</span><div className="w-32"><FileUploader bucket="admin-assets" folder="voices" accept="audio/*" label="Unggah" isAudio onUploadSuccess={p => setVoiceForm(s => ({...s, sample_path: p[0]}))} /></div></div>
