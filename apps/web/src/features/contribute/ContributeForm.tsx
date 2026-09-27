@@ -49,7 +49,7 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
   const [detectedRegion, setDetectedRegion] = useState<string>('');
 
   useEffect(() => {
-    supabase.from('regions').select('id, name').then(({data}) => {
+    supabase.from('regions').select('id, name, level').then(({data}) => {
       if (data) setRegions(data);
     });
   }, []);
@@ -239,8 +239,16 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                       if (placeName) {
                         setDetectedRegion(placeName);
                         if (regions.length > 0) {
-                          const matched = regions.find(r => placeName.toLowerCase().includes(r.name.toLowerCase()));
-                          if (matched) handleChange('region_id', matched.id);
+                          const p = placeName.toLowerCase();
+                          // Cari kabupaten/kota lebih dulu agar lebih spesifik
+                          const specific = regions.find(r => (r.level === 'kota' || r.level === 'kabupaten') && p.includes(r.name.toLowerCase()));
+                          if (specific) {
+                            handleChange('region_id', specific.id);
+                          } else {
+                            // Fallback ke provinsi
+                            const prov = regions.find(r => r.level === 'provinsi' && p.includes(r.name.toLowerCase()));
+                            if (prov) handleChange('region_id', prov.id);
+                          }
                         }
                       }
                     }}

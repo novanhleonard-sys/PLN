@@ -1,7 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { Map, setWorkerUrl, Marker } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
-
 
 setWorkerUrl(workerUrl);
 
@@ -17,6 +16,21 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
   const marker = useRef<Marker | null>(null);
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<any[]>([]);
+
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
+      const data = await res.json();
+      if (data && data.display_name) {
+        onChange(lat, lng, data.display_name);
+      } else {
+        onChange(lat, lng);
+      }
+    } catch (err) {
+      console.error("Nominatim reverse failed", err);
+      onChange(lat, lng);
+    }
+  };
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -44,12 +58,11 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
           }
         ]
       },
-      center: [lng || 113.9213, lat || -0.7893], // Center of Indonesia
+      center: [lng || 113.9213, lat || -0.7893],
       zoom: lat && lng ? 12 : 4,
     });
 
     map.current.on('load', () => {
-      // Add marker if lat lng provided
       if (lat && lng) {
         marker.current = new Marker({ draggable: true, color: '#1a7f84', anchor: 'bottom' })
           .setLngLat([lng, lat])
@@ -57,9 +70,7 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
         
         marker.current.on('dragend', () => {
           const lngLat = marker.current?.getLngLat();
-          if (lngLat) {
-            onChange(lngLat.lat, lngLat.lng);
-          }
+          if (lngLat) reverseGeocode(lngLat.lat, lngLat.lng);
         });
       }
 
@@ -71,12 +82,12 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
             .addTo(map.current!);
           marker.current.on('dragend', () => {
             const lngLat = marker.current?.getLngLat();
-            if (lngLat) onChange(lngLat.lat, lngLat.lng);
+            if (lngLat) reverseGeocode(lngLat.lat, lngLat.lng);
           });
         } else {
           marker.current.setLngLat([lng, lat]);
         }
-        onChange(lat, lng);
+        reverseGeocode(lat, lng);
       });
     });
 
@@ -86,11 +97,14 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
     };
   }, []);
 
-  // Sync marker if lat/lng change from outside (like from search)
   useEffect(() => {
     if (map.current && marker.current && lat && lng) {
-      marker.current.setLngLat([lng, lat]);
-      map.current.flyTo({ center: [lng, lat], zoom: 12 });
+      const current = marker.current.getLngLat();
+      // Only move if it significantly changed to prevent loops
+      if (Math.abs(current.lat - lat) > 0.0001 || Math.abs(current.lng - lng) > 0.0001) {
+        marker.current.setLngLat([lng, lat]);
+        map.current.flyTo({ center: [lng, lat], zoom: 12 });
+      }
     }
   }, [lat, lng]);
 
@@ -142,7 +156,7 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
                       .addTo(map.current);
                     marker.current.on('dragend', () => {
                       const lngLat = marker.current?.getLngLat();
-                      if (lngLat) onChange(lngLat.lat, lngLat.lng);
+                      if (lngLat) reverseGeocode(lngLat.lat, lngLat.lng);
                     });
                   } else {
                     marker.current.setLngLat([newLng, newLat]);
