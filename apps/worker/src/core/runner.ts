@@ -98,23 +98,25 @@ export class JobRunner {
 
   private async handleRetry(job: Job, errorMsg: string) {
     const nextRunAfter = new Date();
-    
-    // attempts is already incremented by claim_job
-    // if attempts == 1, failed once -> wait 30s
-    // if attempts == 2, failed twice -> wait 2m
-    // if attempts == 3, failed thrice -> wait 10m
-    // if attempts >= 4, mark failed permanently
-    
     let status = 'queued';
     
-    if (job.attempts >= 4) {
+    // SAFETY GUARDRAIL: Max 2 attempts
+    if (job.attempts >= 2) {
       status = 'failed';
+      console.error(`\n🚨 ADMIN ALERT: SAFETY GUARDRAIL TRIGGERED! 🚨`);
+      console.error(`Job [${job.kind}] ID: ${job.id} has failed 2 times.`);
+      console.error(`Last Error: ${errorMsg}`);
+      console.error(`Action: STOPPING ALL QUEUED AI JOBS automatically.\n`);
+      
+      // Stop all queued jobs to prevent runaway cost
+      await this.supabase.from('jobs')
+        .update({ 
+           status: 'failed', 
+           error: `AUTO_CANCELLED: System paused due to repeated failure in job ${job.id}. Original Error: ${errorMsg}` 
+        })
+        .eq('status', 'queued');
     } else if (job.attempts === 1) {
       nextRunAfter.setSeconds(nextRunAfter.getSeconds() + 30);
-    } else if (job.attempts === 2) {
-      nextRunAfter.setMinutes(nextRunAfter.getMinutes() + 2);
-    } else if (job.attempts === 3) {
-      nextRunAfter.setMinutes(nextRunAfter.getMinutes() + 10);
     }
 
     await this.supabase.from('jobs').update({
