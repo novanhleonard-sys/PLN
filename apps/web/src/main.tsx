@@ -88,10 +88,9 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
       for(let registration of registrations) { registration.unregister(); }
-
-      console.log('SW registered: ', registration);
-    }).catch((registrationError) => {
-      console.log('SW registration failed: ', registrationError);
+      console.log('SW unregistered successfully');
+    }).catch((err) => {
+      console.log('SW unregistration failed: ', err);
     });
   });
 }
