@@ -92,7 +92,17 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
           body: formData
         });
 
-        if (error) throw new Error(error.message || 'Gagal mengirim');
+        if (error) {
+          console.error(error);
+          let msg = error.message || 'Gagal mengirim';
+          if (error.context) {
+            try {
+              const txt = await error.context.text();
+              msg = `Error: ${txt}`;
+            } catch (e) {}
+          }
+          throw new Error(msg);
+        }
         if (data?.error) throw new Error(data.error);
         
         // Success
