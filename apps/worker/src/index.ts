@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import WebSocket from 'ws';
 globalThis.WebSocket = WebSocket as any;
@@ -17,6 +17,8 @@ import { verifyStage } from './stages/verify';
 import { segmentStage } from './stages/segment';
 import { characterStage } from './stages/character';
 import { processSceneImageStage } from './stages/scene-image';
+import { processStoryVisualBibleStage } from './stages/story-visual-bible';
+import { processCanonicalRefStage } from './stages/canonical-ref';
 import { audioStage } from './stages/audio';
 import { adaptStage } from './stages/adapt';
 import { adaptCheckStage } from './stages/adapt-check';
@@ -48,6 +50,8 @@ runner.register('verify', async (ctx, job) => await verifyStage(ctx, job, regist
 runner.register('segment', async (ctx, job) => await segmentStage(ctx, job, registry));
 runner.register('character', async (ctx, job) => await characterStage(ctx, job, registry));
 runner.register('scene-image', async (ctx, job) => await processSceneImageStage(ctx, job, registry));
+runner.register('story-visual-bible', async (ctx, job) => await processStoryVisualBibleStage(ctx, job, registry));
+runner.register('canonical-ref', async (ctx, job) => await processCanonicalRefStage(ctx, job, registry));
 runner.register('audio', async (ctx, job) => await audioStage(ctx, job, registry));
 runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry));
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));
@@ -79,3 +83,4 @@ async function main() {
 }
 
 main().catch(console.error);
+

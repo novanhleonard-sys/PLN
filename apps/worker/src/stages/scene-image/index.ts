@@ -1,98 +1,117 @@
-import sharp from 'sharp';
+﻿import { SupabaseClient } from "@supabase/supabase-js";
 import { ProviderRegistry } from "../../providers/registry";
+import * as path from "path";
+import * as os from "os";
+import * as fs from "fs";
+import * as crypto from "crypto";
 
-export function assembleImagePrompt(
-  styleDescriptor: string,
-  sceneDescription: string,
-  fixedRules: string = "composition square, subject in center with safe margin, no text, no letters, no watermark"
-): string {
-  return `${styleDescriptor} Adegan: ${sceneDescription} Aturan: ${fixedRules}`.trim().replace(/\\s+/g, ' ');
-}
+export const processSceneImageStage = async (ctx: { supabase: SupabaseClient }, job: any, registry: ProviderRegistry) => {
+  const sceneId = job.ref_id;
 
-export const processSceneImageStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
-  const { data: scene } = await ctx.supabase.from("scenes")
-    .select("*, version:story_versions(*, story:stories(*))")
-    .eq("id", job.ref_id)
+  const { data: scene } = await ctx.supabase
+    .from("scenes")
+    .select("*, version:story_versions(id, story:stories(title, region_id))")
+    .eq("id", sceneId)
     .single();
 
   if (!scene) throw new Error("Scene not found");
+  
+  const versionId = scene.version_id;
 
-  console.log("Processing scene-image for", scene.version.story.title, "scene idx", scene.idx);
-
-  // Get region_group_id from stories regions
-  let regionGroupId = null;
-  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("id", scene.version.story.region_id).limit(1).maybeSingle();
-  if (regions) regionGroupId = regions.region_group_id;
-
-  // Get style config
-  let { data: styleConfig } = await ctx.supabase
-    .from("style_configs")
+  const { data: bible } = await ctx.supabase
+    .from("story_visual_bibles")
     .select("*")
-    .eq("story_type", scene.version.story.type)
-    .eq("region_group_id", regionGroupId)
-    .limit(1)
-    .maybeSingle();
+    .eq("version_id", versionId)
+    .single();
 
-  if (!styleConfig) {
-    const { data: fallback } = await ctx.supabase.from("style_configs").select("*").limit(1).maybeSingle();
-    styleConfig = fallback;
+  if (!bible) {
+    throw new Error("Story Visual Bible not ready yet for version " + versionId);
   }
 
-  const { data: umum } = await ctx.supabase.from("app_settings").select("value").eq("key", "umum_gambar").single();
-  const basePrompt = umum?.value?.prompt || "";
-  const specific = styleConfig?.descriptor || "ilustrasi buku anak dengan garis pensil warna halus, sapuan cat air lembut, dan tekstur kertas ringan";
-  const descriptor = [basePrompt, specific].filter(Boolean).join("\n\nAturan Spesifik: ");
+  const { data: cRefs } = await ctx.supabase
+    .from("canonical_references")
+    .select("*")
+    .eq("bible_id", bible.id);
+    
+  if (cRefs && cRefs.some((r: any) => r.status !== 'ready')) {
+    throw new Error("WAITING_FOR_CANONICAL_REFS");
+  }
 
-  const prompt = assembleImagePrompt(
-    descriptor,
-    scene.image_prompt || scene.description || "Adegan buku cerita",
-  );
+  // Find relevant visual plan
+  const plans = bible.scene_plans || [];
+  const plan = plans.find((p: any) => p.scene_idx === scene.idx) || {};
 
-  const result = await registry.generateImage({
+  // Fetch canonical images based on plan
+  const referenceBase64s: string[] = [];
+  
+  if (cRefs && plan.characters) {
+    const relevantRefs = cRefs.filter((r: any) => 
+      (plan.characters || []).includes(r.name) ||
+      (plan.locations || []).includes(r.name) ||
+      (plan.props || []).includes(r.name)
+    );
+
+    for (const ref of relevantRefs) {
+      if (ref.image_path) {
+        try {
+          const resp = await fetch(ref.image_path);
+          if (resp.ok) {
+            const arrBuffer = await resp.arrayBuffer();
+            referenceBase64s.push(Buffer.from(arrBuffer).toString('base64'));
+          }
+        } catch (e) {
+          console.error("Failed to fetch canonical ref image", ref.name);
+        }
+      }
+    }
+  }
+
+  const renderingStyle = JSON.stringify(bible.rendering_style || {});
+  const scenePlanJson = JSON.stringify(plan);
+  
+  const prompt = `
+Rendering Style: ${renderingStyle}
+Scene Visual Plan: ${scenePlanJson}
+Deskripsi Scene Aktual: ${scene.description}
+
+Aturan: Patuhi Rendering Style dan Scene Visual Plan. Gunakan referensi karakter/lokasi/prop yang diberikan (bila ada) sebagai panduan utama desain visual agar konsisten.`;
+
+  console.log("Generating scene-image for", (scene.version?.story as any)?.title, "idx", scene.idx);
+
+  const resultBase64 = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-image", 
+    model: "gemini-3.1-flash-image",
     prompt,
-    ref: scene.version.id,
-    stage: "scene-image",
-    userId: undefined
+    referenceImages: referenceBase64s,
+    ref: job.id,
+    stage: "scene-image"
   });
 
-  if (!result || !result.length) {
-    throw new Error("Failed to generate image base64");
-  }
+  if (!resultBase64) throw new Error("Failed to generate scene image");
 
-  // Parse base64 and convert to WebP
-  const imageBuffer = Buffer.from(result, 'base64');
-  const webpBuffer = await sharp(imageBuffer)
-    .resize(1024, 1024, { fit: 'inside' }) // ensure it's not too huge
-    .webp({ quality: 80 })
-    .toBuffer();
-  
-  const filePath = `scenes/${scene.version_id}/${scene.idx}.webp`;
-  
+  const tempFile = path.join(os.tmpdir(), `scene_${crypto.randomUUID()}.png`);
+  fs.writeFileSync(tempFile, Buffer.from(resultBase64, 'base64'));
+
+  const storagePath = `scenes/${scene.version_id}/${scene.id}_${Date.now()}.png`;
+  const fileBuffer = fs.readFileSync(tempFile);
+
   const { error: uploadError } = await ctx.supabase.storage
-    .from("story-media")
-    .upload(filePath, webpBuffer, {
-      contentType: 'image/webp',
+    .from("assets")
+    .upload(storagePath, fileBuffer, {
+      contentType: "image/png",
       upsert: true
     });
 
-  if (uploadError) {
-     throw new Error("Failed to upload image: " + uploadError.message);
-  }
+  if (uploadError) throw new Error("Upload failed: " + uploadError.message);
 
-  // Get public URL
-  const { data: publicUrlData } = ctx.supabase.storage
-    .from("story-media")
-    .getPublicUrl(filePath);
-
-  // Update scene record
-  await ctx.supabase.from("scenes").update({ 
-    image_status: 'ready',
-    image_path: publicUrlData.publicUrl
+  const { data: publicUrlData } = ctx.supabase.storage.from("assets").getPublicUrl(storagePath);
+  
+  await ctx.supabase.from("scenes").update({
+    image_path: publicUrlData.publicUrl,
+    image_status: "ready"
   }).eq("id", scene.id);
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
+  console.log("Scene image completed:", scene.idx);
 };
-
 

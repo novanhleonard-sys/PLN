@@ -106,15 +106,6 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
     // Queue scene-image and audio jobs
     const { error: jobErr } = await ctx.supabase.from("jobs").insert([{
-      kind: "scene-image",
-      ref_type: "scene",
-      ref_id: sceneData.id,
-      status: "queued",
-      attempts: 0,
-      cost_usd: 0,
-      run_after: new Date().toISOString(),
-      idempotency_key: "scene-image_" + sceneData.id
-    }, {
       kind: "audio",
       ref_type: "page",
       ref_id: pageData.id,
@@ -129,6 +120,18 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
     console.log("Scene + page + jobs queued for idx=" + scene.idx);
   }
+
+  const { error: bibleJobErr } = await ctx.supabase.from("jobs").insert({
+    kind: "story-visual-bible",
+    ref_type: "version",
+    ref_id: version.id,
+    status: "queued",
+    attempts: 0,
+    cost_usd: 0,
+    run_after: new Date().toISOString(),
+    idempotency_key: "bible_" + version.id
+  });
+  if (bibleJobErr) throw new Error("Failed to queue story-visual-bible: " + bibleJobErr.message);
 
   // Update story version status
   await ctx.supabase.from("story_versions").update({

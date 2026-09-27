@@ -4,6 +4,7 @@ import { calculateCost } from '../../../../packages/shared/src/ai/prices';
 import { BudgetGuard } from '../core/budget';
 
 export interface GenerateOptions {
+  referenceImages?: string[];
   provider: string;
   model: string;
   systemInstruction?: string;
@@ -19,7 +20,7 @@ export interface AIProvider {
   generateText(model: string, prompt: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ text: string; inputTokens: number; outputTokens: number }>;
   generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>): Promise<{ data: T; inputTokens: number; outputTokens: number }>;
   generateAudio?(model: string, prompt: string, voiceName: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ audioBase64: string; inputTokens: number; outputTokens: number }>;
-  generateImage?(model: string, prompt: string, opts?: Record<string, any>): Promise<{ imageBase64: string; costUsd?: number }>;
+  generateImage?(model: string, prompt: string, referenceImages?: string[], opts?: Record<string, any>): Promise<{ imageBase64: string; costUsd?: number }>;
 }
 
 export class ProviderRegistry {
@@ -120,7 +121,7 @@ export class ProviderRegistry {
     let attempt = 0;
     while (attempt < 2) {
       try {
-        const result = await provider.generateImage(opts.model, opts.prompt, opts);
+        const result = await provider.generateImage(opts.model, opts.prompt, opts.referenceImages, opts);
         
         let cost = result.costUsd || 0;
         if (!result.costUsd) {
@@ -165,6 +166,7 @@ export class ProviderRegistry {
     });
   }
 }
+
 
 
 
