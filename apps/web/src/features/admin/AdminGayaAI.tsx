@@ -37,7 +37,7 @@ export function AdminGayaAI() {
   const [umumSuaraForm, setUmumSuaraForm] = useState<UmumConfig>({ prompt: '', references: [] });
 
   // Test Modal State
-  const [testModal, setTestModal] = useState<{ open: boolean, kind: 'image' | 'audio', refId: string, name: string } | null>(null);
+  const [testModal, setTestModal] = useState<{ open: boolean, kind: 'image' | 'audio', refId?: string, name: string, snapshot?: any } | null>(null);
   const [testText, setTestText] = useState(SCENE_TEMPLATES[1].text);
   const [testTemplate, setTestTemplate] = useState(SCENE_TEMPLATES[1].id);
 
@@ -72,7 +72,7 @@ export function AdminGayaAI() {
     },
     onSuccess: () => { setToast('Gaya disimpan.'); queryClient.invalidateQueries({ queryKey: ['admin_styles'] }); resetStyle(); }
   });
-  const delStyle = useMutation({ mutationFn: async (id: string) => await supabase.from('style_configs').delete().eq('id', id).throwOnError(), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin_styles'] }) });
+  const delStyle = useMutation({ mutationFn: async (id: string) => await supabase.from('style_configs').delete().eq('id', id).throwOnError(), onSuccess: () => { setToast('Gaya dihapus.'); queryClient.invalidateQueries({ queryKey: ['admin_styles'] }) }, onError: () => setToast('Gagal menghapus: Gaya sedang digunakan (terikat ke cerita).') });
 
   // Mutations (Voices)
   const saveVoice = useMutation({
@@ -83,7 +83,7 @@ export function AdminGayaAI() {
     },
     onSuccess: () => { setToast('Persona disimpan.'); queryClient.invalidateQueries({ queryKey: ['admin_voices'] }); resetVoice(); }
   });
-  const delVoice = useMutation({ mutationFn: async (id: string) => await supabase.from('voice_personas').delete().eq('id', id).throwOnError(), onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin_voices'] }) });
+  const delVoice = useMutation({ mutationFn: async (id: string) => await supabase.from('voice_personas').delete().eq('id', id).throwOnError(), onSuccess: () => { setToast('Persona dihapus.'); queryClient.invalidateQueries({ queryKey: ['admin_voices'] }) }, onError: () => setToast('Gagal menghapus: Persona sedang digunakan (terikat ke cerita).') });
 
   // Mutations (Umum)
   const saveUmum = useMutation({
@@ -98,7 +98,7 @@ export function AdminGayaAI() {
     mutationFn: async () => {
       if (!testModal) return;
       const { data, error } = await supabase.from('test_runs').insert({
-        kind: testModal.kind, text_prompt: testText, style_id: testModal.kind === 'image' ? testModal.refId : null, voice_id: testModal.kind === 'audio' ? testModal.refId : null
+        kind: testModal.kind, text_prompt: testText, style_id: (testModal.kind === 'image' && testModal.refId) ? testModal.refId : null, voice_id: (testModal.kind === 'audio' && testModal.refId) ? testModal.refId : null, config_snapshot: testModal.snapshot || null
       }).select('id').single();
       if (error) throw error;
 
@@ -224,6 +224,9 @@ export function AdminGayaAI() {
               
               <div className="md:col-span-2 flex gap-2 justify-end pt-2">
                 {styleForm.id && <Button variant="secondary" onClick={resetStyle}>Batal</Button>}
+                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!styleForm.name || !styleForm.descriptor} onClick={() => setTestModal({ open: true, kind: 'image', name: styleForm.name, snapshot: styleForm, refId: styleForm.id })}>
+                  <Icon name="Play" size={14} className="mr-1 inline-block" /> Tes
+                </Button>
                 <Button disabled={!styleForm.name || !styleForm.descriptor || saveStyle.isPending} onClick={() => saveStyle.mutate(styleForm)}>{styleForm.id ? 'Simpan' : 'Buat'}</Button>
               </div>
             </div>
@@ -243,6 +246,9 @@ export function AdminGayaAI() {
 
               <div className="flex gap-2 justify-end pt-2">
                 {voiceForm.id && <Button variant="secondary" onClick={resetVoice}>Batal</Button>}
+                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!voiceForm.name || !voiceForm.voice_name} onClick={() => setTestModal({ open: true, kind: 'audio', name: voiceForm.name, snapshot: voiceForm, refId: voiceForm.id })}>
+                  <Icon name="Play" size={14} className="mr-1 inline-block" /> Tes
+                </Button>
                 <Button disabled={!voiceForm.name || !voiceForm.voice_name || saveVoice.isPending} onClick={() => saveVoice.mutate(voiceForm)}>{voiceForm.id ? 'Simpan' : 'Buat'}</Button>
               </div>
             </div>
