@@ -9,6 +9,7 @@ import { AdminEditKonten } from './AdminEditKonten';
 import { AdminGayaAI } from './AdminGayaAI';
 import { AdminLaporan } from './AdminLaporan';
 import { AdminPustakaSuara } from './AdminPustakaSuara';
+import { AdminKelompokDaerah } from './AdminKelompokDaerah';
 
 export function AdminCenter() {
   return (
@@ -24,6 +25,7 @@ export function AdminCenter() {
         <Route path="/kelola" element={<AdminKelola />} />
         <Route path="/laporan" element={<AdminLaporan />} />
         <Route path="/pustaka-suara" element={<AdminPustakaSuara />} />
+        <Route path="/kelompok-daerah" element={<AdminKelompokDaerah />} />
       </Routes>
     </AdminLayout>
   );

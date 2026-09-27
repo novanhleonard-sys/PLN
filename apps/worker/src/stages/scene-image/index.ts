@@ -4,9 +4,9 @@ import { ProviderRegistry } from "../../providers/registry";
 export function assembleImagePrompt(
   styleDescriptor: string,
   sceneDescription: string,
-  fixedRules: string = "komposisi persegi, subjek di tengah dengan margin aman, tanpa teks, huruf, atau watermark"
+  fixedRules: string = "composition square, subject in center with safe margin, no text, no letters, no watermark"
 ): string {
-  return `${styleDescriptor} Adegan: ${sceneDescription} Aturan: ${fixedRules}`.trim().replace(/\s+/g, ' ');
+  return `${styleDescriptor} Adegan: ${sceneDescription} Aturan: ${fixedRules}`.trim().replace(/\\s+/g, ' ');
 }
 
 export const processSceneImageStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -19,8 +19,29 @@ export const processSceneImageStage = async (ctx: any, job: any, registry: Provi
 
   console.log("Processing scene-image for", scene.version.story.title, "scene idx", scene.idx);
 
+  // Get region_group_id from stories regions
+  let regionGroupId = null;
+  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("story_id", scene.version.story.id).limit(1).maybeSingle();
+  if (regions) regionGroupId = regions.region_group_id;
+
+  // Get style config
+  let { data: styleConfig } = await ctx.supabase
+    .from("style_configs")
+    .select("*")
+    .eq("story_type", scene.version.story.type)
+    .eq("region_group_id", regionGroupId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!styleConfig) {
+    const { data: fallback } = await ctx.supabase.from("style_configs").select("*").limit(1).maybeSingle();
+    styleConfig = fallback;
+  }
+
+  const descriptor = styleConfig?.descriptor || "ilustrasi buku anak dengan garis pensil warna halus, sapuan cat air lembut, dan tekstur kertas ringan";
+
   const prompt = assembleImagePrompt(
-    "ilustrasi buku anak dengan garis pensil warna halus, sapuan cat air lembut, dan tekstur kertas ringan",
+    descriptor,
     scene.image_prompt || scene.description || "Adegan buku cerita",
   );
 

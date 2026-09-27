@@ -31,7 +31,7 @@ export function useStories() {
         .from('stories')
         .select(`
           id, slug, title, type, lat, lng, synopsis, hero_image_path, pin_image_path,
-          tier, status, regions(name), story_versions(id, status, asset_status, body, sources, adaptations(status))
+          tier, status, regions(name, region_group_id, region_groups(name, slug)), story_versions(id, status, asset_status, body, sources, adaptations(status))
         `);
       if (error) throw error;
       
@@ -59,7 +59,7 @@ export function useStories() {
           synopsis: story.synopsis || '',
           pinImage: story.pin_image_path ? supabase.storage.from('story-media').getPublicUrl(story.pin_image_path).data.publicUrl : undefined,
           sources: publishedVersion.sources || [],
-          region: Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name,
+          region: Array.isArray(story.regions) ? ((story.regions[0]?.region_groups as any)?.name || story.regions[0]?.name) : ((story.regions as any)?.region_groups?.name || (story.regions as any)?.name),
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
           dongengReady: publishedVersion.asset_status === 'ready' || publishedVersion.adaptations?.some((a: any) => a.status === 'ready'),
