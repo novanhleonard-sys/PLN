@@ -66,7 +66,7 @@ serve(async (req) => {
     if (payload.region_id === '') payload.region_id = null;
     if (payload.target_story_id === '') payload.target_story_id = null;
     if (Array.isArray(payload.sources)) {
-      payload.sources = payload.sources.map((s) => {
+      payload.sources = payload.sources.filter((s) => s.citation && s.citation.trim().length >= 5).map((s) => {
         if (s.author === '') s.author = undefined;
         return s;
       });
