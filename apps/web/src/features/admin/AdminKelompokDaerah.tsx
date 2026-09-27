@@ -25,7 +25,6 @@ function getIslandGroup(code: string) {
   return "Lainnya";
 }
 
-// Order within each island group (by geographic position west to east)
 const ISLAND_PROV_ORDER: Record<string, string[]> = {
   "Sumatera": ["ACEH","SUMATERA_UTARA","SUMATERA_BARAT","RIAU","KEPULAUAN_RIAU","JAMBI","KEPULAUAN_BANGKA_BELITUNG","SUMATERA_SELATAN","BENGKULU","LAMPUNG"],
   "Jawa": ["BANTEN","DKI_JAKARTA","JAWA_BARAT","JAWA_TENGAH","DI_YOGYAKARTA","JAWA_TIMUR"],
@@ -39,11 +38,9 @@ const ISLAND_PROV_ORDER: Record<string, string[]> = {
 function sortProvincesByIsland(provs: any[], island: string) {
   const order = ISLAND_PROV_ORDER[island] || [];
   return [...provs].sort((a, b) => {
-    const ia = order.indexOf(a.code);
-    const ib = order.indexOf(b.code);
+    const ia = order.indexOf(a.code), ib = order.indexOf(b.code);
     if (ia === -1 && ib === -1) return a.name.localeCompare(b.name);
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
+    if (ia === -1) return 1; if (ib === -1) return -1;
     return ia - ib;
   });
 }
@@ -55,9 +52,14 @@ export function AdminKelompokDaerah() {
   const [toast, setToast] = useState("");
 
   const [form, setForm] = useState({ id: "", name: "", slug: "" });
+  // selectedGroup = kelompok yg sedang aktif (null = mode baru)
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  // pendingIds = set region_id yang dipilih saat mode baru (belum disimpan ke DB)
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [expandedProv, setExpandedProv] = useState<string | null>(null);
+
+  const isNewMode = !selectedGroup && !form.id;
 
   const fetchData = async () => {
     setLoading(true);
@@ -72,18 +74,39 @@ export function AdminKelompokDaerah() {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Saat switch ke mode baru, reset pending
+  const startNew = () => {
+    setForm({ id: "", name: "", slug: "" });
+    setSelectedGroup(null);
+    setPendingIds(new Set());
+    setExpandedProv(null);
+  };
+
   const handleSaveGroup = async () => {
     if (!form.name || !form.slug) return setToast("Nama dan slug harus diisi.");
     setLoading(true);
     try {
       if (form.id) {
+        // Edit existing
         await supabase.from("region_groups").update({ name: form.name, slug: form.slug }).eq("id", form.id);
         setToast("Kelompok daerah berhasil diperbarui.");
+        setForm({ id: "", name: "", slug: "" });
+        setSelectedGroup(null);
       } else {
-        await supabase.from("region_groups").insert([{ name: form.name, slug: form.slug }]);
+        // Insert new + apply pending selections
+        const { data: newGroup, error } = await supabase
+          .from("region_groups").insert([{ name: form.name, slug: form.slug }])
+          .select().single();
+        if (error || !newGroup) throw error;
+        if (pendingIds.size > 0) {
+          await supabase.from("regions").update({ region_group_id: newGroup.id }).in("id", [...pendingIds]);
+        }
         setToast("Kelompok daerah berhasil ditambahkan.");
+        setPendingIds(new Set());
+        setForm({ id: "", name: "", slug: "" });
+        // Auto-select new group
+        setSelectedGroup(newGroup);
       }
-      setForm({ id: "", name: "", slug: "" });
       await fetchData();
     } catch {
       setToast("Gagal menyimpan.");
@@ -97,7 +120,7 @@ export function AdminKelompokDaerah() {
     setLoading(true);
     await supabase.from("region_groups").delete().eq("id", id);
     setToast("Kelompok dihapus.");
-    if (selectedGroup?.id === id) setSelectedGroup(null);
+    if (selectedGroup?.id === id) { setSelectedGroup(null); setPendingIds(new Set()); }
     await fetchData();
   };
 
@@ -113,57 +136,86 @@ export function AdminKelompokDaerah() {
     return map;
   }, [regions]);
 
-  const getProvStatus = (p: any) => {
-    if (!selectedGroup) return "none";
+  // Compute status: "full" | "partial" | "none"
+  const getProvStatus = (p: any): "full" | "partial" | "none" => {
+    const gid = selectedGroup?.id;
     const children = childrenMap[p.id] || [];
-    if (children.length === 0) return p.region_group_id === selectedGroup.id ? "full" : "none";
-    const sel = children.filter(c => c.region_group_id === selectedGroup.id).length;
-    if (sel === children.length && p.region_group_id === selectedGroup.id) return "full";
-    if (sel === 0 && p.region_group_id !== selectedGroup.id) return "none";
+
+    if (isNewMode) {
+      // Use pendingIds for new group mode
+      if (children.length === 0) return pendingIds.has(p.id) ? "full" : "none";
+      const sel = children.filter(c => pendingIds.has(c.id)).length;
+      const provSel = pendingIds.has(p.id);
+      if (sel === children.length && provSel) return "full";
+      if (sel === 0 && !provSel) return "none";
+      return "partial";
+    }
+
+    if (!gid) return "none";
+    if (children.length === 0) return p.region_group_id === gid ? "full" : "none";
+    const sel = children.filter(c => c.region_group_id === gid).length;
+    if (sel === children.length && p.region_group_id === gid) return "full";
+    if (sel === 0 && p.region_group_id !== gid) return "none";
     return "partial";
+  };
+
+  const getChildStatus = (child: any): boolean => {
+    if (isNewMode) return pendingIds.has(child.id);
+    return child.region_group_id === selectedGroup?.id;
   };
 
   const groupedProvinces = useMemo(() => {
     const terpilih: any[] = [];
     const islands: Record<string, any[]> = Object.fromEntries(ISLAND_ORDER.map(k => [k, []]));
-
     let provs = regions.filter(r => r.level === "provinsi");
     if (query.trim()) {
       const q = query.toLowerCase();
       provs = provs.filter(p => p.name.toLowerCase().includes(q));
     }
-
     provs.forEach(p => {
       const status = getProvStatus(p);
-      if (selectedGroup && status !== "none") {
-        terpilih.push(p);
-      } else {
-        const island = getIslandGroup(p.code);
-        islands[island].push(p);
-      }
+      if (status !== "none") terpilih.push(p);
+      else { const island = getIslandGroup(p.code); islands[island].push(p); }
     });
-
-    Object.keys(islands).forEach(island => {
-      islands[island] = sortProvincesByIsland(islands[island], island);
-    });
-    terpilih.sort((a, b) => getIslandGroup(a.code).localeCompare(getIslandGroup(b.code)) || a.name.localeCompare(b.name));
-
+    Object.keys(islands).forEach(island => { islands[island] = sortProvincesByIsland(islands[island], island); });
     return { terpilih, islands };
-  }, [regions, query, selectedGroup, childrenMap]);
+  }, [regions, query, selectedGroup, childrenMap, pendingIds, isNewMode]);
 
+  // Toggle province (all children included)
   const handleToggleProvince = async (prov: any) => {
-    if (!selectedGroup) return;
     const status = getProvStatus(prov);
-    const newGroupId = status === "full" ? null : selectedGroup.id;
     const children = childrenMap[prov.id] || [];
-    const ids = [prov.id, ...children.map((c: any) => c.id)];
-    setRegions(prev => prev.map(r => ids.includes(r.id) ? { ...r, region_group_id: newGroupId } : r));
-    await supabase.from("regions").update({ region_group_id: newGroupId }).in("id", ids);
+    const allIds = [prov.id, ...children.map((c: any) => c.id)];
+    const add = status !== "full"; // if not full -> select all
+
+    if (isNewMode) {
+      setPendingIds(prev => {
+        const next = new Set(prev);
+        if (add) allIds.forEach(id => next.add(id));
+        else allIds.forEach(id => next.delete(id));
+        return next;
+      });
+      return;
+    }
+    if (!selectedGroup) return;
+    const newGroupId = add ? selectedGroup.id : null;
+    setRegions(prev => prev.map(r => allIds.includes(r.id) ? { ...r, region_group_id: newGroupId } : r));
+    await supabase.from("regions").update({ region_group_id: newGroupId }).in("id", allIds);
   };
 
+  // Toggle single child
   const handleToggleChild = async (child: any) => {
+    const isAssigned = getChildStatus(child);
+
+    if (isNewMode) {
+      setPendingIds(prev => {
+        const next = new Set(prev);
+        if (isAssigned) next.delete(child.id); else next.add(child.id);
+        return next;
+      });
+      return;
+    }
     if (!selectedGroup) return;
-    const isAssigned = child.region_group_id === selectedGroup.id;
     const newGroupId = isAssigned ? null : selectedGroup.id;
     setRegions(prev => prev.map(r => r.id === child.id ? { ...r, region_group_id: newGroupId } : r));
     await supabase.from("regions").update({ region_group_id: newGroupId }).eq("id", child.id);
@@ -171,65 +223,65 @@ export function AdminKelompokDaerah() {
 
   const renderProvince = (prov: any) => {
     const status = getProvStatus(prov);
-    const isOtherAssigned = prov.region_group_id && prov.region_group_id !== selectedGroup?.id;
+    const isOtherAssigned = !isNewMode && prov.region_group_id && prov.region_group_id !== selectedGroup?.id;
     const children = childrenMap[prov.id] || [];
     const hasChildren = children.length > 0;
     const isExpanded = expandedProv === prov.id;
-    const canSelect = !!selectedGroup;
+    const isSelected = status !== "none";
 
     return (
-      <div key={prov.id} className={"mb-1 bg-white rounded-xl shadow-sm border overflow-hidden " + (status !== "none" ? "border-teal-200" : "border-stone-200")}>
-        <div className="flex items-center p-3 hover:bg-stone-50 transition-colors">
-          <label className={"flex items-center gap-3 flex-1 select-none " + (canSelect ? "cursor-pointer" : "cursor-default opacity-60")}>
-            <input
-              type="radio"
-              disabled={!canSelect}
-              checked={status === "full" || status === "partial"}
-              onClick={(e) => e.stopPropagation()}
-              onChange={() => handleToggleProvince(prov)}
-              className="w-4 h-4 text-teal border-stone-300 focus:ring-teal cursor-pointer"
-            />
+      <div key={prov.id} className={"mb-1 rounded-xl shadow-sm border overflow-hidden transition-colors " + (isSelected ? "bg-teal-50 border-teal-200" : "bg-white border-stone-200")}>
+        <div className="flex items-center p-3 hover:bg-opacity-80 transition-colors">
+          {/* Toggle button (acts like checkbox with click-to-toggle) */}
+          <div
+            className={"flex items-center gap-3 flex-1 cursor-pointer select-none"}
+            onClick={() => handleToggleProvince(prov)}
+          >
+            <div className={"w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors " + (isSelected ? "border-teal bg-teal" : "border-stone-300 bg-white")}>
+              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+            </div>
             <div className="flex items-center gap-2">
-              <span className={"text-sm " + (status !== "none" ? "font-bold text-stone-800" : "text-stone-600")}>{prov.name}</span>
+              <span className={"text-sm " + (isSelected ? "font-bold text-stone-800" : "text-stone-600")}>{prov.name}</span>
               {status === "partial" && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold uppercase tracking-wider">Sebagian</span>
               )}
-              {isOtherAssigned && status === "none" && (
+              {isOtherAssigned && !isSelected && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-400 uppercase">Grup Lain</span>
               )}
             </div>
-          </label>
+          </div>
 
-          {hasChildren && canSelect && (
-            <Button
-              variant={isExpanded ? "primary" : "secondary"}
-              className="!px-3 !py-1.5 text-xs rounded-lg"
-              onClick={() => setExpandedProv(isExpanded ? null : prov.id)}
+          {/* Pilih Sebagian button — always shown for provinces with children */}
+          {hasChildren && (
+            <button
+              className={"px-3 py-1.5 text-xs rounded-lg border font-medium transition-colors " + (isExpanded ? "bg-teal text-white border-teal" : "bg-white text-stone-600 border-stone-300 hover:border-stone-400")}
+              onClick={(e) => { e.stopPropagation(); setExpandedProv(isExpanded ? null : prov.id); }}
             >
               Pilih Sebagian
-            </Button>
+            </button>
           )}
         </div>
 
-        {isExpanded && hasChildren && canSelect && (
-          <div className="px-3 pb-3 pt-1 border-t border-stone-100 bg-stone-50/50">
+        {isExpanded && hasChildren && (
+          <div className="px-3 pb-3 pt-1 border-t border-stone-100 bg-white/60">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
               {children.map((child: any) => {
-                const isChildAssigned = child.region_group_id === selectedGroup?.id;
-                const isChildOther = child.region_group_id && !isChildAssigned;
+                const isChildSelected = getChildStatus(child);
+                const isChildOther = !isNewMode && child.region_group_id && !isChildSelected;
                 return (
-                  <label key={child.id} className={"flex items-start gap-2 p-2 rounded-lg cursor-pointer border transition-colors " + (isChildAssigned ? "bg-teal-50 border-teal-200" : "bg-white border-stone-200 hover:border-stone-300")}>
-                    <input
-                      type="radio"
-                      checked={isChildAssigned}
-                      onChange={() => handleToggleChild(child)}
-                      className="mt-0.5 w-3.5 h-3.5 text-teal border-stone-300 focus:ring-teal cursor-pointer shrink-0"
-                    />
+                  <div
+                    key={child.id}
+                    onClick={() => handleToggleChild(child)}
+                    className={"flex items-start gap-2 p-2 rounded-lg cursor-pointer border transition-colors " + (isChildSelected ? "bg-teal-50 border-teal-200" : "bg-white border-stone-200 hover:border-stone-300")}
+                  >
+                    <div className={"mt-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors " + (isChildSelected ? "border-teal bg-teal" : "border-stone-300 bg-white")}>
+                      {isChildSelected && <div className="w-1 h-1 rounded-full bg-white" />}
+                    </div>
                     <div className="flex flex-col">
-                      <span className={"text-xs leading-tight " + (isChildAssigned ? "font-bold text-teal-900" : "text-stone-600")}>{child.name}</span>
+                      <span className={"text-xs leading-tight " + (isChildSelected ? "font-bold text-teal-900" : "text-stone-600")}>{child.name}</span>
                       {isChildOther && <span className="text-[9px] text-stone-400 mt-0.5">Grup Lain</span>}
                     </div>
-                  </label>
+                  </div>
                 );
               })}
             </div>
@@ -249,7 +301,12 @@ export function AdminKelompokDaerah() {
       <div className="grid lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4">
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5 mb-6">
-            <h3 className="text-lg font-fredoka font-bold text-stone-800 mb-4">{form.id ? "Edit Kelompok" : "Tambah Kelompok"}</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-fredoka font-bold text-stone-800">{form.id ? "Edit Kelompok" : "Tambah Kelompok"}</h3>
+              {!form.id && selectedGroup && (
+                <button onClick={startNew} className="text-xs text-teal-600 hover:underline">+ Buat Baru</button>
+              )}
+            </div>
             <div className="flex flex-col gap-3">
               <input
                 className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal"
@@ -264,7 +321,9 @@ export function AdminKelompokDaerah() {
                 onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/\s+/g, "") })}
               />
               <div className="flex justify-end gap-2 mt-2">
-                {form.id && <Button variant="secondary" onClick={() => setForm({ id: "", name: "", slug: "" })}>Batal</Button>}
+                {(form.id || selectedGroup) && (
+                  <Button variant="secondary" onClick={startNew}>Batal</Button>
+                )}
                 <Button onClick={handleSaveGroup} disabled={loading}>{loading ? "Menyimpan..." : "Simpan"}</Button>
               </div>
             </div>
@@ -278,7 +337,7 @@ export function AdminKelompokDaerah() {
                 <div
                   key={g.id}
                   className={"p-4 flex justify-between items-center transition-colors cursor-pointer border-l-4 " + (selectedGroup?.id === g.id ? "bg-teal-50 border-teal" : "hover:bg-stone-50 border-transparent")}
-                  onClick={() => setSelectedGroup(g)}
+                  onClick={() => { setSelectedGroup(g); setForm({ id: "", name: "", slug: "" }); setPendingIds(new Set()); }}
                 >
                   <div>
                     <div className={"font-bold " + (selectedGroup?.id === g.id ? "text-teal-800" : "text-stone-800")}>{g.name}</div>
@@ -296,17 +355,23 @@ export function AdminKelompokDaerah() {
 
         <div className="lg:col-span-8">
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 h-[850px] flex flex-col">
-            <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-2">Anggota Daerah</h3>
-            {!selectedGroup && (
-              <p className="text-sm text-amber-600 bg-amber-50 rounded-xl px-4 py-2.5 mb-4 border border-amber-200">
-                Pilih kelompok di sebelah kiri untuk mulai mengelola anggotanya, atau buat kelompok baru terlebih dahulu.
-              </p>
-            )}
-            {selectedGroup && (
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl font-fredoka font-bold text-stone-800">Anggota Daerah</h3>
+              {isNewMode && pendingIds.size > 0 && (
+                <span className="text-xs bg-teal-100 text-teal-700 px-3 py-1 rounded-full font-bold">{pendingIds.size} dipilih (belum disimpan)</span>
+              )}
+            </div>
+
+            {isNewMode ? (
               <p className="text-sm text-stone-500 mb-4">
-                Pilih daerah yang termasuk ke dalam <strong>{selectedGroup.name}</strong>.
+                Pilih daerah yang akan masuk ke kelompok baru, lalu klik <strong>Simpan</strong> di sebelah kiri.
+              </p>
+            ) : (
+              <p className="text-sm text-stone-500 mb-4">
+                Pilih daerah yang termasuk ke dalam <strong>{selectedGroup?.name ?? "..."}</strong>. Perubahan langsung disimpan.
               </p>
             )}
+
             <div className="relative mb-4 shrink-0">
               <Icon name="Search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
@@ -317,6 +382,7 @@ export function AdminKelompokDaerah() {
                 className="w-full pl-10 pr-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal"
               />
             </div>
+
             <div className="border border-stone-200 rounded-xl overflow-y-auto bg-stone-50 p-2 grow">
               {loading && regions.length === 0 && <div className="text-center py-8 text-stone-400 text-sm">Memuat provinsi...</div>}
 
