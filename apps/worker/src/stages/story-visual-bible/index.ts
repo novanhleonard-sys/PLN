@@ -63,7 +63,7 @@ ${version.body}
   console.log("Generating Story Visual Bible for version", versionId);
   const bibleData = await registry.generateJSON(bibleSchema, {
     provider: "gemini",
-    model: "gemini-2.5-flash",
+    model: "gemini-3.8-flash",
     prompt: sysPrompt,
     ref: job.id,
     stage: "story-visual-bible"
