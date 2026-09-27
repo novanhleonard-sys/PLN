@@ -134,7 +134,7 @@ serve(async (req) => {
     const { error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({
-        kind: 'triage_submission',
+        kind: 'triage',
         ref_type: 'submissions',
         ref_id: submission.id,
         idempotency_key: `triage_submission_${submission.id}`
