@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -244,7 +244,7 @@ export type Database = {
           created_at: string
           id: string
           license: string | null
-          region_group: Database["public"]["Enums"]["region_group"] | null
+          region_group_id: string | null
           source: string
           tale_type: string | null
           title: string
@@ -254,7 +254,7 @@ export type Database = {
           created_at?: string
           id?: string
           license?: string | null
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
           source: string
           tale_type?: string | null
           title: string
@@ -264,7 +264,7 @@ export type Database = {
           created_at?: string
           id?: string
           license?: string | null
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
           source?: string
           tale_type?: string | null
           title?: string
@@ -514,7 +514,7 @@ export type Database = {
           },
         ]
       }
-      regions: {
+      region_groups: { Row: { id: string; slug: string; name: string; created_at: string; }; Insert: { id?: string; slug: string; name: string; created_at?: string; }; Update: { id?: string; slug?: string; name?: string; created_at?: string; }; Relationships: []; }; regions: {
         Row: {
           aliases: string[] | null
           bbox: Json | null
@@ -526,7 +526,7 @@ export type Database = {
           lng: number
           name: string
           parent_id: string | null
-          region_group: Database["public"]["Enums"]["region_group"] | null
+          region_group_id: string | null
         }
         Insert: {
           aliases?: string[] | null
@@ -539,7 +539,7 @@ export type Database = {
           lng: number
           name: string
           parent_id?: string | null
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
         }
         Update: {
           aliases?: string[] | null
@@ -552,7 +552,7 @@ export type Database = {
           lng?: number
           name?: string
           parent_id?: string | null
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
         }
         Relationships: [
           {
@@ -838,7 +838,7 @@ export type Database = {
           id: string
           negative_prompt: string
           palette: Json
-          region_group: Database["public"]["Enums"]["region_group"] | null
+          region_group_id: string | null
           story_type: Database["public"]["Enums"]["story_type"]
         }
         Insert: {
@@ -848,7 +848,7 @@ export type Database = {
           id?: string
           negative_prompt: string
           palette: Json
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
           story_type: Database["public"]["Enums"]["story_type"]
         }
         Update: {
@@ -858,7 +858,7 @@ export type Database = {
           id?: string
           negative_prompt?: string
           palette?: Json
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
           story_type?: Database["public"]["Enums"]["story_type"]
         }
         Relationships: []
@@ -1007,7 +1007,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          region_group: Database["public"]["Enums"]["region_group"] | null
+          region_group_id: string | null
           sample_path: string | null
           story_type: Database["public"]["Enums"]["story_type"] | null
           style_prompt: string
@@ -1017,7 +1017,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
           sample_path?: string | null
           story_type?: Database["public"]["Enums"]["story_type"] | null
           style_prompt: string
@@ -1027,7 +1027,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          region_group?: Database["public"]["Enums"]["region_group"] | null
+          region_group_id?: string | null
           sample_path?: string | null
           story_type?: Database["public"]["Enums"]["story_type"] | null
           style_prompt?: string
@@ -1068,14 +1068,7 @@ export type Database = {
       age_band: "asli" | "3-4" | "5-6" | "7-9" | "10-12"
       asset_status: "none" | "generating" | "ready" | "partial" | "failed"
       job_status: "queued" | "running" | "succeeded" | "failed" | "deferred"
-      region_group:
-        | "sumatera"
-        | "jawa"
-        | "bali_nusra"
-        | "kalimantan"
-        | "sulawesi"
-        | "maluku"
-        | "papua"
+      
       story_type: "legenda" | "mite" | "fabel" | "dongeng"
       submission_status:
         | "submitted"
@@ -1215,15 +1208,7 @@ export const Constants = {
       age_band: ["asli", "3-4", "5-6", "7-9", "10-12"],
       asset_status: ["none", "generating", "ready", "partial", "failed"],
       job_status: ["queued", "running", "succeeded", "failed", "deferred"],
-      region_group: [
-        "sumatera",
-        "jawa",
-        "bali_nusra",
-        "kalimantan",
-        "sulawesi",
-        "maluku",
-        "papua",
-      ],
+      
       story_type: ["legenda", "mite", "fabel", "dongeng"],
       submission_status: [
         "submitted",
@@ -1237,3 +1222,5 @@ export const Constants = {
     },
   },
 } as const
+
+
