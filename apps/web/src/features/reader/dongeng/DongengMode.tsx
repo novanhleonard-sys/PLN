@@ -5,7 +5,7 @@ import { ProgressBar } from '../../../ui/basic/Misc';
 import { useComputedPrefs, getThemeClasses, getFontSizeClass } from '../store/useReaderStore';
 import { ReaderHeader } from '../baca/ReaderHeader';
 import { cn } from '../../../utils/cn';
-import { supabase } from '../../../lib/supabase';
+
 
 interface DongengModeProps {
   pages: any[];
@@ -195,7 +195,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
       <main className="flex-1 flex flex-col relative overflow-hidden" onClick={showControls}>
         {prefs.dongengImageMode === 'dengan' && page.scene?.image_status === 'ready' && page.scene.image_path ? (
           <img 
-            src={supabase.storage.from('images').getPublicUrl(page.scene.image_path).data.publicUrl}
+            src={page.scene.image_path}
             alt="Ilustrasi"
             className={cn("absolute inset-0 w-full h-full object-cover transition-all duration-500", themeClasses.imageFilter)}
           />
