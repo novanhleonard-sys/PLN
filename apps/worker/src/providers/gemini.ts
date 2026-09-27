@@ -10,8 +10,14 @@ function zodToGeminiSchema(schema: any): Schema {
     const shape = schema.shape || schema._def?.shape();
     for (const key of Object.keys(shape)) {
       const fieldSchema = shape[key];
-      const isOpt = fieldSchema._def?.type === 'optional' || fieldSchema.isOptional?.();
-      properties[key] = zodToGeminiSchema(isOpt ? (fieldSchema._def?.innerType || fieldSchema.unwrap()) : fieldSchema);
+        const isOpt = fieldSchema.isOptional ? fieldSchema.isOptional() : false;
+        let inner = fieldSchema;
+        if (isOpt && typeof fieldSchema.unwrap === 'function') {
+           inner = fieldSchema.unwrap();
+        } else if (isOpt && fieldSchema._def?.innerType) {
+           inner = fieldSchema._def.innerType;
+        }
+        properties[key] = zodToGeminiSchema(inner);
       if (!isOpt) required.push(key);
     }
     return {
@@ -31,6 +37,8 @@ function zodToGeminiSchema(schema: any): Schema {
   if (typeStr === 'string') return { type: Type.STRING, description: schema.description };
   if (typeStr === 'number') return { type: Type.NUMBER, description: schema.description };
   if (typeStr === 'boolean') return { type: Type.BOOLEAN, description: schema.description };
+    if (schema._def?.typeName === 'ZodAny') return { type: Type.STRING, description: schema.description };
+    if (schema._def?.typeName === 'ZodAny') return { type: Type.STRING, description: schema.description };
   return { type: Type.STRING };
 }
 
