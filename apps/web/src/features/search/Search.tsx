@@ -10,9 +10,10 @@ interface SearchProps {
   stories: StoryPin[];
   onSelectStory: (story: StoryPin) => void;
   onSelectLocation?: (loc: [number, number]) => void;
+  onFilterChange?: (filtered: StoryPin[]) => void;
 }
 
-export function Search({ stories, onSelectStory, onSelectLocation }: SearchProps) {
+export function Search({ stories, onSelectStory, onSelectLocation, onFilterChange }: SearchProps) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -20,6 +21,19 @@ export function Search({ stories, onSelectStory, onSelectLocation }: SearchProps
   const [filterType, setFilterType] = useState<string>('');
   const [filterRegion, setFilterRegion] = useState<string>('');
   const [filterAudio, setFilterAudio] = useState<boolean>(false);
+
+  const activeStories = useMemo(() => {
+    let base = stories;
+    if (filterType) base = base.filter(s => s.type?.toLowerCase() === filterType.toLowerCase());
+    if (filterRegion) base = base.filter(s => s.region === filterRegion);
+    if (filterAudio) base = base.filter(s => s.dongengReady === true);
+    return base;
+  }, [stories, filterType, filterRegion, filterAudio]);
+
+  useEffect(() => {
+    if (onFilterChange) onFilterChange(activeStories);
+  }, [activeStories, onFilterChange]);
+
   
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);

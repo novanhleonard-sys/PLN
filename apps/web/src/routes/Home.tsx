@@ -12,6 +12,7 @@ export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
   const [selectedStory, setSelectedStory] = useState<StoryPin | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<[number, number] | null>(null);
+  const [filteredStories, setFilteredStories] = useState<StoryPin[] | null>(null);
   const { slug } = useParams();
   const { data: stories = [] } = useStories();
   const navigate = useNavigate();
@@ -44,15 +45,12 @@ export default function Home() {
         styleType={styleType} 
         onPinClick={setSelectedStory} 
         searchedLocation={searchedLocation}
-          stories={stories}
+          stories={filteredStories || stories}
       />
       
       {splashDone && (
         <>
-          <Search stories={stories} 
-            onSelectStory={setSelectedStory} 
-            onSelectLocation={setSearchedLocation} 
-          />
+          <Search stories={stories} onSelectStory={setSelectedStory} onSelectLocation={setSearchedLocation} onFilterChange={setFilteredStories} />
           
           <StoryCard 
             story={selectedStory} 
