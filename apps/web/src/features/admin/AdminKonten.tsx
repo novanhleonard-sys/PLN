@@ -176,11 +176,13 @@ export function AdminKonten() {
                           'bg-stone-100 text-stone-600'
                         }`}>
                           {job.status} ({job.attempts}x)
-                        </span>
-                      </td>
-                      <td className="p-4 text-xs text-stone-500 max-w-xs truncate" title={job.error || '-'}>
-                        {job.error || '-'}
-                      </td>
+                          </span>
+                          <div className="text-[10px] text-stone-400 mt-1">Dibuat: {new Date(job.created_at).toLocaleString('id-ID', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}</div>
+                        </td>
+                        <td className="p-4 text-xs text-stone-500 max-w-xs truncate" title={job.error || '-'}>
+                          <div>{job.error || '-'}</div>
+                          {job.status === 'failed' && <div className="text-[10px] text-red-400 mt-1">Jadwal: {new Date(job.run_after).toLocaleString('id-ID', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit', second:'2-digit'})}</div>}
+                        </td>
                       <td className="p-4 text-right">
                         {job.status === 'failed' && (
                           <Button 
