@@ -294,8 +294,9 @@ export function AdminDashboard() {
             <p className="text-xs text-stone-400 mb-4 h-4 leading-tight">Total pengeluaran API per tahap eksekusi.</p>
             <div className="flex flex-col md:flex-row gap-6">
               <div className="shrink-0 flex flex-col justify-center">
-                <div className="text-4xl font-black text-coral">{aiCost.total > 0 ? `$${aiCost.total.toFixed(4)}` : 'Belum ada data'}</div>
+                <div className="text-4xl font-black text-coral">{aiCost.total > 0 ? `Rp ${(aiCost.total * 15500).toLocaleString('id-ID', { maximumFractionDigits: 0 })}` : 'Rp 0'}</div>
                 <div className="text-xs font-bold text-stone-500 uppercase tracking-wider mt-1">Total Periode Ini</div>
+                {aiCost.total > 0 && <div className="text-[10px] text-stone-400 mt-1">(${aiCost.total.toFixed(4)} USD)</div>}
               </div>
               <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(aiCost.byStage).map(([stage, cost]) => (
