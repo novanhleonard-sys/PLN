@@ -13,7 +13,7 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
       lng: z.number(),
       name: z.string()
     }).describe("Titik koordinat geografis di mana cerita ini terjadi"),
-    confidence: z.number(),
+    confidence: z.number().min(0).max(1).describe("Nilai 0 sampai 1 sejauh mana AI yakin ini cerita valid"),
     reason: z.string()
   });
 
@@ -30,7 +30,7 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
     useSearchGrounding: true
   });
   
-  console.log("Verify Result:", result.isValid, result.reason, result.location);
+  console.log("Verify Result:", result.isValid, result.reason, result.location, result.confidence);
   
   // Apply verdict
   await ctx.supabase.from("verification_runs").insert({
@@ -39,7 +39,34 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
     created_at: new Date().toISOString()
   });
 
-  if (result.isValid) {
+  // Fetch app settings to decide auto-publish
+  const { data: appSettings } = await ctx.supabase.from("app_settings").select("key, value").in("key", ["auto_publish_enabled", "auto_publish_min_confidence"]);
+  
+  let autoPublishEnabled = true;
+  let autoPublishMinConf = 0.85;
+  if (appSettings) {
+    const s1 = appSettings.find((s: any) => s.key === "auto_publish_enabled");
+    if (s1) autoPublishEnabled = s1.value === 'true' || s1.value === true;
+    const s2 = appSettings.find((s: any) => s.key === "auto_publish_min_confidence");
+    if (s2) autoPublishMinConf = Number(s2.value);
+  }
+
+  console.log(`Auto Publish Settings: Enabled=${autoPublishEnabled}, MinConf=${autoPublishMinConf}`);
+
+  let finalStatus = 'needs_review';
+  
+  if (result.isValid && result.confidence >= autoPublishMinConf && autoPublishEnabled) {
+    finalStatus = 'approved';
+  } else if (!result.isValid && result.confidence >= autoPublishMinConf) {
+    finalStatus = 'rejected';
+  } else {
+    finalStatus = 'needs_review';
+  }
+
+  // Update submission status based on rules
+  await ctx.supabase.from("submissions").update({ status: finalStatus }).eq("id", submission.id);
+
+  if (finalStatus === 'approved') {
     const slug = submission.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const { data: story, error: storyErr } = await ctx.supabase.from("stories").upsert({
       title: submission.title,
@@ -81,10 +108,5 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
     }
   }
 
-  // Update submission status
-  await ctx.supabase.from("submissions").update({ status: result.isValid ? 'approved' : 'rejected' }).eq("id", submission.id);
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
-
-
-
