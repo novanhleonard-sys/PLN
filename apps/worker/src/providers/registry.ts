@@ -1,4 +1,4 @@
-import { SupabaseClient } from '@supabase/supabase-js';
+﻿import { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { calculateCost } from '../../../../packages/shared/src/ai/prices';
 import { BudgetGuard } from '../core/budget';
@@ -18,7 +18,7 @@ export interface AIProvider {
   name: string;
   generateText(model: string, prompt: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ text: string; inputTokens: number; outputTokens: number }>;
   generateJSON<T>(model: string, prompt: string, schema: z.Schema<T>, systemInstruction?: string, opts?: Record<string, any>): Promise<{ data: T; inputTokens: number; outputTokens: number }>;
-  generateAudio?(model: string, prompt: string, voiceName: string, opts?: Record<string, any>): Promise<{ audioBase64: string; inputTokens: number; outputTokens: number }>;
+  generateAudio?(model: string, prompt: string, voiceName: string, systemInstruction?: string, opts?: Record<string, any>): Promise<{ audioBase64: string; inputTokens: number; outputTokens: number }>;
   generateImage?(model: string, prompt: string, opts?: Record<string, any>): Promise<{ imageBase64: string; costUsd?: number }>;
 }
 
@@ -94,7 +94,7 @@ export class ProviderRegistry {
     let attempt = 0;
     while (attempt < 2) {
       try {
-        const result = await provider.generateAudio(opts.model, opts.prompt, opts.voiceName, opts);
+        const result = await provider.generateAudio(opts.model, opts.prompt, opts.voiceName, opts.systemInstruction, opts);
         await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
         return result.audioBase64;
       } catch (err: any) {
@@ -165,6 +165,7 @@ export class ProviderRegistry {
     });
   }
 }
+
 
 
 

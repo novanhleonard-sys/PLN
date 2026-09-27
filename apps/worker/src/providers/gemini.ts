@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type, Schema } from '@google/genai';
+﻿import { GoogleGenAI, Type, Schema } from '@google/genai';
 import { z } from 'zod';
 import { AIProvider } from './registry';
 
@@ -83,11 +83,11 @@ export class GeminiProvider implements AIProvider {
     };
   }
 
-  async generateAudio(model: string, prompt: string, voiceName: string, opts?: Record<string, any>) {
+  async generateAudio(model: string, prompt: string, voiceName: string, systemInstruction?: string, opts?: Record<string, any>) {
     const response = await this.ai.models.generateContent({
       model: model || 'gemini-2.0-flash',
       contents: prompt,
-      config: {
+      config: { systemInstruction: systemInstruction ? { role: 'user', parts: [{ text: systemInstruction }] } : undefined,
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
@@ -131,6 +131,7 @@ export class GeminiProvider implements AIProvider {
     };
   }
 }
+
 
 
 

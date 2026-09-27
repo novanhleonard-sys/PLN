@@ -47,7 +47,17 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
     throw new Error("Registry is required for audio generation");
   }
 
+  const { data: umum } = await ctx.supabase.from("app_settings").select("value").eq("key", "umum_suara").single();
+  const basePrompt = umum?.value?.prompt || "";
+  const specific = persona?.style_prompt || "";
+
+  const finalInstruction = [
+    basePrompt,
+    specific ? "Instruksi Spesifik Karakter:\n" + specific : ""
+  ].filter(Boolean).join("\n\n");
+
   const audioBase64 = await registry.generateAudio({
+    systemInstruction: finalInstruction,
     provider: 'gemini',
     model: 'gemini-2.5-flash-preview-tts',
     prompt: page.text,
@@ -113,4 +123,5 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
     if (fs.existsSync(tempOgg)) fs.unlinkSync(tempOgg);
   }
 };
+
 
