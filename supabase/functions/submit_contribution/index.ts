@@ -60,11 +60,17 @@ serve(async (req) => {
       // Wait, my setup_users script used `email_confirm: true`, so they are confirmed!
     }
 
-        const payload = await req.json();
+            const payload = await req.json();
     
     // Clean up empty strings for UUIDs
     if (payload.region_id === '') payload.region_id = null;
     if (payload.target_story_id === '') payload.target_story_id = null;
+    if (Array.isArray(payload.sources)) {
+      payload.sources = payload.sources.map((s) => {
+        if (s.author === '') s.author = undefined;
+        return s;
+      });
+    }
     
     const result = contributionSchema.safeParse(payload);
     
