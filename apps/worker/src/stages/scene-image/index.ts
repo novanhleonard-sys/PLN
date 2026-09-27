@@ -1,4 +1,4 @@
-﻿import sharp from 'sharp';
+import sharp from 'sharp';
 import { ProviderRegistry } from "../../providers/registry";
 
 export function assembleImagePrompt(
@@ -38,7 +38,10 @@ export const processSceneImageStage = async (ctx: any, job: any, registry: Provi
     styleConfig = fallback;
   }
 
-  const descriptor = styleConfig?.descriptor || "ilustrasi buku anak dengan garis pensil warna halus, sapuan cat air lembut, dan tekstur kertas ringan";
+  const { data: umum } = await ctx.supabase.from("app_settings").select("value").eq("key", "umum_gambar").single();
+  const basePrompt = umum?.value?.prompt || "";
+  const specific = styleConfig?.descriptor || "ilustrasi buku anak dengan garis pensil warna halus, sapuan cat air lembut, dan tekstur kertas ringan";
+  const descriptor = [basePrompt, specific].filter(Boolean).join("\n\nAturan Spesifik: ");
 
   const prompt = assembleImagePrompt(
     descriptor,
@@ -91,4 +94,5 @@ export const processSceneImageStage = async (ctx: any, job: any, registry: Provi
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
+
 
