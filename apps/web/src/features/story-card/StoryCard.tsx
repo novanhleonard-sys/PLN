@@ -208,8 +208,14 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
       <div className="flex flex-col h-full bg-white relative">
         {/* Cover Area */}
         <div className="w-full aspect-square md:aspect-video bg-[#fdfaf3] flex flex-col items-center justify-center relative shrink-0">
-          <Icon name="BookOpen" size={48} className="text-[#e8e4db] absolute opacity-50" />
-          <div className="z-10 font-fredoka font-bold text-[#8fbab8] text-xl opacity-70">Cover Image</div>
+          {story.cover ? (
+              <img src={story.cover} alt={story.title} className="w-full h-full object-cover" />
+            ) : (
+              <>
+                <Icon name="BookOpen" size={48} className="text-[#e8e4db] absolute opacity-50" />
+                <div className="z-10 font-fredoka font-bold text-[#8fbab8] text-xl opacity-70">Cover Image</div>
+              </>
+            )}
         </div>
 
         {/* Content Card */}
@@ -238,7 +244,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
           <h2 className="text-2xl font-fredoka font-bold text-[#1a7f84] mb-3 leading-tight">{story.title}</h2>
           <p className="text-[15px] text-stone-600 leading-relaxed font-nunito">
-            Ini adalah ringkasan singkat tentang kisah {story.title} dari {story.region || 'Nusantara'}. Masyarakat lokal mempercayai kisah ini secara turun temurun.
+            {story.synopsis || `Ini adalah ringkasan singkat tentang kisah ${story.title} dari ${story.region || 'Nusantara'}. Masyarakat lokal mempercayai kisah ini secara turun temurun.`}
           </p>
 
           <div className="bg-[#fdfaf3] rounded-2xl p-4 flex flex-col gap-3 my-5 border border-[#f3eee4]">

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 export type StoryType = 'fabel' | 'legenda' | 'mite' | 'dongeng';
 
 export interface StoryPin {
+  synopsis?: string;
   id: string;
   slug: string;
   title: string;
@@ -27,7 +28,7 @@ export function useStories() {
       const { data, error } = await supabase
         .from('stories')
         .select(`
-          id, title, type, lat, lng,
+          id, slug, title, type, lat, lng, synopsis, hero_image_path,
           tier, status, regions(name), story_versions(id, status, asset_status, body, adaptations(status))
         `);
       if (error) throw error;
@@ -45,14 +46,15 @@ export function useStories() {
 
         pins.push({
           id: story.id,
-          slug: story.id, // using id as slug for now, or we can use title
+          slug: story.slug || story.id,
           title: story.title,
           type: story.type as StoryType,
           lat: story.lat,
           lng: story.lng,
           tier: story.tier || 1,
           score: 100, // Dummy score or derived from story_stats later
-          cover: undefined,
+          cover: story.hero_image_path ? supabase.storage.from('story-media').getPublicUrl(story.hero_image_path).data.publicUrl : undefined,
+          synopsis: story.synopsis || '',
           region: Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name,
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
