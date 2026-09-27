@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useRegionGroups } from './useRegionGroups';
@@ -22,6 +22,7 @@ const SCENE_TEMPLATES = [
 
 export function AdminGayaAI() {
   const queryClient = useQueryClient();
+  const { regionGroups } = useRegionGroups();
   const [toast, setToast] = useState('');
   const [tab, setTab] = useState<'styles' | 'voices'>('styles');
   const formRef = useRef<HTMLDivElement>(null);
@@ -104,7 +105,7 @@ export function AdminGayaAI() {
                 <option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option>
               </select>
               <select className="flex-1 px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.region_group || ''} onChange={e => setStyleForm({...styleForm, region_group: e.target.value})}>
-                <option value="">Daerah: Global</option>{regionGroups.map(g => (<option key={g.id} value={g.slug}>{g.name}</option>))}
+                <option value="">Daerah: Global</option>{regionGroups.map((g: any) => (<option key={g.id} value={g.slug}>{g.name}</option>))}
               </select>
             </div>
             <textarea className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[80px]" placeholder="Prompt (Cat minyak, surealis...)" value={styleForm.descriptor} onChange={e => setStyleForm({...styleForm, descriptor: e.target.value})} />
@@ -133,7 +134,7 @@ export function AdminGayaAI() {
               <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (Bapak Tua)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
               <div className="relative"><input className="w-full px-4 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-sm outline-none text-stone-500 font-mono" placeholder="Voice ID (Otomatis)" value={voiceForm.voice_name} readOnly /><span className="absolute right-3 top-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-bold">AUTO</span></div>
             </div>
-            <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.region_group || ''} onChange={e => setVoiceForm({...voiceForm, region_group: e.target.value})}><option value="">Daerah: Global</option>{regionGroups.map(g => (<option key={g.id} value={g.slug}>{g.name}</option>))}</select></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Deskripsi karakter (Suara berat, pelan...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
+            <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.region_group || ''} onChange={e => setVoiceForm({...voiceForm, region_group: e.target.value})}><option value="">Daerah: Global</option>{regionGroups.map((g: any) => (<option key={g.id} value={g.slug}>{g.name}</option>))}</select></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Deskripsi karakter (Suara berat, pelan...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
             
             <div className="flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
               <div className="flex justify-between items-center"><span className="text-sm font-bold text-stone-700">Sampel Audio (MP3)</span><div className="w-32"><FileUploader bucket="admin-assets" folder="voices" accept="audio/*" label="Unggah" isAudio onUploadSuccess={p => setVoiceForm(s => ({...s, sample_path: p[0]}))} /></div></div>
@@ -202,3 +203,5 @@ export function AdminGayaAI() {
     </div>
   );
 }
+
+

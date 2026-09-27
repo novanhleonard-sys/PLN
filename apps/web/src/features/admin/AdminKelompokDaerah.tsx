@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
@@ -99,7 +99,7 @@ export function AdminKelompokDaerah() {
                     <div className="text-xs text-stone-500">{g.slug}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-1.5 text-stone-400 hover:text-teal-600" onClick={(e) => { e.stopPropagation(); setForm(g); }}><Icon name="Edit2" size={14} /></button>
+                    <button className="p-1.5 text-stone-400 hover:text-teal-600" onClick={(e) => { e.stopPropagation(); setForm(g); }}><Icon name="Pencil" size={14} /></button>
                     <button className="p-1.5 text-stone-400 hover:text-red-500" onClick={(e) => { e.stopPropagation(); handleDeleteGroup(g.id); }}><Icon name="Trash" size={14} /></button>
                   </div>
                 </div>
@@ -149,3 +149,4 @@ export function AdminKelompokDaerah() {
     </div>
   );
 }
+
