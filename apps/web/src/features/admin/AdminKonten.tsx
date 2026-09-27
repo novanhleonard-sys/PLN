@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
@@ -31,7 +31,7 @@ export function AdminKonten() {
     queryKey: ['admin_jobs'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('jobs')
+        .from('admin_jobs_view')
         .select('*')
         .in('status', ['failed', 'running', 'queued'])
         .order('created_at', { ascending: false });
@@ -118,7 +118,7 @@ export function AdminKonten() {
                         </td>
                         <td className="p-4 text-stone-600">
                           Tier {story.tier || 1} 
-                          {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">🔒</span>}
+                          {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">ðŸ”’</span>}
                         </td>
                         <td className="p-4 flex gap-2 justify-end">
                           <Button 
@@ -159,7 +159,7 @@ export function AdminKonten() {
               <table className="w-full text-left text-sm min-w-[700px]">
                 <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
                   <tr>
-                    <th className="p-4 font-bold">Jenis Task</th>
+                    <th className="p-4 font-bold">Judul</th><th className="p-4 font-bold">Jenis Task</th>
                     <th className="p-4 font-bold">Status</th>
                     <th className="p-4 font-bold">Error Info</th>
                     <th className="p-4 font-bold text-right">Aksi</th>
@@ -168,7 +168,7 @@ export function AdminKonten() {
                 <tbody>
                   {jobs?.map((job) => (
                     <tr key={job.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
-                      <td className="p-4 font-bold text-stone-800 uppercase text-xs">{job.kind}</td>
+                      <td className="p-4 text-xs font-semibold text-stone-700">{job.story_title || "-"}</td><td className="p-4 font-bold text-stone-800 uppercase text-xs">{job.kind}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${
                           job.status === 'failed' ? 'bg-red-100 text-red-600' : 
@@ -209,3 +209,5 @@ export function AdminKonten() {
     </div>
   );
 }
+
+

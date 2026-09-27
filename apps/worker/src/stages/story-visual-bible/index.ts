@@ -7,7 +7,7 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
 
   const { data: version } = await ctx.supabase
     .from("story_versions")
-    .select("id, text, story:stories(title, region_id, target_age, character_names), scenes(id, idx, description)")
+    .select("id, text, story:stories(title, region_id), scenes(id, idx, description)")
     .eq("id", versionId)
     .single();
 
@@ -136,4 +136,5 @@ ${version.text}
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
   console.log("Story Visual Bible generated & jobs queued.");
 };
+
 
