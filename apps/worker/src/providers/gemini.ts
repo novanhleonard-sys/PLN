@@ -125,7 +125,7 @@ export class GeminiProvider implements AIProvider {
   async generateImage(model: string, prompt: string, referenceImages?: string[], opts?: Record<string, any>) {
     const interaction = await this.ai.interactions.create({
       model: model || 'gemini-3.1-flash-image',
-      input: referenceImages?.length ? [prompt, ...referenceImages.map(img => ({ inlineData: { data: img, mimeType: 'image/png' } }))] as any : prompt,
+      input: referenceImages?.length ? { role: 'user', parts: [ { text: prompt }, ...referenceImages.map(img => ({ inlineData: { data: img, mimeType: 'image/png' } })) ] } as any : prompt,
     });
 
     const outputImage = interaction.output_image;
