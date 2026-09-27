@@ -19,6 +19,7 @@ import { characterStage } from './stages/character';
 import { processSceneImageStage } from './stages/scene-image';
 import { processStoryVisualBibleStage } from './stages/story-visual-bible';
 import { processCanonicalRefStage } from './stages/canonical-ref';
+import { processCanonicalMasterStage } from './stages/canonical-master';
 import { audioStage } from './stages/audio';
 import { adaptStage } from './stages/adapt';
 import { adaptCheckStage } from './stages/adapt-check';
@@ -52,6 +53,7 @@ runner.register('character', async (ctx, job) => await characterStage(ctx, job, 
 runner.register('scene-image', async (ctx, job) => await processSceneImageStage(ctx, job, registry));
 runner.register('story-visual-bible', async (ctx, job) => await processStoryVisualBibleStage(ctx, job, registry));
 runner.register('canonical-ref', async (ctx, job) => await processCanonicalRefStage(ctx, job, registry));
+runner.register('canonical-master', async (ctx, job) => await processCanonicalMasterStage(ctx, job, registry));
 runner.register('audio', async (ctx, job) => await audioStage(ctx, job, registry));
 runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry));
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));

@@ -67,14 +67,22 @@ export const processSceneImageStage = async (ctx: { supabase: SupabaseClient }, 
   }
 
   const renderingStyle = JSON.stringify(bible.rendering_style || {});
+  const overallDir = bible.overall_direction || "";
   const scenePlanJson = JSON.stringify(plan);
   
+  // Inject text descriptors for locations and props if they are mentioned but not passed as images
+  const locDesc = (bible.locations || []).filter((l: any) => (plan.locations || []).includes(l.name)).map((l: any) => l.name + ": " + l.description).join("\n");
+  const propDesc = (bible.props || []).filter((p: any) => (plan.props || []).includes(p.name)).map((p: any) => p.name + ": " + p.description).join("\n");
+
   const prompt = `
+Overall Direction: ${overallDir}
 Rendering Style: ${renderingStyle}
 Scene Visual Plan: ${scenePlanJson}
+Deskripsi Lokasi: ${locDesc}
+Deskripsi Properti: ${propDesc}
 Deskripsi Scene Aktual: ${scene.description}
 
-Aturan: Patuhi Rendering Style dan Scene Visual Plan. Gunakan referensi karakter/lokasi/prop yang diberikan (bila ada) sebagai panduan utama desain visual agar konsisten.`;
+Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter/lokasi/prop gambar yang diberikan (bila ada) sebagai panduan utama. Deskripsi teks di atas digunakan untuk hal-hal yang tidak memiliki referensi gambar spesifik agar tetap konsisten.`;
 
   console.log("Generating scene-image for", (scene.version?.story as any)?.title, "idx", scene.idx);
 

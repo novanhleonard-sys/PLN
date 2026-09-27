@@ -23,15 +23,18 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
     characters: z.array(z.object({
       name: z.string(),
       description: z.string(),
-      role: z.string().optional()
+      role: z.string().optional(),
+      is_canonical: z.boolean().default(false).describe("True if visually significant/recurring")
     })),
     locations: z.array(z.object({
       name: z.string(),
-      description: z.string()
+      description: z.string(),
+      is_canonical: z.boolean().default(false)
     })),
     props: z.array(z.object({
       name: z.string(),
-      description: z.string()
+      description: z.string(),
+      is_canonical: z.boolean().default(false)
     })),
     scene_plans: z.array(z.object({
       scene_idx: z.number(),
@@ -48,13 +51,7 @@ Patuhi Global Image Instruction berikut:
 ${globalPrompt}
 
 Hasilkan JSON dengan skema:
-- overall_direction: atmosfer, mood
-- rendering_style: medium, lines, shading
-- color_palette: warna dominan, secondary, dll
-- characters: daftar karakter penting (dengan deskripsi fisik lengkap)
-- locations: daftar lokasi penting
-- props: benda penting
-- scene_plans: rencana visual per scene (scene_idx harus sesuai urutan scene)
+- characters, locations, props: tetapkan is_canonical=true hanya untuk entitas penting (berulang/signifikan secara visual).
 
 Teks Cerita:
 ${version.body}
@@ -82,28 +79,19 @@ ${version.body}
 
   if (bibleErr) throw new Error("Failed to insert bible: " + bibleErr.message);
 
-  const canonicalJobs: any[] = [];
-  
+  const allEntities: any[] = [];
   const insertRefs = async (items: any[], type: string) => {
     for (const item of items) {
       const { data: refRecord } = await ctx.supabase.from("canonical_references").insert({
         bible_id: bibleRecord.id,
         type: type,
         name: item.name,
-        description: item.description || item.role || ""
-      }).select("id").single();
+        description: item.description || item.role || "",
+        is_canonical: item.is_canonical || false
+      }).select("id, is_canonical, name").single();
 
-      if (refRecord) {
-        canonicalJobs.push({
-          kind: "canonical-ref",
-          ref_type: "canonical_reference",
-          ref_id: refRecord.id,
-          status: "queued",
-          attempts: 0,
-          cost_usd: 0,
-          run_after: new Date().toISOString(),
-          idempotency_key: `canonical_ref_${refRecord.id}`
-        });
+      if (refRecord && refRecord.is_canonical) {
+        allEntities.push(refRecord);
       }
     }
   };
@@ -112,9 +100,74 @@ ${version.body}
   await insertRefs(bibleData.locations || [], "location");
   await insertRefs(bibleData.props || [], "prop");
 
-  if (canonicalJobs.length > 0) {
-    const { error: cjobErr } = await ctx.supabase.from("jobs").insert(canonicalJobs);
-    if (cjobErr) throw new Error("Failed to queue canonical jobs: " + cjobErr.message);
+  if (allEntities.length > 0) {
+    const plannerSchema = z.object({
+      master_sheets: z.array(z.object({
+        rows: z.number().max(3),
+        columns: z.number().max(3),
+        entities: z.array(z.object({
+          id: z.string(),
+          row: z.number(),
+          column: z.number()
+        }))
+      }))
+    });
+    
+    const entitiesListStr = allEntities.map(e => `- ${e.name} (id: ${e.id})`).join("\n");
+    const plannerPrompt = `Plan canonical master sheets for these entities:
+${entitiesListStr}
+
+Rules:
+- preferredMaxEntitiesPerSheet = 6, absoluteMaxEntitiesPerSheet = 9
+- Return array of master_sheets with rows and columns (e.g., 2x3, 1x3, 2x2).
+- Assign each entity to a specific row and column in one of the sheets (0-indexed).
+- Group semantically (e.g. main characters together).`;
+
+    const planData = await registry.generateJSON(plannerSchema, {
+      provider: "gemini",
+      model: "gemini-3.8-flash",
+      prompt: plannerPrompt,
+      ref: job.id,
+      stage: "story-visual-bible"
+    });
+
+    const masterJobs: any[] = [];
+    for (const sheetPlan of planData.master_sheets) {
+      if (sheetPlan.entities.length === 0) continue;
+      
+      const { data: sheetRec } = await ctx.supabase.from("canonical_master_sheets").insert({
+        bible_id: bibleRecord.id,
+        sheet_rows: sheetPlan.rows,
+        sheet_columns: sheetPlan.columns,
+        entity_count: sheetPlan.entities.length,
+        layout_metadata: sheetPlan
+      }).select("id").single();
+
+      if (sheetRec) {
+        masterJobs.push({
+          kind: "canonical-master",
+          ref_type: "canonical_master_sheet",
+          ref_id: sheetRec.id,
+          status: "queued",
+          attempts: 0,
+          cost_usd: 0,
+          run_after: new Date().toISOString(),
+          idempotency_key: `canonical_master_${sheetRec.id}`
+        });
+
+        for (const e of sheetPlan.entities) {
+          await ctx.supabase.from("canonical_references").update({
+            master_sheet_id: sheetRec.id,
+            sheet_row: e.row,
+            sheet_column: e.column
+          }).eq("id", e.id);
+        }
+      }
+    }
+
+    if (masterJobs.length > 0) {
+      await ctx.supabase.from("jobs").insert(masterJobs);
+    }
   }
 
   const sceneJobs = version.scenes.map((s: any) => ({
@@ -129,13 +182,9 @@ ${version.body}
   }));
 
   if (sceneJobs.length > 0) {
-    const { error: sjobErr } = await ctx.supabase.from("jobs").insert(sceneJobs);
-    if (sjobErr) throw new Error("Failed to queue scene-image jobs: " + sjobErr.message);
+    await ctx.supabase.from("jobs").insert(sceneJobs);
   }
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
   console.log("Story Visual Bible generated & jobs queued.");
 };
-
-
-
