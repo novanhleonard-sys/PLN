@@ -20,7 +20,7 @@ interface ReaderMenuProps {
   onAdaptationReady: (adaptationId: string) => void;
 }
 
-type MenuView = 'main' | 'suasana' | 'usia' | 'laporan';
+type MenuView = 'main' | 'suasana' | 'usia' | 'laporan' | 'tentang';
 
 export const ReaderMenu: React.FC<ReaderMenuProps> = ({ 
   isOpen, onClose, mode, versionId, storyId, onAdaptationReady
@@ -33,6 +33,14 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   const [reportReason, setReportReason] = useState('');
   const [reportStatus, setReportStatus] = useState<'idle'|'submitting'|'success'>('idle');
   const [age, setAge] = useState(6);
+  const [sources, setSources] = useState<any[]>([]);
+  useEffect(() => {
+    if (isOpen && versionId) {
+      supabase.from('story_versions').select('sources').eq('id', versionId).single().then(({data}) => {
+        if (data && data.sources) setSources(data.sources);
+      });
+    }
+  }, [isOpen, versionId]);
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [availableSounds, setAvailableSounds] = useState<any[]>([]);
 
@@ -217,13 +225,14 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
           <span className="font-bold">Sesuaikan usia</span>
           <Icon name="ChevronRight" size={16} className="opacity-50" />
         </button>
-        <button 
-          onClick={() => setView('laporan')}
-          className="flex items-center justify-between px-4 py-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500"
-        >
-          <span className="font-bold">Laporkan cerita</span>
-          <Icon name="ChevronRight" size={16} className="opacity-50" />
-        </button>
+        <button onClick={() => setView('tentang')} className="flex items-center justify-between px-4 py-2 hover:bg-teal/10 rounded-xl transition-colors text-teal mb-2">
+            <span className="font-bold flex items-center gap-2"><Icon name="Info" size={16} /> Tentang Cerita</span>
+            <Icon name="ChevronRight" size={16} className="opacity-50" />
+          </button>
+          <button onClick={() => setView('laporan')} className="flex items-center justify-between px-4 py-2 hover:bg-red-500/10 rounded-xl transition-colors text-red-500">
+            <span className="font-bold">Laporkan cerita</span>
+            <Icon name="ChevronRight" size={16} className="opacity-50" />
+          </button>
       </div>
     </div>
   );
@@ -270,6 +279,23 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
     </div>
   ));
 
+  
+  const renderTentangContent = () => (
+    <div className="flex flex-col gap-4 font-nunito max-h-60 overflow-y-auto pr-2">
+      {sources && sources.length > 0 ? (
+        sources.map((src, idx) => (
+          <div key={idx} className={cn("p-3 rounded-xl border", themeClasses.navBg, themeClasses.border)}>
+            <div className="font-bold mb-1">{src.author || 'Sumber'}</div>
+            <div className="text-xs uppercase tracking-wider mb-1 opacity-60">{src.type || 'Lainnya'}</div>
+            <div className="break-all text-sm opacity-80">{src.citation?.startsWith('http') ? <a href={src.citation} target="_blank" rel="noreferrer" className="text-teal hover:underline">{src.citation}</a> : src.citation}</div>
+          </div>
+        ))
+      ) : (
+        <p className="italic opacity-60 text-sm">Data sumber tidak tersedia untuk cerita ini.</p>
+      )}
+    </div>
+  );
+
   const renderLaporanContent = () => (
     <>{reportStatus === 'success' ? (
       <div className="py-8 text-center text-teal font-bold flex flex-col items-center gap-3">
@@ -315,7 +341,8 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
       <div ref={menuRef} className={cn("absolute top-full right-0 mt-2 rounded-2xl shadow-xl border z-50 p-6 min-w-[320px]", themeClasses.surface, themeClasses.border)}>
         {view === 'main' && renderMainView()}
         {view === 'suasana' && renderSuasanaView()}
-        {view === 'laporan' && wrapView('Laporkan Cerita', renderLaporanContent())}
+        {view === 'tentang' && wrapView('Tentang Cerita', renderTentangContent())}
+          {view === 'laporan' && wrapView('Laporkan Cerita', renderLaporanContent())}
         {view === 'usia' && wrapView('Sesuaikan Usia', renderUsiaContent())}
       </div>
     );
@@ -326,7 +353,8 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
       <div className={cn("rounded-t-3xl p-6 pt-8 min-h-[50vh]", themeClasses.surface)}>
         {view === 'main' && renderMainView()}
         {view === 'suasana' && renderSuasanaView()}
-        {view === 'laporan' && wrapView('Laporkan Cerita', renderLaporanContent())}
+        {view === 'tentang' && wrapView('Tentang Cerita', renderTentangContent())}
+          {view === 'laporan' && wrapView('Laporkan Cerita', renderLaporanContent())}
         {view === 'usia' && wrapView('Sesuaikan Usia', renderUsiaContent())}
       </div>
     </Sheet>
