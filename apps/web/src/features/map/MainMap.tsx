@@ -267,7 +267,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
            else if (t.includes('mite')) pinType = 'mite';
            else if (t.includes('fabel')) pinType = 'fabel';
         }
-        root.render(<MapPin type={pinType} title={story.title} onClick={() => onPinClick(story)} />);
+        root.render(<MapPin type={pinType} title={story.title} imageUrl={story.pinImage} onClick={() => onPinClick(story)} />);
         
         const marker = new Marker({ element: el })
           .setLngLat([story.lng, story.lat])

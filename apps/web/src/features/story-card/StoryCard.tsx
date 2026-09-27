@@ -80,6 +80,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   const [storyVersions, setStoryVersions] = useState<any[]>([]);
   
   const [isReportPromptOpen, setIsReportPromptOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
 
   // Version picker state
@@ -235,8 +236,11 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
                     <Icon name="Pen" size={16} className="text-stone-400" /> Edit cerita
                   </button>
                   <button onClick={handleReport} className="w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2">
-                    <Icon name="Flag" size={16} className="text-stone-400" /> Laporkan cerita
-                  </button>
+                      <Icon name="Flag" size={16} className="text-stone-400" /> Laporkan cerita
+                    </button>
+                    <button onClick={() => { setIsMenuOpen(false); setIsAboutOpen(true); }} className="w-full px-4 py-2 text-left text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2">
+                      <Icon name="Info" size={16} className="text-stone-400" /> Tentang
+                    </button>
                 </div>
               )}
             </div>
@@ -298,7 +302,30 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
           </div>
         )}
 
-        {/* Report Dialog */}
+        {/* About Dialog */}
+          {isAboutOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+              <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+                <h3 className="font-fredoka font-bold text-lg text-stone-800 mb-4">Sumber Cerita</h3>
+                <div className="max-h-60 overflow-y-auto font-nunito text-sm text-stone-600 flex flex-col gap-3 pr-2 mb-4">
+                  {story.sources && story.sources.length > 0 ? (
+                    story.sources.map((src: any, idx: number) => (
+                      <div key={idx} className="bg-stone-50 p-3 rounded-xl border border-stone-100">
+                        <div className="font-bold text-stone-700 mb-1">{src.author || 'Sumber'}</div>
+                        <div className="text-stone-500 text-xs uppercase tracking-wider mb-1">{src.type || 'Lainnya'}</div>
+                        <div className="break-all">{src.citation?.startsWith('http') ? <a href={src.citation} target="_blank" rel="noreferrer" className="text-teal hover:underline">{src.citation}</a> : src.citation}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="italic text-stone-400">Data sumber tidak tersedia untuk cerita ini.</p>
+                  )}
+                </div>
+                <Button onClick={() => setIsAboutOpen(false)} variant="ghost" className="w-full bg-stone-100">Tutup</Button>
+              </div>
+            </div>
+          )}
+
+          {/* Report Dialog */}
         {isReportPromptOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
