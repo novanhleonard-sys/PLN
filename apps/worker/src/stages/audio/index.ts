@@ -19,11 +19,17 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
     throw new Error("Page not found: " + (pageErr?.message || ""));
   }
 
+  // Get region_group_id from stories regions
+  let regionGroupId = null;
+  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("story_id", page.adaptation.version.story.id).limit(1).maybeSingle();
+  if (regions) regionGroupId = regions.region_group_id;
+
   // Get persona
   let { data: persona, error: personaErr } = await ctx.supabase
     .from("voice_personas")
     .select("*")
     .eq("story_type", page.adaptation.version.story.type)
+    .eq("region_group_id", regionGroupId)
     .limit(1)
     .maybeSingle();
     
