@@ -17,21 +17,42 @@ import '@fontsource/nunito/700.css'
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './index.css'
 
-const Styleguide = lazy(() => import('./routes/styleguide.tsx'))
-const Home = lazy(() => import('./routes/Home.tsx'))
-const Baca = lazy(() => import('./features/reader/baca/Baca').then(m => ({ default: m.Baca })))
-const Login = lazy(() => import('./routes/Login.tsx').then(m => ({ default: m.Login })))
-const AdminCenter = lazy(() => import('./features/admin/AdminCenter').then(m => ({ default: m.AdminCenter })))
+const lazyReload = (componentImport: () => Promise<any>) => {
+  return lazy(async () => {
+    try {
+      const component = await componentImport();
+      return component;
+    } catch (error: any) {
+      if (
+        error.message.includes('Failed to fetch dynamically imported module') ||
+        error.message.includes('Importing a module script failed')
+      ) {
+        if (!sessionStorage.getItem('vite-reload-attempted')) {
+          sessionStorage.setItem('vite-reload-attempted', 'true');
+          window.location.reload();
+          // Return a never-resolving promise to prevent React from throwing while reloading
+          return new Promise(() => {});
+        } else {
+          sessionStorage.removeItem('vite-reload-attempted');
+        }
+      }
+      throw error;
+    }
+  });
+};
 
+const Styleguide = lazyReload(() => import('./routes/styleguide.tsx'))
+const Home = lazyReload(() => import('./routes/Home.tsx'))
+const Baca = lazyReload(() => import('./features/reader/baca/Baca').then(m => ({ default: m.Baca })))
+const Login = lazyReload(() => import('./routes/Login.tsx').then(m => ({ default: m.Login })))
+const AdminCenter = lazyReload(() => import('./features/admin/AdminCenter').then(m => ({ default: m.AdminCenter })))
 
-
-
-const Profile = lazy(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
-const Pengaturan = lazy(() => import('./features/profile/Pengaturan.tsx').then(m => ({ default: m.Pengaturan })))
-const ContributeForm = lazy(() => import('./features/contribute/ContributeForm').then(m => ({ default: m.ContributeForm })))
-const EditContributionWrapper = lazy(() => import('./features/contribute/EditContributionWrapper').then(m => ({ default: m.EditContributionWrapper })))
-const MyContributions = lazy(() => import('./features/contribute/MyContributions').then(m => ({ default: m.MyContributions })))
-const ContributionStatusDetail = lazy(() => import('./features/contribute/ContributionStatusDetail').then(m => ({ default: m.ContributionStatusDetail })))
+const Profile = lazyReload(() => import('./features/profile/Profile.tsx').then(m => ({ default: m.Profile })))
+const Pengaturan = lazyReload(() => import('./features/profile/Pengaturan.tsx').then(m => ({ default: m.Pengaturan })))
+const ContributeForm = lazyReload(() => import('./features/contribute/ContributeForm').then(m => ({ default: m.ContributeForm })))
+const EditContributionWrapper = lazyReload(() => import('./features/contribute/EditContributionWrapper').then(m => ({ default: m.EditContributionWrapper })))
+const MyContributions = lazyReload(() => import('./features/contribute/MyContributions').then(m => ({ default: m.MyContributions })))
+const ContributionStatusDetail = lazyReload(() => import('./features/contribute/ContributionStatusDetail').then(m => ({ default: m.ContributionStatusDetail })))
 
 const queryClient = new QueryClient();
 
@@ -43,7 +64,7 @@ const AppContent = () => {
   }, [initialize]);
 
   return (
-    <Suspense fallback={<div className="p-8 text-stone-500 font-nunito">Memuat aplikasi...</div>}>
+    <Suspense fallback={<div className="p-8 text-stone-500 font-nunito flex justify-center mt-20">Memuat aplikasi...</div>}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cerita/:slug" element={<Home />} />
@@ -58,10 +79,6 @@ const AppContent = () => {
         <Route path="/kontribusi/:id" element={<RequireAuth><ContributionStatusDetail /></RequireAuth>} />
         <Route path="/kontribusi/:id/edit" element={<RequireAuth><EditContributionWrapper /></RequireAuth>} />
         <Route path="/admin/*" element={<AdminCenter />} />
-        
-        
-        
-        
       </Routes>
     </Suspense>
   );
@@ -77,6 +94,11 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Clear reload attempt flag on successful mount
+if (sessionStorage.getItem('vite-reload-attempted')) {
+  sessionStorage.removeItem('vite-reload-attempted');
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -88,7 +110,3 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
-
-
-
-
