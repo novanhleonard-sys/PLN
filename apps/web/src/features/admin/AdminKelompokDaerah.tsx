@@ -4,6 +4,21 @@ import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
 import { Toast } from '../../ui/basic/Toast';
 
+const ISLAND_ORDER = ['Sumatera', 'Jawa', 'Bali & Nusa Tenggara', 'Kalimantan', 'Sulawesi', 'Maluku', 'Papua', 'Lainnya'];
+
+function getIslandGroup(code: string) {
+  if (!code) return 'Lainnya';
+  const prefix = parseInt(code.substring(0, 2), 10);
+  if (prefix >= 11 && prefix <= 21) return 'Sumatera';
+  if (prefix >= 31 && prefix <= 36) return 'Jawa';
+  if (prefix >= 51 && prefix <= 53) return 'Bali & Nusa Tenggara';
+  if (prefix >= 61 && prefix <= 65) return 'Kalimantan';
+  if (prefix >= 71 && prefix <= 76) return 'Sulawesi';
+  if (prefix >= 81 && prefix <= 82) return 'Maluku';
+  if (prefix >= 91 && prefix <= 99) return 'Papua';
+  return 'Lainnya';
+}
+
 export function AdminKelompokDaerah() {
   const [groups, setGroups] = useState<any[]>([]);
   const [regions, setRegions] = useState<any[]>([]);
@@ -19,7 +34,7 @@ export function AdminKelompokDaerah() {
     setLoading(true);
     const [gRes, rRes] = await Promise.all([
       supabase.from('region_groups').select('*').order('name'),
-      supabase.from('regions').select('id, name, level, parent_id, lng, region_group_id')
+      supabase.from('regions').select('id, name, level, parent_id, lng, code, region_group_id')
     ]);
     
     if (gRes.data) setGroups(gRes.data);
@@ -85,29 +100,49 @@ export function AdminKelompokDaerah() {
     return 'partial';
   };
 
-  const sortedProvinces = useMemo(() => {
+  const groupedProvinces = useMemo(() => {
+    const terpilih: any[] = [];
+    const islands: Record<string, any[]> = {
+      'Sumatera': [],
+      'Jawa': [],
+      'Bali & Nusa Tenggara': [],
+      'Kalimantan': [],
+      'Sulawesi': [],
+      'Maluku': [],
+      'Papua': [],
+      'Lainnya': []
+    };
+
     let provs = regions.filter(r => r.level === 'provinsi');
     if (query.trim()) {
       const q = query.toLowerCase();
       provs = provs.filter(p => p.name.toLowerCase().includes(q));
     }
-    return provs.sort((a, b) => {
-      const statusA = getProvStatus(a);
-      const statusB = getProvStatus(b);
-      const isSelectedA = statusA !== 'none' ? 1 : 0;
-      const isSelectedB = statusB !== 'none' ? 1 : 0;
-      
-      if (isSelectedA !== isSelectedB) {
-        return isSelectedB - isSelectedA; // selected first
+
+    provs.forEach(p => {
+      const status = getProvStatus(p);
+      if (status !== 'none') {
+        terpilih.push(p);
+      } else {
+        const island = getIslandGroup(p.code);
+        if (islands[island]) {
+          islands[island].push(p);
+        } else {
+          islands['Lainnya'].push(p);
+        }
       }
-      return (a.lng || 0) - (b.lng || 0);
     });
+
+    const sortByCode = (a: any, b: any) => (a.code || '').localeCompare(b.code || '');
+    terpilih.sort(sortByCode);
+    Object.values(islands).forEach(arr => arr.sort(sortByCode));
+
+    return { terpilih, islands };
   }, [regions, query, selectedGroup, childrenMap]);
 
   const handleToggleProvince = async (prov: any) => {
     if (!selectedGroup) return;
     const status = getProvStatus(prov);
-    // If it's already full, deselect it. If it's none or partial, select it fully.
     const newGroupId = status === 'full' ? null : selectedGroup.id;
     const children = childrenMap[prov.id] || [];
     const idsToUpdate = [prov.id, ...children.map(c => c.id)];
@@ -121,11 +156,78 @@ export function AdminKelompokDaerah() {
     const isAssigned = child.region_group_id === selectedGroup.id;
     const newGroupId = isAssigned ? null : selectedGroup.id;
     
-    // Also we might need to sync the province's region_group_id if it's the only child assigned?
-    // Let's just update the child directly, and the getProvStatus will compute 'partial'.
-    
     setRegions(prev => prev.map(r => r.id === child.id ? { ...r, region_group_id: newGroupId } : r));
     await supabase.from('regions').update({ region_group_id: newGroupId }).eq('id', child.id);
+  };
+
+  const renderProvince = (prov: any) => {
+    const status = getProvStatus(prov);
+    const isOtherAssigned = prov.region_group_id && prov.region_group_id !== selectedGroup?.id;
+    const children = childrenMap[prov.id] || [];
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedProv === prov.id;
+
+    return (
+      <div key={prov.id} className={"mb-1 bg-white rounded-xl shadow-sm border overflow-hidden " + (status !== 'none' ? 'border-teal-200' : 'border-stone-200')}>
+        <div className="flex items-center p-3 hover:bg-stone-50 transition-colors">
+          <label className="flex items-center gap-3 cursor-pointer flex-1 select-none">
+            <input 
+              type="radio" 
+              checked={status === 'full' || status === 'partial'}
+              onClick={(e) => e.stopPropagation()}
+              onChange={() => handleToggleProvince(prov)}
+              className="w-4 h-4 text-teal border-stone-300 focus:ring-teal cursor-pointer"
+            />
+            <div className="flex items-center gap-2">
+              <span className={"text-sm " + (status !== 'none' ? 'font-bold text-stone-800' : 'text-stone-600')}>{prov.name}</span>
+              {status === 'partial' && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold uppercase tracking-wider">Sebagian</span>
+              )}
+              {isOtherAssigned && status === 'none' && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-400 uppercase">Grup Lain</span>
+              )}
+            </div>
+          </label>
+
+          {hasChildren && (
+            <Button 
+              variant={isExpanded ? "primary" : "secondary"} 
+              className="!px-3 !py-1.5 text-xs rounded-lg"
+              onClick={() => setExpandedProv(isExpanded ? null : prov.id)}
+            >
+              Pilih Sebagian
+            </Button>
+          )}
+        </div>
+
+        {isExpanded && hasChildren && (
+          <div className="px-3 pb-3 pt-1 border-t border-stone-100 bg-stone-50/50">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+              {children.map(child => {
+                const isChildAssigned = child.region_group_id === selectedGroup?.id;
+                const isChildOtherAssigned = child.region_group_id && !isChildAssigned;
+                return (
+                  <label key={child.id} className={"flex items-start gap-2 p-2 rounded-lg cursor-pointer border transition-colors " + (isChildAssigned ? 'bg-teal-50 border-teal-200' : 'bg-white border-stone-200 hover:border-stone-300')}>
+                    <input 
+                      type="radio" 
+                      checked={isChildAssigned}
+                      onChange={() => handleToggleChild(child)}
+                      className="mt-0.5 w-3.5 h-3.5 text-teal border-stone-300 focus:ring-teal cursor-pointer shrink-0"
+                    />
+                    <div className="flex flex-col">
+                      <span className={"text-xs leading-tight " + (isChildAssigned ? 'font-bold text-teal-900' : 'text-stone-600')}>{child.name}</span>
+                      {isChildOtherAssigned && (
+                        <span className="text-[9px] text-stone-400 mt-0.5">Grup Lain</span>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -170,7 +272,7 @@ export function AdminKelompokDaerah() {
                     <div className="text-xs text-stone-500">{g.slug}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="p-2 text-stone-400 hover:text-teal-600 bg-white rounded-lg border border-stone-200 shadow-sm" onClick={(e) => { e.stopPropagation(); setForm(g); }}><Icon name="Pencil" size={14} /></button>
+                    <button className="p-2 text-stone-400 hover:text-teal-600 bg-white rounded-lg border border-stone-200 shadow-sm" onClick={(e) => { e.stopPropagation(); setForm(g); setSelectedGroup(g); }}><Icon name="Pencil" size={14} /></button>
                     <button className="p-2 text-stone-400 hover:text-red-500 bg-white rounded-lg border border-stone-200 shadow-sm" onClick={(e) => { e.stopPropagation(); handleDeleteGroup(g.id); }}><Icon name="Trash" size={14} /></button>
                   </div>
                 </div>
@@ -185,7 +287,7 @@ export function AdminKelompokDaerah() {
             {selectedGroup ? (
               <>
                 <p className="text-sm text-stone-500 mb-4">
-                  Pilih daerah yang termasuk ke dalam <strong>{selectedGroup.name}</strong>. Terurut dari ujung barat ke timur.
+                  Pilih daerah yang termasuk ke dalam <strong>{selectedGroup.name}</strong>.
                 </p>
                 <div className="relative mb-4 shrink-0">
                   <Icon name="Search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
@@ -198,77 +300,25 @@ export function AdminKelompokDaerah() {
                   />
                 </div>
                 <div className="border border-stone-200 rounded-xl overflow-y-auto bg-stone-50 p-2 grow">
-                  {sortedProvinces.map(prov => {
-                    const status = getProvStatus(prov);
-                    const isOtherAssigned = prov.region_group_id && prov.region_group_id !== selectedGroup.id;
-                    const children = childrenMap[prov.id] || [];
-                    const hasChildren = children.length > 0;
-                    const isExpanded = expandedProv === prov.id;
+                  {groupedProvinces.terpilih.length > 0 && (
+                    <div className="mb-6">
+                      <div className="text-xs font-bold text-teal-700 uppercase tracking-wider mb-2 px-1">Daerah Terpilih</div>
+                      {groupedProvinces.terpilih.map(renderProvince)}
+                    </div>
+                  )}
 
+                  {ISLAND_ORDER.map(islandName => {
+                    const provs = groupedProvinces.islands[islandName];
+                    if (!provs || provs.length === 0) return null;
                     return (
-                      <div key={prov.id} className={"mb-1 bg-white rounded-xl shadow-sm border overflow-hidden " + (status !== 'none' ? 'border-teal-200' : 'border-stone-200')}>
-                        <div className="flex items-center p-3 hover:bg-stone-50 transition-colors">
-                          <label className="flex items-center gap-3 cursor-pointer flex-1 select-none">
-                            <input 
-                              type="radio" 
-                              checked={status === 'full' || status === 'partial'}
-                              onClick={(e) => e.stopPropagation()}
-                              onChange={() => handleToggleProvince(prov)}
-                              className="w-4 h-4 text-teal border-stone-300 focus:ring-teal cursor-pointer"
-                            />
-                            <div className="flex items-center gap-2">
-                              <span className={"text-sm " + (status !== 'none' ? 'font-bold text-stone-800' : 'text-stone-600')}>{prov.name}</span>
-                              {status === 'partial' && (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold uppercase tracking-wider">Sebagian</span>
-                              )}
-                              {isOtherAssigned && status === 'none' && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-400 uppercase">Grup Lain</span>
-                              )}
-                            </div>
-                          </label>
-
-                          {hasChildren && (
-                            <Button 
-                              variant={isExpanded ? "primary" : "secondary"} 
-                              className="!px-3 !py-1.5 text-xs rounded-lg"
-                              onClick={() => setExpandedProv(isExpanded ? null : prov.id)}
-                            >
-                              Pilih Sebagian
-                            </Button>
-                          )}
-                        </div>
-
-                        {/* Children List */}
-                        {isExpanded && hasChildren && (
-                          <div className="px-3 pb-3 pt-1 border-t border-stone-100 bg-stone-50/50">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-                              {children.map(child => {
-                                const isChildAssigned = child.region_group_id === selectedGroup.id;
-                                const isChildOtherAssigned = child.region_group_id && !isChildAssigned;
-                                return (
-                                  <label key={child.id} className={"flex items-start gap-2 p-2 rounded-lg cursor-pointer border transition-colors " + (isChildAssigned ? 'bg-teal-50 border-teal-200' : 'bg-white border-stone-200 hover:border-stone-300')}>
-                                    <input 
-                                      type="radio" 
-                                      checked={isChildAssigned}
-                                      onChange={() => handleToggleChild(child)}
-                                      className="mt-0.5 w-3.5 h-3.5 text-teal border-stone-300 focus:ring-teal cursor-pointer shrink-0"
-                                    />
-                                    <div className="flex flex-col">
-                                      <span className={"text-xs leading-tight " + (isChildAssigned ? 'font-bold text-teal-900' : 'text-stone-600')}>{child.name}</span>
-                                      {isChildOtherAssigned && (
-                                        <span className="text-[9px] text-stone-400 mt-0.5">Grup Lain</span>
-                                      )}
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
+                      <div key={islandName} className="mb-6">
+                        <div className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 px-1">{islandName}</div>
+                        {provs.map(renderProvince)}
                       </div>
                     );
                   })}
-                  {sortedProvinces.length === 0 && (
+                  
+                  {groupedProvinces.terpilih.length === 0 && Object.values(groupedProvinces.islands).every(arr => arr.length === 0) && (
                     <div className="text-center py-8 text-stone-400 text-sm">Tidak ada daerah yang cocok.</div>
                   )}
                 </div>
