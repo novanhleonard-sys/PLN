@@ -7,7 +7,7 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
 
   const { data: version } = await ctx.supabase
     .from("story_versions")
-    .select("id, text, story:stories(title, region_id), scenes(id, idx, description)")
+    .select("id, body, story:stories(title, region_id), scenes(id, idx, description)")
     .eq("id", versionId)
     .single();
 
@@ -57,7 +57,7 @@ Hasilkan JSON dengan skema:
 - scene_plans: rencana visual per scene (scene_idx harus sesuai urutan scene)
 
 Teks Cerita:
-${version.text}
+${version.body}
 `;
 
   console.log("Generating Story Visual Bible for version", versionId);
@@ -136,5 +136,6 @@ ${version.text}
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
   console.log("Story Visual Bible generated & jobs queued.");
 };
+
 
 

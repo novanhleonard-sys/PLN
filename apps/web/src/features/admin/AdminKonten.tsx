@@ -15,12 +15,9 @@ export function AdminKonten() {
     queryKey: ['admin_stories'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('stories')
-        .select(`
-          id, title, status, tier_locked, tier,
-          story_stats(reads_count)
-        `)
-        .order('created_at', { ascending: false });
+        .from('admin_stories_view')
+          .select('*')
+          .order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -98,12 +95,13 @@ export function AdminKonten() {
                     <th className="p-4 font-bold">Judul Cerita</th>
                     <th className="p-4 font-bold">Status</th>
                     <th className="p-4 font-bold">Selesai Dibaca</th>
+                      <th className="p-4 font-bold">Total Spend AI</th>
                     <th className="p-4 font-bold">Tier</th>
                     <th className="p-4 font-bold text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {stories?.map((story) => {
+                  {stories?.map((story: any) => {
                     const readCount = Array.isArray(story.story_stats) ? story.story_stats[0]?.reads_count : (story.story_stats as any)?.reads_count;
                     return (
                       <tr key={story.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors">
@@ -114,8 +112,11 @@ export function AdminKonten() {
                           </span>
                         </td>
                         <td className="p-4 text-stone-600 font-mono">
-                          {readCount || 0} kali
-                        </td>
+                            {readCount || 0} kali
+                          </td>
+                          <td className="p-4 text-stone-600 font-mono text-sm">
+                            Rp {(story.total_spend_idr || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })}
+                          </td>
                         <td className="p-4 text-stone-600">
                           Tier {story.tier || 1} 
                           {story.tier_locked && <span className="ml-2 text-amber-500" title="Tier Locked">ðŸ”’</span>}
