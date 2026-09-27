@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useRegionGroups } from './useRegionGroups';
 import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
 import { FileUploader } from '../../ui/basic/FileUploader';
@@ -7,6 +8,7 @@ import { Toast } from '../../ui/basic/Toast';
 
 export function AdminPustakaSuara() {
   const [sounds, setSounds] = useState<any[]>([]);
+  const { regionGroups } = useRegionGroups();
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
   
@@ -131,13 +133,7 @@ export function AdminPustakaSuara() {
               onChange={e => setForm({...form, region_group: e.target.value})}
             >
               <option value="">Daerah: Global</option>
-              <option value="jawa">Jawa</option>
-              <option value="sumatra">Sumatra</option>
-              <option value="kalimantan">Kalimantan</option>
-              <option value="sulawesi">Sulawesi</option>
-              <option value="papua">Papua</option>
-              <option value="nusa_bali">Nusa Tenggara & Bali</option>
-              <option value="maluku">Maluku</option>
+              {regionGroups.map(g => (<option key={g.id} value={g.slug}>{g.name}</option>))}
             </select>
           </div>
           

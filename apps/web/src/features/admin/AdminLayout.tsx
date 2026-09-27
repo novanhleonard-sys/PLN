@@ -60,6 +60,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { id: 'pengaturan', label: 'Pengaturan', icon: 'Settings', onClick: () => navigate('/admin/pengaturan') },
     { id: 'kelola', label: 'Kelola Admin', icon: 'Shield', onClick: () => navigate('/admin/kelola') },
     { id: 'pustaka-suara', label: 'Pustaka Suara', icon: 'Music', onClick: () => navigate('/admin/pustaka-suara') },
+    { id: 'kelompok-daerah', label: 'Kelompok Daerah', icon: 'Map', onClick: () => navigate('/admin/kelompok-daerah') },
     
   ];
 
