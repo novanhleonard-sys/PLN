@@ -1,4 +1,4 @@
-import { AIProvider } from '../../providers/registry';
+﻿import { AIProvider } from '../../providers/registry';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
@@ -21,7 +21,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
 
   // Get region_group_id from stories regions
   let regionGroupId = null;
-  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("story_id", page.adaptation.version.story.id).limit(1).maybeSingle();
+  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("id", page.adaptation.version.story.region_id).limit(1).maybeSingle();
   if (regions) regionGroupId = regions.region_group_id;
 
   // Get persona
@@ -113,3 +113,4 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
     if (fs.existsSync(tempOgg)) fs.unlinkSync(tempOgg);
   }
 };
+

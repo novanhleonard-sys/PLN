@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+﻿import sharp from 'sharp';
 import { ProviderRegistry } from "../../providers/registry";
 
 export function assembleImagePrompt(
@@ -21,7 +21,7 @@ export const processSceneImageStage = async (ctx: any, job: any, registry: Provi
 
   // Get region_group_id from stories regions
   let regionGroupId = null;
-  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("story_id", scene.version.story.id).limit(1).maybeSingle();
+  const { data: regions } = await ctx.supabase.from("regions").select("region_group_id").eq("id", scene.version.story.region_id).limit(1).maybeSingle();
   if (regions) regionGroupId = regions.region_group_id;
 
   // Get style config
@@ -91,3 +91,4 @@ export const processSceneImageStage = async (ctx: any, job: any, registry: Provi
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
+
