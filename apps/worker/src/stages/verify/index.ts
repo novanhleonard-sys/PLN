@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -25,7 +25,7 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
     model: "gemini-3.6-flash",
     prompt,
     systemInstruction: "Anda adalah verifikator ahli folklor Nusantara. Lakukan pencarian web untuk memvalidasi folklor, lalu kembalikan JSON hasil verifikasi dengan lokasi akurat (lat, lng).",
-    ref: submission.id,
+    ref: job.id,
     stage: "verify",
     useSearchGrounding: true
   });
@@ -110,3 +110,4 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
+

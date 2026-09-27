@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -30,7 +30,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
     model: "gemini-3.6-flash",
     prompt,
     systemInstruction: "Anda adalah pembuat naskah buku anak. Bagi cerita ke bagian-bagian dengan panjang merata. Hasilkan deskripsi visual yang detail untuk tiap bagian agar bisa digambar oleh AI.",
-    ref: version.id,
+    ref: job.id,
     stage: "segment"
   });
 
@@ -142,3 +142,4 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
   console.log("Segment complete for", version.story.title);
 };
+

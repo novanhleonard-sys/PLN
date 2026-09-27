@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const adaptCheckStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -55,7 +55,7 @@ ${JSON.stringify(adaptedPages.map((p: any) => p.text))}
     prompt,
     systemInstruction: "Kamu adalah penilai kualitas teks. Berikan 'faithful: true' jika adaptasi setia pada sumbernya, atau berikan daftar 'issues' jika melenceng.",
     stage: "adapt_check",
-    ref: job.ref_id
+    ref: job.id
   });
 
   if (!result.faithful) {
@@ -71,3 +71,4 @@ ${JSON.stringify(adaptedPages.map((p: any) => p.text))}
   // Lolos check, mark adaptation as ready
   await ctx.supabase.from("adaptations").update({ status: 'ready' }).eq('id', adaptation.id);
 };
+

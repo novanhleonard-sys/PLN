@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const adaptStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -68,7 +68,7 @@ ${originalPagesJSON}
     prompt,
     systemInstruction: "Kamu adalah spesialis sastra anak yang ahli menyederhanakan teks.",
     stage: "adapt",
-    ref: job.ref_id
+    ref: job.id
   });
 
   const adaptedPages = result.pages;
@@ -105,3 +105,4 @@ ${originalPagesJSON}
 
   if (jobError) throw jobError;
 };
+

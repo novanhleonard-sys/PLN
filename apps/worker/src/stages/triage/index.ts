@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -19,7 +19,7 @@ export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry
     model: "glm-5.3-flash",
     prompt,
     systemInstruction: "Anda adalah asisten kurator Peta Legenda Nusantara. Tolak cerita modern atau non-Indonesia. Return JSON matching the schema EXACTLY with properties `status` and `reason`.",
-    ref: submission.id,
+    ref: job.id,
     stage: "triage"
   });
   
@@ -43,4 +43,5 @@ export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: reasonText }).eq("id", job.id);
 };
+
 
