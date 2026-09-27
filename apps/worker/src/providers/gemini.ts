@@ -122,28 +122,26 @@ export class GeminiProvider implements AIProvider {
       outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
     };
   }
-  async generateImage(model: string, prompt: string, referenceImages?: string[], opts?: Record<string, any>) {
-    const interaction = await this.ai.interactions.create({
-      model: model || 'gemini-3.1-flash-image',
-      input: referenceImages?.length ? { role: 'user', parts: [ { text: prompt }, ...referenceImages.map(img => ({ inlineData: { data: img, mimeType: 'image/png' } })) ] } as any : prompt,
-    });
+    async generateImage(model: string, prompt: string, referenceImages?: string[], opts?: Record<string, any>) {
+    const contents = referenceImages?.length 
+      ? [ { text: prompt }, ...referenceImages.map(img => ({ inlineData: { data: img, mimeType: 'image/png' } })) ] as any 
+      : prompt;
 
-    const outputImage = interaction.output_image;
-    if (!outputImage || !outputImage.data) {
+    const response = await this.ai.models.generateContent({
+      model: model || 'gemini-3.1-flash-image',
+      contents
+    });
+    
+    const parts = response.candidates?.[0]?.content?.parts || [];
+    const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.mimeType?.startsWith('image/'));
+    
+    if (!imagePart || !imagePart.inlineData || !imagePart.inlineData.data) {
       throw new Error('Gemini did not return image data.');
     }
 
     return {
-      imageBase64: outputImage.data as string,
+      imageBase64: imagePart.inlineData.data as string,
       costUsd: undefined
     };
   }
 }
-
-
-
-
-
-
-
-
