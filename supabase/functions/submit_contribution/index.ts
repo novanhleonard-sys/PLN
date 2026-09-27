@@ -49,9 +49,10 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } }
     });
 
-    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser();
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser(token);
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Unauthorized', details: userError?.message || 'User not found', token_present: !!authHeader }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (!user.email_confirmed_at) {
