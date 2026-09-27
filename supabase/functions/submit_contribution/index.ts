@@ -85,8 +85,8 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Check quota
-    const { data: settings } = await supabaseAdmin.from('app_settings').select('submissions_per_day').single();
-    const limit = settings?.submissions_per_day || 3;
+    const { data: settings } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'submissions_per_day').maybeSingle();
+    const limit = settings?.value || 3;
 
     const startOfDay = new Date();
     startOfDay.setUTCHours(0,0,0,0);
@@ -134,8 +134,10 @@ serve(async (req) => {
     const { error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({
-        type: 'triage',
-        payload: { submission_id: submission.id }
+        kind: 'triage_submission',
+        ref_type: 'submissions',
+        ref_id: submission.id,
+        idempotency_key: `triage_submission_${submission.id}`
       });
 
     if (jobError) {
