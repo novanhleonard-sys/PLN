@@ -145,7 +145,8 @@ Rules:
 
       if (sheetRec) {
         masterJobs.push({
-          kind: "canonical-master",
+            process_run_id: job.process_run_id,
+            kind: "canonical-master",
           ref_type: "canonical_master_sheet",
           ref_id: sheetRec.id,
           status: "queued",
@@ -171,6 +172,7 @@ Rules:
   }
 
   const sceneJobs = version.scenes.map((s: any) => ({
+    process_run_id: job.process_run_id,
     kind: "scene-image",
     ref_type: "scene",
     ref_id: s.id,

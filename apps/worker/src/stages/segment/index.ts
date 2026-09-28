@@ -36,6 +36,15 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
   console.log("Segment OK: scenes=" + result.scenes.length + " chars=" + result.characters.length);
 
+  let scope = 'all';
+  if (job.process_run_id) {
+    const { data: runData } = await ctx.supabase.from("ai_process_runs").select("scope").eq("id", job.process_run_id).single();
+    if (runData) {
+      scope = runData.scope;
+      console.log("Process run scope:", scope);
+    }
+  }
+
   // Insert characters (ignore errors - upsert by name+version_id)
   const charMap = new Map<string, string>();
   for (const char of result.characters) {
@@ -121,17 +130,20 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
     console.log("Scene + page + jobs queued for idx=" + scene.idx);
   }
 
-  const { error: bibleJobErr } = await ctx.supabase.from("jobs").insert({
-    kind: "story-visual-bible",
-    ref_type: "version",
-    ref_id: version.id,
-    status: "queued",
-    attempts: 0,
-    cost_usd: 0,
-    run_after: new Date().toISOString(),
-    idempotency_key: "bible_" + version.id
-  });
-  if (bibleJobErr) throw new Error("Failed to queue story-visual-bible: " + bibleJobErr.message);
+  if (scope === 'all' || scope === 'image_only') {
+    const { error: bibleJobErr } = await ctx.supabase.from("jobs").insert({
+      kind: "story-visual-bible",
+      ref_type: "version",
+      ref_id: version.id,
+      process_run_id: job.process_run_id,
+      status: "queued",
+      attempts: 0,
+      cost_usd: 0,
+      run_after: new Date().toISOString(),
+      idempotency_key: "bible_" + version.id
+    });
+    if (bibleJobErr) throw new Error("Failed to queue story-visual-bible: " + bibleJobErr.message);
+  }
 
   // Update story version status
   await ctx.supabase.from("story_versions").update({
