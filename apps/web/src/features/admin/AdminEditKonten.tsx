@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { ContributeForm } from '../contribute/ContributeForm';
 import type { ContributeFormData } from '../contribute/ContributeForm';
 import { Toast } from '../../ui/basic/Toast';
-import { Trash } from 'lucide-react';
+import { Trash, RefreshCw, EyeOff, Image as ImageIcon, Music, BookOpen, AlertTriangle, Plus } from 'lucide-react';
 
 export function AdminEditKonten() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +23,68 @@ export function AdminEditKonten() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const [assetStats, setAssetStats] = useState({
+    vbExists: false,
+    vbRefsCount: 0,
+    scenesTotal: 0,
+    scenesComplete: 0,
+    audioTotal: 0,
+    audioComplete: 0
+  });
+  const [loadingAssets, setLoadingAssets] = useState(false);
+
+  useEffect(() => {
+    if (selectedVersionId) {
+      fetchAssetStats(selectedVersionId);
+    }
+  }, [selectedVersionId]);
+
+  const fetchAssetStats = async (versionId: string) => {
+    setLoadingAssets(true);
+    try {
+      const { data: vb } = await supabase
+        .from('story_visual_bibles')
+        .select('id, canonical_references(id)')
+        .eq('version_id', versionId)
+        .maybeSingle();
+      
+      const { data: scenes } = await supabase
+        .from('scenes')
+        .select('id, image_path')
+        .eq('version_id', versionId);
+
+      const { data: adaptations } = await supabase
+        .from('adaptations')
+        .select('id, pages(id, page_audio(id))')
+        .eq('version_id', versionId);
+
+      let aTotal = 0;
+      let aComp = 0;
+      if (adaptations) {
+        adaptations.forEach((ad: any) => {
+          ad.pages?.forEach((p: any) => {
+            aTotal++;
+            if (p.page_audio && p.page_audio.length > 0) aComp++;
+          });
+        });
+      }
+
+      setAssetStats({
+        vbExists: !!vb,
+        vbRefsCount: vb?.canonical_references ? vb.canonical_references.length : 0,
+        scenesTotal: scenes ? scenes.length : 0,
+        scenesComplete: scenes ? scenes.filter((s: any) => s.image_path).length : 0,
+        audioTotal: aTotal,
+        audioComplete: aComp
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingAssets(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchStory();
@@ -150,6 +212,26 @@ export function AdminEditKonten() {
     }
   };
 
+  const handleRegenerateVB = () => {
+    if (confirm('Ini akan memengaruhi canonical references dan scenes. Lanjut?')) {
+      setToast('Visual Bible sedang di-regenerate (MOCK)');
+    }
+  };
+
+  const handleGenerateMissing = () => {
+    setToast('Memproses aset yang hilang... (MOCK)');
+  };
+
+  const handleHideAsset = () => {
+    setToast('Aset disembunyikan (MOCK)');
+  };
+
+  const handleDeleteAsset = () => {
+    if (confirm('Yakin ingin menghapus aset?')) {
+      setToast('Aset dihapus (MOCK)');
+    }
+  };
+
   const handleDelete = async () => {
     if (!id) return;
     const isLastVersion = versions.length <= 1;
@@ -258,6 +340,115 @@ export function AdminEditKonten() {
             onSubmitOverride={handleSubmit} 
             onCancel={() => navigate('/admin/konten')} 
           />
+        )}
+      </div>
+
+      {/* Asset Completion Section */}
+      <div className="mt-8 bg-white p-6 rounded-xl border border-border-light shadow-sm mb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div>
+            <h3 className="text-xl font-fredoka font-bold text-stone-800 flex items-center gap-2">
+              <BookOpen size={20} className="text-teal" />
+              Kelengkapan Asset
+            </h3>
+            <p className="text-sm text-stone-500 font-nunito mt-1">Status aset untuk versi cerita ini</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            <button 
+              onClick={handleRegenerateVB}
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200 rounded-lg text-sm font-bold transition-colors"
+            >
+              <RefreshCw size={14} />
+              Regenerate VB
+            </button>
+            <button 
+              onClick={handleGenerateMissing}
+              className="flex items-center gap-2 px-3 py-1.5 bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200 rounded-lg text-sm font-bold transition-colors"
+            >
+              <Plus size={14} />
+              Generate Missing
+            </button>
+            <button 
+              onClick={handleHideAsset}
+              className="flex items-center gap-2 px-3 py-1.5 bg-stone-100 text-stone-600 hover:bg-stone-200 border border-stone-200 rounded-lg text-sm font-bold transition-colors"
+            >
+              <EyeOff size={14} />
+              Hide Asset
+            </button>
+            <button 
+              onClick={handleDeleteAsset}
+              className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-sm font-bold transition-colors"
+            >
+              <Trash size={14} />
+              Delete Asset
+            </button>
+          </div>
+        </div>
+
+        {loadingAssets ? (
+          <div className="py-8 text-center text-stone-500 animate-pulse font-nunito text-sm">
+            Memeriksa status aset...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-lg ${assetStats.vbExists ? 'bg-teal-100 text-teal-dark' : 'bg-red-100 text-red-600'}`}>
+                  <BookOpen size={18} />
+                </div>
+                <div className="font-bold text-stone-800">Visual Bible</div>
+              </div>
+              <div className="text-2xl font-black font-fredoka text-stone-800 mt-2">
+                {assetStats.vbExists ? 'Tersedia' : 'Kosong'}
+              </div>
+              <div className="text-xs text-stone-500 mt-1 font-bold">
+                {assetStats.vbRefsCount} Canonical References
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-lg ${assetStats.scenesComplete === assetStats.scenesTotal && assetStats.scenesTotal > 0 ? 'bg-teal-100 text-teal-dark' : 'bg-amber-100 text-amber-600'}`}>
+                  <ImageIcon size={18} />
+                </div>
+                <div className="font-bold text-stone-800">Scene Images</div>
+              </div>
+              <div className="text-2xl font-black font-fredoka text-stone-800 mt-2 flex items-baseline gap-1">
+                {assetStats.scenesComplete} <span className="text-base font-bold text-stone-400">/ {assetStats.scenesTotal}</span>
+              </div>
+              <div className="text-xs text-stone-500 mt-1 font-bold">
+                Gambar Ter-generate
+              </div>
+              {assetStats.scenesTotal > 0 && assetStats.scenesComplete < assetStats.scenesTotal && (
+                <div className="mt-3 flex items-center gap-1.5 text-xs text-amber-600 font-bold bg-amber-50 py-1 px-2 rounded-md border border-amber-100">
+                  <AlertTriangle size={12} />
+                  Belum Lengkap
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`p-2 rounded-lg ${assetStats.audioComplete === assetStats.audioTotal && assetStats.audioTotal > 0 ? 'bg-teal-100 text-teal-dark' : 'bg-amber-100 text-amber-600'}`}>
+                  <Music size={18} />
+                </div>
+                <div className="font-bold text-stone-800">Audio Narasi</div>
+              </div>
+              <div className="text-2xl font-black font-fredoka text-stone-800 mt-2 flex items-baseline gap-1">
+                {assetStats.audioComplete} <span className="text-base font-bold text-stone-400">/ {assetStats.audioTotal}</span>
+              </div>
+              <div className="text-xs text-stone-500 mt-1 font-bold">
+                Audio Ter-generate
+              </div>
+              {assetStats.audioTotal > 0 && assetStats.audioComplete < assetStats.audioTotal && (
+                <div className="mt-3 flex items-center gap-1.5 text-xs text-amber-600 font-bold bg-amber-50 py-1 px-2 rounded-md border border-amber-100">
+                  <AlertTriangle size={12} />
+                  Belum Lengkap
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
