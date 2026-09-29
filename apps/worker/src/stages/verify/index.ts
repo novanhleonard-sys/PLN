@@ -94,16 +94,12 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
       if (versionErr) console.error("Version Insert Error:", versionErr);
 
       if (version) {
-        await ctx.supabase.from("jobs").insert({
-          kind: "segment",
-          ref_type: "story_version",
-          ref_id: version.id,
-          status: "queued",
-          attempts: 0,
-          cost_usd: 0,
-          run_after: new Date().toISOString(),
-          idempotency_key: "segment_" + version.id
+        const { error: runErr } = await ctx.supabase.rpc('start_ai_process_run', {
+           p_version_id: version.id,
+           p_scope: 'all',
+           p_config_snapshot: { source: 'auto-approve' }
         });
+        if (runErr) console.error("Process Run Start Error:", runErr);
       }
     }
   }

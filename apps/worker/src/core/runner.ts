@@ -9,6 +9,7 @@ export interface Job {
   attempts: number;
   run_after: string;
   idempotency_key: string;
+  process_run_id?: string;
   error?: string;
   cost_usd: number;
   created_at: string;
@@ -108,13 +109,27 @@ export class JobRunner {
       console.error(`Last Error: ${errorMsg}`);
       console.error(`Action: STOPPING ALL QUEUED AI JOBS automatically.\n`);
       
-      // Stop all queued jobs to prevent runaway cost
-      await this.supabase.from('jobs')
-        .update({ 
-           status: 'failed', 
-           error: `AUTO_CANCELLED: System paused due to repeated failure in job ${job.id}. Original Error: ${errorMsg}` 
-        })
-        .eq('status', 'queued');
+      // Stop queued jobs to prevent runaway cost
+      if (job.process_run_id) {
+        await this.supabase.from('jobs')
+          .update({ 
+             status: 'failed', 
+             error: `AUTO_CANCELLED: System paused due to repeated failure in job ${job.id}. Original Error: ${errorMsg}` 
+          })
+          .eq('status', 'queued')
+          .eq('process_run_id', job.process_run_id);
+          
+        await this.supabase.from('ai_process_runs')
+          .update({ status: 'failed' })
+          .eq('id', job.process_run_id);
+      } else {
+        await this.supabase.from('jobs')
+          .update({ 
+             status: 'failed', 
+             error: `AUTO_CANCELLED: System paused due to repeated failure in job ${job.id}. Original Error: ${errorMsg}` 
+          })
+          .eq('status', 'queued');
+      }
     } else if (job.attempts === 1) {
       nextRunAfter.setSeconds(nextRunAfter.getSeconds() + 30);
     }

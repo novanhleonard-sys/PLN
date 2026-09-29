@@ -45,6 +45,16 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
     }
   }
 
+  // Idempotency: Clean up existing scenes (cascades to pages if DB is set up, otherwise we manually delete pages)
+  // Wait, pages are linked to adaptation, scenes are linked to version.
+  // Actually, deleting scenes might not cascade to pages depending on FK. Let's delete pages first.
+  const { data: oldScenes } = await ctx.supabase.from("scenes").select("id").eq("version_id", version.id);
+  if (oldScenes && oldScenes.length > 0) {
+    const oldSceneIds = oldScenes.map((s: any) => s.id);
+    await ctx.supabase.from("pages").delete().in("scene_id", oldSceneIds);
+    await ctx.supabase.from("scenes").delete().in("id", oldSceneIds);
+  }
+
   // Insert characters (ignore errors - upsert by name+version_id)
   const charMap = new Map<string, string>();
   for (const char of result.characters) {
