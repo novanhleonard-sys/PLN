@@ -13,6 +13,9 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
 
   if (!version) throw new Error("Story version not found");
 
+  const scenes: any[] = (version.scenes || []).sort((a: any, b: any) => a.idx - b.idx);
+  if (scenes.length === 0) throw new Error("No scenes found for version " + versionId);
+
   const { data: umumG } = await ctx.supabase.from("app_settings").select("value").eq("key", "umum_gambar").single();
   const globalPrompt = umumG?.value?.prompt || "Gaya ilustrasi storybook kartunis...";
 
@@ -24,7 +27,7 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
       name: z.string(),
       description: z.string(),
       role: z.string().optional(),
-      is_canonical: z.boolean().default(false).describe("True if visually significant/recurring")
+      is_canonical: z.boolean().default(false)
     })),
     locations: z.array(z.object({
       name: z.string(),
@@ -35,16 +38,25 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
       name: z.string(),
       description: z.string(),
       is_canonical: z.boolean().default(false)
-    })),
-    scene_plans: z.array(z.object({
+    }))
+  });
+
+  // Scene plans are derived from actual DB scenes — NOT from AI free-form generation
+  // This prevents scene_idx mismatch between bible.scene_plans and actual scenes
+  const scenePlanSchema = z.object({
+    plans: z.array(z.object({
       scene_idx: z.number(),
       narrative_focus: z.string(),
       characters: z.array(z.string()),
       locations: z.array(z.string()),
       props: z.array(z.string()),
-      density: z.string()
+      density: z.enum(["sparse", "moderate", "dense"])
     }))
   });
+
+  const sceneListForPrompt = scenes.map((s: any) =>
+    `Scene ${s.idx}: ${s.description}`
+  ).join("\n\n");
 
   const sysPrompt = `Anda adalah Art Director untuk Peta Legenda Nusantara. Buat Story Visual Bible untuk cerita berjudul: "${(version.story as any)?.title}".
 Patuhi Global Image Instruction berikut:
@@ -66,6 +78,44 @@ ${version.body}
     stage: "story-visual-bible"
   });
 
+  // Generate scene plans separately, explicitly listing each scene idx from DB
+  console.log("Generating scene plans for", scenes.length, "scenes");
+  const planData = await registry.generateJSON(scenePlanSchema, {
+    provider: "gemini",
+    model: "gemini-3.8-flash",
+    prompt: `Anda adalah Art Director. Untuk setiap scene berikut, tentukan characters, locations, props yang muncul, dan narrative_focus visual.
+PENTING: Kembalikan tepat ${scenes.length} plans, satu untuk setiap scene_idx di bawah. Jangan tambah atau kurangi.
+
+Karakter yang tersedia: ${bibleData.characters.map((c: any) => c.name).join(", ")}
+Lokasi yang tersedia: ${bibleData.locations.map((l: any) => l.name).join(", ")}
+Props yang tersedia: ${bibleData.props.map((p: any) => p.name).join(", ")}
+
+Daftar Scene:
+${sceneListForPrompt}`,
+    ref: job.id,
+    stage: "story-visual-bible"
+  });
+
+  // Validate plans cover all scene indices
+  const sceneIdxSet = new Set(scenes.map((s: any) => s.idx));
+  const planIdxSet = new Set(planData.plans.map((p: any) => p.scene_idx));
+  for (const idx of sceneIdxSet) {
+    if (!planIdxSet.has(idx)) {
+      // Fill missing plan with minimal fallback
+      planData.plans.push({
+        scene_idx: idx,
+        narrative_focus: scenes.find((s: any) => s.idx === idx)?.description || "",
+        characters: [],
+        locations: [],
+        props: [],
+        density: "moderate"
+      });
+    }
+  }
+
+  // Idempotency: Delete existing visual bible for this version
+  await ctx.supabase.from("story_visual_bibles").delete().eq("version_id", versionId);
+
   const { data: bibleRecord, error: bibleErr } = await ctx.supabase.from("story_visual_bibles").insert({
     version_id: versionId,
     overall_direction: bibleData.overall_direction,
@@ -74,7 +124,7 @@ ${version.body}
     characters: bibleData.characters,
     locations: bibleData.locations,
     props: bibleData.props,
-    scene_plans: bibleData.scene_plans
+    scene_plans: planData.plans
   }).select("id").single();
 
   if (bibleErr) throw new Error("Failed to insert bible: " + bibleErr.message);
@@ -112,18 +162,11 @@ ${version.body}
         }))
       }))
     });
-    
+
     const entitiesListStr = allEntities.map(e => `- ${e.name} (id: ${e.id})`).join("\n");
-    const plannerPrompt = `Plan canonical master sheets for these entities:
-${entitiesListStr}
+    const plannerPrompt = `Plan canonical master sheets for these entities:\n${entitiesListStr}\n\nRules:\n- preferredMaxEntitiesPerSheet = 6, absoluteMaxEntitiesPerSheet = 9\n- Return array of master_sheets with rows and columns (e.g., 2x3, 1x3, 2x2).\n- Assign each entity to a specific row and column in one of the sheets (0-indexed).\n- Group semantically (e.g. main characters together).`;
 
-Rules:
-- preferredMaxEntitiesPerSheet = 6, absoluteMaxEntitiesPerSheet = 9
-- Return array of master_sheets with rows and columns (e.g., 2x3, 1x3, 2x2).
-- Assign each entity to a specific row and column in one of the sheets (0-indexed).
-- Group semantically (e.g. main characters together).`;
-
-    const planData = await registry.generateJSON(plannerSchema, {
+    const sheetPlanData = await registry.generateJSON(plannerSchema, {
       provider: "gemini",
       model: "gemini-3.8-flash",
       prompt: plannerPrompt,
@@ -132,9 +175,9 @@ Rules:
     });
 
     const masterJobs: any[] = [];
-    for (const sheetPlan of planData.master_sheets) {
+    for (const sheetPlan of sheetPlanData.master_sheets) {
       if (sheetPlan.entities.length === 0) continue;
-      
+
       const { data: sheetRec } = await ctx.supabase.from("canonical_master_sheets").insert({
         bible_id: bibleRecord.id,
         sheet_rows: sheetPlan.rows,
@@ -145,8 +188,8 @@ Rules:
 
       if (sheetRec) {
         masterJobs.push({
-            process_run_id: job.process_run_id,
-            kind: "canonical-master",
+          process_run_id: job.process_run_id,
+          kind: "canonical-master",
           ref_type: "canonical_master_sheet",
           ref_id: sheetRec.id,
           status: "queued",
@@ -171,7 +214,7 @@ Rules:
     }
   }
 
-  const sceneJobs = version.scenes.map((s: any) => ({
+  const sceneJobs = scenes.map((s: any) => ({
     process_run_id: job.process_run_id,
     kind: "scene-image",
     ref_type: "scene",
@@ -180,13 +223,14 @@ Rules:
     attempts: 0,
     cost_usd: 0,
     run_after: new Date().toISOString(),
-    idempotency_key: `scene_image_stage2_${s.id}`
+    idempotency_key: `scene_image_stage2_${job.process_run_id}_${s.id}`
   }));
 
   if (sceneJobs.length > 0) {
-    await ctx.supabase.from("jobs").insert(sceneJobs);
+    const { error: err } = await ctx.supabase.from("jobs").insert(sceneJobs);
+    if (err) throw err;
   }
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
-  console.log("Story Visual Bible generated & jobs queued.");
+  console.log("Story Visual Bible generated & jobs queued for", scenes.length, "scenes.");
 };
