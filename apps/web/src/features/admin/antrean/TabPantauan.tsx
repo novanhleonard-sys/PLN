@@ -15,7 +15,7 @@ export function TabPantauan() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ai_process_runs')
-        .select('*')
+        .select('*, story_versions(stories(title)), jobs(id, status, cost_usd)')
         .in('status', ['queued', 'running', 'partially_completed'])
         .order('created_at', { ascending: false });
       
@@ -69,11 +69,11 @@ export function TabPantauan() {
             <div key={run.id} className="p-5 bg-white border border-stone-200 rounded-2xl shadow-sm flex flex-col gap-4 transition-all">
               <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div>
-                  <h3 className="font-bold font-fredoka text-lg text-stone-800">{run.title || run.id}</h3>
+                  <h3 className="font-bold font-fredoka text-lg text-stone-800">{(run.story_versions?.stories?.title) || 'Tanpa Judul'} ({run.id.split('-')[0]})</h3>
                   <div className="text-sm text-stone-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                     <span>Status: <strong className="uppercase">{run.status}</strong></span>
-                    <span>Progres: {run.completed_jobs || 0}/{run.total_jobs || 0}</span>
-                    <span>Biaya: Rp {run.current_cost?.toLocaleString('id-ID') || 0}</span>
+                    <span>Progres: {run.jobs?.filter((j: any) => j.status === 'succeeded').length || 0}/{run.jobs?.length || 0}</span>
+                    <span>Biaya: Rp {(run.jobs?.reduce((acc: any, j: any) => acc + (j.cost_usd || 0), 0) * 15000).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
                 <Button 
@@ -95,7 +95,7 @@ export function TabPantauan() {
                       <div key={job.id} className="p-4 bg-stone-50 rounded-xl border border-stone-200 flex flex-col gap-2">
                         <div className="flex justify-between items-start gap-4">
                           <div>
-                            <div className="font-bold text-stone-700 text-sm">{job.type || job.id}</div>
+                            <div className="font-bold text-stone-700 text-sm">{job.kind} — {job.ref_type}</div>
                             <div className="text-xs text-stone-500 flex gap-4 mt-1">
                               <span>Status: <strong className={job.status === 'failed' ? 'text-red-500 uppercase' : 'uppercase text-stone-700'}>{job.status}</strong></span>
                               <span>Percobaan: {job.attempts || 0}</span>

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { ContributeForm } from '../contribute/ContributeForm';
 import type { ContributeFormData } from '../contribute/ContributeForm';
 import { Toast } from '../../ui/basic/Toast';
+import { Modal } from '../../ui/layers/Modal';
 import { Trash, RefreshCw, EyeOff, Image as ImageIcon, Music, BookOpen, AlertTriangle, Plus } from 'lucide-react';
 
 export function AdminEditKonten() {
@@ -33,6 +34,8 @@ export function AdminEditKonten() {
     audioComplete: 0
   });
   const [loadingAssets, setLoadingAssets] = useState(false);
+  const [assetDetails, setAssetDetails] = useState<any>(null);
+  const [viewModal, setViewModal] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedVersionId) {
@@ -70,7 +73,8 @@ export function AdminEditKonten() {
         });
       }
 
-      setAssetStats({
+      setAssetDetails({ vb, scenes });
+        setAssetStats({
         vbExists: !!vb,
         vbRefsCount: vb?.canonical_references ? vb.canonical_references.length : 0,
         scenesTotal: scenes ? scenes.length : 0,
@@ -460,6 +464,55 @@ export function AdminEditKonten() {
         </div>
       )}
 
+      
+      {viewModal === 'vb' && (
+        <Modal isOpen={true} onClose={() => setViewModal(null)}>
+          <h2 className="font-fredoka text-xl font-bold mb-4">Visual Bible & Canonical References</h2>
+          <div className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto pr-2">
+            {!assetDetails?.vb ? <p>Belum ada Visual Bible.</p> : (
+              <div className="grid gap-4">
+                {assetDetails.vb.canonical_references?.map((ref: any, idx: number) => (
+                  <div key={idx} className="border p-3 rounded-lg flex items-start gap-4">
+                    {ref.image_path ? (
+                      <img src={supabase.storage.from('story-media').getPublicUrl(ref.image_path).data.publicUrl} alt={ref.name} className="w-24 h-24 object-cover rounded-md" />
+                    ) : (
+                      <div className="w-24 h-24 bg-stone-200 rounded-md flex items-center justify-center text-xs text-stone-500">No Image</div>
+                    )}
+                    <div>
+                      <h4 className="font-bold">{ref.name}</h4>
+                      <p className="text-xs text-stone-500 mt-1">{ref.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {viewModal === 'scenes' && (
+        <Modal isOpen={true} onClose={() => setViewModal(null)}>
+          <h2 className="font-fredoka text-xl font-bold mb-4">Scene Images</h2>
+          <div className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto pr-2">
+            {!assetDetails?.scenes?.length ? <p>Belum ada Scene.</p> : (
+              <div className="grid gap-4">
+                {assetDetails.scenes.map((scene: any, idx: number) => (
+                  <div key={idx} className="border p-3 rounded-lg flex flex-col gap-2">
+                    <div className="font-bold text-sm">Scene {scene.idx}</div>
+                    {scene.image_path ? (
+                      <img src={supabase.storage.from('story-media').getPublicUrl(scene.image_path).data.publicUrl} alt="Scene" className="w-full h-auto object-cover rounded-md" />
+                    ) : (
+                      <div className="w-full h-32 bg-stone-200 rounded-md flex items-center justify-center text-xs text-stone-500">Proses...</div>
+                    )}
+                    <p className="text-xs text-stone-600 mt-1 italic">{scene.image_prompt}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+      
       <Toast visible={!!toast} message={toast} onClose={() => setToast('')} />
     </div>
   );

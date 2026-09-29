@@ -7,7 +7,7 @@ export function TabRiwayat() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ai_process_runs')
-        .select('*')
+        .select('*, story_versions(stories(title)), jobs(id, status, cost_usd)')
         .in('status', ['completed', 'failed'])
         .order('created_at', { ascending: false });
       
@@ -29,10 +29,10 @@ export function TabRiwayat() {
           {runs?.map((run) => (
             <div key={run.id} className="p-5 bg-white border border-stone-200 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all">
               <div>
-                <h3 className="font-bold font-fredoka text-lg text-stone-800">{run.title || run.id}</h3>
+                <h3 className="font-bold font-fredoka text-lg text-stone-800">{(run.story_versions?.stories?.title) || 'Tanpa Judul'} ({run.id.split('-')[0]})</h3>
                 <div className="text-sm text-stone-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                   <span>Status: <strong className={run.status === 'failed' ? 'text-red-500 uppercase' : 'text-teal uppercase'}>{run.status}</strong></span>
-                  <span>Total Biaya: Rp {run.total_cost?.toLocaleString('id-ID') || run.current_cost?.toLocaleString('id-ID') || 0}</span>
+                  <span>Total Biaya: Rp {run.total_cost?.toLocaleString('id-ID') || (run.jobs?.reduce((acc: any, j: any) => acc + (j.cost_usd || 0), 0) * 15000).toLocaleString('id-ID')}</span>
                   <span>Total Percobaan: {run.attempts || run.total_attempts || 0}</span>
                 </div>
               </div>
