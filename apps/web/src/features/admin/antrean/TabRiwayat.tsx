@@ -26,7 +26,7 @@ function CostBadge({ jobIds }: { jobIds: string[] }) {
       return total;
     }
   });
-  return <span>Biaya: Rp {((data || 0) * 15000).toLocaleString("id-ID")}</span>;
+  return <span>Biaya: ${Number(data || 0).toFixed(4)}</span>;
 }
 
 function JobRow({ job, onRevise }: { job: any; onRevise: (job: any) => void }) {
@@ -61,7 +61,7 @@ function JobRow({ job, onRevise }: { job: any; onRevise: (job: any) => void }) {
               {job.status}
             </span>
             <span className="text-xs text-stone-400">×{job.attempts}</span>
-            <span className="text-xs text-stone-400">Rp {(((usageLogs || []).reduce((a, r) => a + (r.cost_usd || 0), 0)) * 15000).toLocaleString("id-ID")}</span>
+            <span className="text-xs text-stone-400">${((usageLogs || []).reduce((a: any, r: any) => a + (r.cost_usd || 0), 0)).toFixed(4)}</span>
           </div>
           
           {usageLogs && usageLogs.length > 0 && (

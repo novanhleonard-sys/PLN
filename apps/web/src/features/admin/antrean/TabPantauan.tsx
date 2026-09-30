@@ -73,7 +73,7 @@ export function TabPantauan() {
                   <div className="text-sm text-stone-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
                     <span>Status: <strong className="uppercase">{run.status}</strong></span>
                     <span>Progres: {run.jobs?.filter((j: any) => j.status === 'succeeded').length || 0}/{run.jobs?.length || 0}</span>
-                    <span>Biaya: Rp {(run.jobs?.reduce((acc: any, j: any) => acc + (j.cost_usd || 0), 0) * 15000).toLocaleString('id-ID')}</span>
+                    <span>Biaya: ${Number(run.jobs?.reduce((acc: any, j: any) => acc + (j.cost_usd || 0), 0) || 0).toFixed(4)}</span>
                   </div>
                 </div>
                 <Button 
