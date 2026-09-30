@@ -62,7 +62,7 @@ export function useStories() {
           region: Array.isArray(story.regions) ? ((story.regions[0]?.region_groups as any)?.name || story.regions[0]?.name) : ((story.regions as any)?.region_groups?.name || (story.regions as any)?.name),
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
-          dongengReady: publishedVersion.asset_status === 'ready' || publishedVersion.adaptations?.some((a: any) => a.status === 'ready'),
+          dongengReady: publishedVersion.asset_status === 'ready',
           duration: duration
         });
       }

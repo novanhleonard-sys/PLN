@@ -21,8 +21,8 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   console.log("Calling Gemini for verify...", submission.title);
   const result = await registry.generateJSON(schema, {
-    provider: "gemini",
-    model: "gemini-3.6-flash",
+    provider: "zai",
+    model: "glm-4-flash",
     prompt,
     systemInstruction: "Anda adalah verifikator ahli folklor Nusantara. Lakukan pencarian web untuk memvalidasi folklor, lalu kembalikan JSON hasil verifikasi dengan lokasi akurat (lat, lng).",
     ref: job.id,
@@ -40,24 +40,23 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
   });
 
   // Fetch app settings to decide auto-publish
-  const { data: appSettings } = await ctx.supabase.from("app_settings").select("key, value").in("key", ["auto_publish_enabled", "auto_publish_min_confidence"]);
+  const { data: appSettings } = await ctx.supabase.from("app_settings").select("key, value").eq("key", "moderation").single();
   
-  let autoPublishEnabled = true;
-  let autoPublishMinConf = 0.85;
-  if (appSettings) {
-    const s1 = appSettings.find((s: any) => s.key === "auto_publish_enabled");
-    if (s1) autoPublishEnabled = s1.value === 'true' || s1.value === true;
-    const s2 = appSettings.find((s: any) => s.key === "auto_publish_min_confidence");
-    if (s2) autoPublishMinConf = Number(s2.value);
+  let autoPublishEnabled = false;
+  let rawConf = 80;
+  if (appSettings && appSettings.value) {
+    autoPublishEnabled = !!appSettings.value.autoPublish;
+    rawConf = appSettings.value.confidenceThreshold || 80;
   }
+  const minConfDecimal = rawConf / 100;
 
-  console.log(`Auto Publish Settings: Enabled=${autoPublishEnabled}, MinConf=${autoPublishMinConf}`);
+  console.log(`Auto Publish Settings: Enabled=${autoPublishEnabled}, MinConf=${minConfDecimal}`);
 
   let finalStatus = 'needs_review';
   
-  if (result.isValid && result.confidence >= autoPublishMinConf && autoPublishEnabled) {
+  if (result.isValid && result.confidence >= minConfDecimal && autoPublishEnabled) {
     finalStatus = 'approved';
-  } else if (!result.isValid && result.confidence >= autoPublishMinConf) {
+  } else if (!result.isValid && result.confidence >= minConfDecimal) {
     finalStatus = 'rejected';
   } else {
     finalStatus = 'needs_review';
