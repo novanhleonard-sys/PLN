@@ -123,20 +123,20 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
     if (pageError) throw new Error("Failed to insert page idx=" + scene.idx + ": " + pageError.message);
 
-    // Queue scene-image and audio jobs
-    const { error: jobErr } = await ctx.supabase.from("jobs").insert([{
-      kind: "audio",
-      ref_type: "page",
-      ref_id: pageData.id,
-      process_run_id: job.process_run_id,
-      status: "queued",
-      attempts: 0,
-      cost_usd: 0,
-      run_after: new Date().toISOString(),
-      idempotency_key: `audio_${job.process_run_id || ""}_${pageData.id}`
-    }]);
-
-    if (jobErr) throw new Error("Failed to queue jobs for scene " + scene.idx + ": " + jobErr.message);
+        if (scope === 'all' || scope === 'audio_only') {
+      const { error: jobErr } = await ctx.supabase.from("jobs").insert([{
+        kind: "audio",
+        ref_type: "page",
+        ref_id: pageData.id,
+        process_run_id: job.process_run_id,
+        status: "queued",
+        attempts: 0,
+        cost_usd: 0,
+        run_after: new Date().toISOString(),
+        idempotency_key: `audio_${job.process_run_id || ""}_${pageData.id}`
+      }]);
+      if (jobErr) throw new Error("Failed to queue jobs for scene " + scene.idx + ": " + jobErr.message);
+    }
 
     console.log("Scene + page + jobs queued for idx=" + scene.idx);
   }
