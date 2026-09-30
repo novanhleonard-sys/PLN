@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { Button } from '../../../ui/basic/Button';
@@ -9,7 +9,6 @@ export function TabPantauan() {
   const [toast, setToast] = useState('');
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
 
-  // Fetch running/queued/partially_completed runs
   const { data: runs, isLoading } = useQuery({
     queryKey: ['admin_ai_process_runs', 'active'],
     queryFn: async () => {
@@ -18,13 +17,11 @@ export function TabPantauan() {
         .select('*, story_versions(stories(title)), jobs(id, status, cost_usd)')
         .in('status', ['queued', 'running', 'partially_completed'])
         .order('created_at', { ascending: false });
-      
       if (error) throw error;
       return data;
     }
   });
 
-  // Fetch jobs for expanded run
   const { data: jobs, isLoading: isLoadingJobs } = useQuery({
     queryKey: ['admin_jobs', expandedRunId],
     enabled: !!expandedRunId,
@@ -34,9 +31,30 @@ export function TabPantauan() {
         .select('*')
         .eq('process_run_id', expandedRunId)
         .order('created_at', { ascending: true });
-      
       if (error) throw error;
       return data;
+    }
+  });
+
+  const stopMutation = useMutation({
+    mutationFn: async (runId: string) => {
+      const { error } = await supabase
+        .from('jobs')
+        .update({ status: 'failed', error: 'CANCELLED_BY_ADMIN' })
+        .eq('process_run_id', runId)
+        .in('status', ['queued', 'running']);
+      if (error) throw error;
+      
+      const { error: runError } = await supabase
+        .from('ai_process_runs')
+        .update({ status: 'failed' })
+        .eq('id', runId);
+      if (runError) throw runError;
+    },
+    onSuccess: () => {
+      setToast('Proses AI berhasil dihentikan.');
+      queryClient.invalidateQueries({ queryKey: ['admin_jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['admin_ai_process_runs'] });
     }
   });
 
@@ -76,12 +94,26 @@ export function TabPantauan() {
                     <span>Biaya: ${Number(run.jobs?.reduce((acc: any, j: any) => acc + (j.cost_usd || 0), 0) || 0).toFixed(4)}</span>
                   </div>
                 </div>
-                <Button 
-                  variant={expandedRunId === run.id ? 'secondary' : 'primary'}
-                  onClick={() => setExpandedRunId(expandedRunId === run.id ? null : run.id)}
-                >
-                  {expandedRunId === run.id ? 'Tutup Detail' : 'Lihat Jobs'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="secondary" 
+                    className="!text-red-600 !border-red-200 hover:!bg-red-50"
+                    onClick={() => {
+                      if (window.confirm('Yakin ingin menghentikan proses ini?')) {
+                        stopMutation.mutate(run.id);
+                      }
+                    }}
+                    disabled={stopMutation.isPending}
+                  >
+                    Stop Proses
+                  </Button>
+                  <Button 
+                    variant={expandedRunId === run.id ? 'secondary' : 'primary'}
+                    onClick={() => setExpandedRunId(expandedRunId === run.id ? null : run.id)}
+                  >
+                    {expandedRunId === run.id ? 'Tutup Detail' : 'Lihat Jobs'}
+                  </Button>
+                </div>
               </div>
               
               {expandedRunId === run.id && (
@@ -125,7 +157,6 @@ export function TabPantauan() {
           ))}
         </div>
       )}
-
       <Toast visible={!!toast} message={toast} onClose={() => setToast('')} />
     </div>
   );

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import os
+
+content = '''import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { Button } from '../../../ui/basic/Button';
@@ -25,7 +27,7 @@ function CostBadge({ jobIds }: { jobIds: string[] }) {
       return data.reduce((acc, row) => acc + (row.cost_usd || 0), 0);
     }
   });
-  return <span className="font-semibold text-stone-600">Biaya: ${Number(data || 0).toFixed(4)}</span>;
+  return <span className="font-semibold text-stone-600">Biaya: </span>;
 }
 
 function JobRow({ job, onRevise, onImageClick }: { job: any, onRevise: (j: any) => void, onImageClick: (url: string) => void }) {
@@ -55,10 +57,10 @@ function JobRow({ job, onRevise, onImageClick }: { job: any, onRevise: (j: any) 
       <div className="p-4 flex justify-between items-start gap-4">
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-stone-700">{job.kind} {scene ? `â€” Scene ${scene.idx}` : ''}</span>
-            <span className={`text-xs font-bold uppercase ${STATUS_COLOR[job.status] || ''}`}>{job.status}</span>
-            <span className="text-xs text-stone-400">Ã—{job.attempts || 1}</span>
-            <span className="text-xs font-semibold text-stone-600">${Number(job.cost_usd || 0).toFixed(4)}</span>
+            <span className="font-bold text-sm text-stone-700">{job.kind} {scene ? — Scene  : ''}</span>
+            <span className={	ext-xs font-bold uppercase }>{job.status}</span>
+            <span className="text-xs text-stone-400">×{job.attempts || 1}</span>
+            <span className="text-xs font-semibold text-stone-600">\</span>
           </div>
 
           <div className="mt-2 flex gap-2">
@@ -83,11 +85,11 @@ function JobRow({ job, onRevise, onImageClick }: { job: any, onRevise: (j: any) 
               {usageLogs.map((log: any, i: number) => (
                 <div key={log.id} className="grid grid-cols-12 items-start border-b border-stone-200/50 pb-1 last:border-0 last:pb-0 pt-1">
                   <div className="col-span-1">{log.attempt || i + 1}</div>
-                  <div className={`col-span-2 ${log.operation_status === 'failed' ? 'text-red-500' : 'text-teal-600'}`}>{log.operation_status || 'succeeded'}</div>
+                  <div className={col-span-2 }>{log.operation_status || 'succeeded'}</div>
                   <div className="col-span-3 truncate" title={log.model}>{log.model}</div>
                   <div className="col-span-2 text-right">{log.units_in}</div>
                   <div className="col-span-2 text-right">{log.units_out}</div>
-                  <div className="col-span-2 text-right font-semibold">${(log.cost_usd || 0).toFixed(4)}</div>
+                  <div className="col-span-2 text-right font-semibold">\</div>
                   {log.error_message && (
                     <div className="col-span-12 text-red-500 mt-1 p-1 bg-red-50 border border-red-100 rounded truncate" title={log.error_message}>Err: {log.error_message}</div>
                   )}
@@ -122,7 +124,7 @@ function JobRow({ job, onRevise, onImageClick }: { job: any, onRevise: (j: any) 
         >
           <img
             src={scene.image_path}
-            alt={`Scene ${scene.idx}`}
+            alt={Scene }
             className="w-full h-40 object-cover hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-colors">
@@ -214,7 +216,7 @@ export function TabRiwayat() {
               <div>
                 <h3 className="font-bold font-fredoka text-lg text-stone-800">{title}</h3>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-stone-500 mt-2">
-                  <span className={`font-bold uppercase ${STATUS_COLOR[run.status] || ''}`}>{run.status}</span>
+                  <span className={ont-bold uppercase }>{run.status}</span>
                   <CostBadge jobIds={expandedJobs && isOpen ? expandedJobs.map((j: any) => j.id) : []} />
                   {totalAttempts !== null && <span>Total Percobaan: {totalAttempts}</span>}
                   <span className="text-stone-400">{new Date(run.created_at).toLocaleDateString('id-ID')}</span>
@@ -279,3 +281,6 @@ export function TabRiwayat() {
     </div>
   );
 }
+'''
+with open("apps/web/src/features/admin/antrean/TabRiwayat.tsx", "w", encoding="utf-8") as f:
+    f.write(content)

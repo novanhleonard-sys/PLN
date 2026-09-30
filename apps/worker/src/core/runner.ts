@@ -116,7 +116,7 @@ export class JobRunner {
     let status = 'queued';
     
     // SAFETY GUARDRAIL: Max 2 attempts
-    if (job.attempts >= 4) {
+    if (job.attempts >= 1) {
       status = 'failed';
       console.error(`\n🚨 ADMIN ALERT: SAFETY GUARDRAIL TRIGGERED! 🚨`);
       console.error(`Job [${job.kind}] ID: ${job.id} has failed 4 times.`);
