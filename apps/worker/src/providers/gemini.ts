@@ -37,6 +37,15 @@ function zodToGeminiSchema(schema: any): Schema {
   if (typeStr === 'string') return { type: Type.STRING, description: schema.description };
   if (typeStr === 'number') return { type: Type.NUMBER, description: schema.description };
   if (typeStr === 'boolean') return { type: Type.BOOLEAN, description: schema.description };
+  if (typeStr === 'enum' || schema._def?.typeName === 'ZodEnum') {
+    const values = schema.def?.entries ? Object.keys(schema.def.entries) : schema._def?.values;
+    return {
+      type: Type.STRING,
+      enum: values,
+      description: schema.description
+    };
+  }
+
     if (schema._def?.typeName === 'ZodAny') return { type: Type.STRING, description: schema.description };
     if (schema._def?.typeName === 'ZodAny') return { type: Type.STRING, description: schema.description };
   return { type: Type.STRING };
