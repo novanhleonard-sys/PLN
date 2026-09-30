@@ -42,16 +42,15 @@ export class ProviderRegistry {
     if (!provider) throw new Error('Provider not found: ' + opts.provider);
 
     let attempt = 0;
-    while (attempt < 2) { // 1 retry
+    while (attempt < 2) {
       try {
         const result = await provider.generateJSON(opts.model, opts.prompt, schema, opts.systemInstruction, opts);
-        await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
+        await this.logUsage(opts, result.inputTokens, result.outputTokens, false, 'succeeded', attempt + 1);
         return result.data;
       } catch (err: any) {
+        await this.logUsage(opts, 0, 0, false, 'failed', attempt + 1, err.message);
         attempt++;
-        if (attempt >= 2) {
-          throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
-        }
+        if (attempt >= 2) throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
       }
     }
     throw new Error('Unreachable');
@@ -67,16 +66,15 @@ export class ProviderRegistry {
     if (!provider) throw new Error('Provider not found: ' + opts.provider);
 
     let attempt = 0;
-    while (attempt < 2) { // 1 retry
+    while (attempt < 2) {
       try {
         const result = await provider.generateText(opts.model, opts.prompt, opts.systemInstruction, opts);
-        await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
+        await this.logUsage(opts, result.inputTokens, result.outputTokens, false, 'succeeded', attempt + 1);
         return result.text;
       } catch (err: any) {
+        await this.logUsage(opts, 0, 0, false, 'failed', attempt + 1, err.message);
         attempt++;
-        if (attempt >= 2) {
-          throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
-        }
+        if (attempt >= 2) throw new Error('Provider ' + opts.provider + ' failed after retry: ' + err.message, { cause: err });
       }
     }
     throw new Error('Unreachable');
@@ -96,13 +94,12 @@ export class ProviderRegistry {
     while (attempt < 2) {
       try {
         const result = await provider.generateAudio(opts.model, opts.prompt, opts.voiceName, opts.systemInstruction, opts);
-        await this.logUsage(opts, result.inputTokens, result.outputTokens, false);
+        await this.logUsage(opts, result.inputTokens, result.outputTokens, false, 'succeeded', attempt + 1);
         return result.audioBase64;
       } catch (err: any) {
+        await this.logUsage(opts, 0, 0, false, 'failed', attempt + 1, err.message);
         attempt++;
-        if (attempt >= 2) {
-          throw new Error('Provider ' + opts.provider + ' failed audio generation after retry: ' + err.message, { cause: err });
-        }
+        if (attempt >= 2) throw new Error('Provider ' + opts.provider + ' failed audio generation after retry: ' + err.message, { cause: err });
       }
     }
     throw new Error('Unreachable');
@@ -122,48 +119,37 @@ export class ProviderRegistry {
     while (attempt < 2) {
       try {
         const result = await provider.generateImage(opts.model, opts.prompt, opts.referenceImages, opts);
-        
-        let cost = result.costUsd || 0;
-        if (!result.costUsd) {
-          // For Imagen 3, the cost is roughly $0.03 per image
-          cost = calculateCost(opts.provider, opts.model, 0, 1, true);
-        }
-        
-        await this.supabase.from('ai_usage').insert({
-          stage: opts.stage,
-          provider: opts.provider,
-          model: opts.model,
-          units_in: 0,
-          units_out: 1, // 1 image
-          cost_usd: cost,
-          ref: opts.ref,
-          user_id: opts.userId
-        });
-        
+        let cost = result.costUsd || calculateCost(opts.provider, opts.model, 0, 1, true);
+        await this.logUsage(opts, 0, 1, true, 'succeeded', attempt + 1, null, cost);
         return result.imageBase64;
       } catch (err: any) {
+        await this.logUsage(opts, 0, 0, true, 'failed', attempt + 1, err.message);
         attempt++;
-        if (attempt >= 2) {
-          throw new Error('Provider ' + opts.provider + ' failed image generation after retry: ' + err.message, { cause: err });
-        }
+        if (attempt >= 2) throw new Error('Provider ' + opts.provider + ' failed image generation after retry: ' + err.message, { cause: err });
       }
     }
     throw new Error('Unreachable');
   }
 
-  private async logUsage(opts: GenerateOptions, inputTokens: number, outputTokens: number, isImage: boolean) {
-    const cost = calculateCost(opts.provider, opts.model, inputTokens, outputTokens, isImage);
-    
-    await this.supabase.from('ai_usage').insert({
-      stage: opts.stage,
-      provider: opts.provider,
-      model: opts.model,
-      units_in: inputTokens,
-      units_out: outputTokens,
-      cost_usd: cost,
-      ref: opts.ref,
-      user_id: opts.userId
-    });
+  private async logUsage(opts: GenerateOptions, inputTokens: number, outputTokens: number, isImage: boolean, status: string, attempt: number, errorMsg: string | null = null, costUsdOverride?: number) {
+    const cost = costUsdOverride !== undefined ? costUsdOverride : calculateCost(opts.provider, opts.model, inputTokens, outputTokens, isImage);
+    try {
+      await this.supabase.from('ai_usage').insert({
+        stage: opts.stage,
+        provider: opts.provider,
+        model: opts.model,
+        units_in: inputTokens,
+        units_out: outputTokens,
+        cost_usd: cost,
+        ref: opts.ref,
+        user_id: opts.userId,
+        operation_status: status,
+        attempt: attempt,
+        error_message: errorMsg
+      });
+    } catch (e) {
+      console.error("Failed to log usage:", e);
+    }
   }
 }
 

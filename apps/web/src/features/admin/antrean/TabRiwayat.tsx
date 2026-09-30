@@ -30,11 +30,12 @@ function CostBadge({ jobIds }: { jobIds: string[] }) {
 }
 
 function JobRow({ job, onRevise }: { job: any; onRevise: (job: any) => void }) {
-  const { data: usage } = useQuery({
+  const [showUsage, setShowUsage] = useState(false);
+  const { data: usageLogs } = useQuery({
     queryKey: ["job_cost", job.id],
     queryFn: async () => {
-      const { data } = await supabase.from("ai_usage").select("cost_usd").eq("ref", job.id);
-      return (data || []).reduce((acc: number, r: any) => acc + (r.cost_usd || 0), 0);
+      const { data } = await supabase.from("ai_usage").select("*").eq("ref", job.id).order("created_at", { ascending: true });
+      return data || [];
     }
   });
 
@@ -60,8 +61,40 @@ function JobRow({ job, onRevise }: { job: any; onRevise: (job: any) => void }) {
               {job.status}
             </span>
             <span className="text-xs text-stone-400">×{job.attempts}</span>
-            <span className="text-xs text-stone-400">Rp {((usage || 0) * 15000).toLocaleString("id-ID")}</span>
+            <span className="text-xs text-stone-400">Rp {(((usageLogs || []).reduce((a, r) => a + (r.cost_usd || 0), 0)) * 15000).toLocaleString("id-ID")}</span>
           </div>
+          
+          {usageLogs && usageLogs.length > 0 && (
+            <button onClick={() => setShowUsage(!showUsage)} className="mt-2 text-xs font-bold text-teal-600 hover:underline">
+              {showUsage ? "Tutup Detail Usage" : `Lihat ${usageLogs.length} Usage Logs`}
+            </button>
+          )}
+          {showUsage && usageLogs && usageLogs.length > 0 && (
+            <div className="mt-2 text-[10px] sm:text-xs font-mono bg-stone-100 p-2 rounded flex flex-col gap-1">
+              <div className="grid grid-cols-12 font-bold text-stone-500 border-b border-stone-200 pb-1 mb-1">
+                <div className="col-span-1">Att</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-3">Model</div>
+                <div className="col-span-2 text-right">In</div>
+                <div className="col-span-2 text-right">Out</div>
+                <div className="col-span-2 text-right">Cost ($)</div>
+              </div>
+              {usageLogs.map((log: any, i: number) => (
+                <div key={log.id} className="grid grid-cols-12 items-start border-b border-stone-200/50 pb-1 last:border-0 last:pb-0">
+                  <div className="col-span-1">{log.attempt || i + 1}</div>
+                  <div className={`col-span-2 ${log.operation_status === 'failed' ? 'text-red-500' : 'text-teal-600'}`}>{log.operation_status || 'succeeded'}</div>
+                  <div className="col-span-3 truncate" title={log.model}>{log.model}</div>
+                  <div className="col-span-2 text-right">{log.units_in}</div>
+                  <div className="col-span-2 text-right">{log.units_out}</div>
+                  <div className="col-span-2 text-right font-semibold">${(log.cost_usd || 0).toFixed(4)}</div>
+                  {log.error_message && (
+                    <div className="col-span-12 text-red-500 mt-0.5 truncate" title={log.error_message}>Err: {log.error_message}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {job.error && (
             <div className="mt-2 text-xs font-mono bg-white border border-red-100 text-red-600 p-2 rounded-lg max-h-28 overflow-y-auto whitespace-pre-wrap">
               {job.error}
