@@ -48,37 +48,35 @@ export function AdminEditKonten() {
     try {
       const { data: vb } = await supabase
         .from('story_visual_bibles')
-        .select('id, canonical_references(id)')
+        .select('id, canonical_references(id, name, description, image_path, is_canonical, type)')
         .eq('version_id', versionId)
         .maybeSingle();
-      
+
       const { data: scenes } = await supabase
         .from('scenes')
-        .select('id, image_path')
-        .eq('version_id', versionId);
+        .select('id, idx, image_path, image_prompt, description')
+        .eq('version_id', versionId)
+        .order('idx');
 
       const { data: adaptations } = await supabase
         .from('adaptations')
         .select('id, pages(id, page_audio(id))')
         .eq('version_id', versionId);
 
-      let aTotal = 0;
-      let aComp = 0;
-      if (adaptations) {
-        adaptations.forEach((ad: any) => {
-          ad.pages?.forEach((p: any) => {
-            aTotal++;
-            if (p.page_audio && p.page_audio.length > 0) aComp++;
-          });
+      let aTotal = 0, aComp = 0;
+      adaptations?.forEach((ad: any) => {
+        ad.pages?.forEach((p: any) => {
+          aTotal++;
+          if (p.page_audio?.length > 0) aComp++;
         });
-      }
+      });
 
       setAssetDetails({ vb, scenes });
-        setAssetStats({
+      setAssetStats({
         vbExists: !!vb,
-        vbRefsCount: vb?.canonical_references ? vb.canonical_references.length : 0,
-        scenesTotal: scenes ? scenes.length : 0,
-        scenesComplete: scenes ? scenes.filter((s: any) => s.image_path).length : 0,
+        vbRefsCount: vb?.canonical_references?.length ?? 0,
+        scenesTotal: scenes?.length ?? 0,
+        scenesComplete: scenes?.filter((s: any) => s.image_path).length ?? 0,
         audioTotal: aTotal,
         audioComplete: aComp
       });
@@ -396,7 +394,7 @@ export function AdminEditKonten() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50">
+            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50 cursor-pointer hover:border-teal-300 hover:bg-teal-50/30 transition-colors" onClick={() => setViewModal('vb')}>
               <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-lg ${assetStats.vbExists ? 'bg-teal-100 text-teal-dark' : 'bg-red-100 text-red-600'}`}>
                   <BookOpen size={18} />
@@ -411,7 +409,7 @@ export function AdminEditKonten() {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50">
+            <div className="p-4 rounded-xl border border-border-light bg-stone-50/50 cursor-pointer hover:border-teal-300 hover:bg-teal-50/30 transition-colors" onClick={() => setViewModal('scenes')}>
               <div className="flex items-center gap-3 mb-2">
                 <div className={`p-2 rounded-lg ${assetStats.scenesComplete === assetStats.scenesTotal && assetStats.scenesTotal > 0 ? 'bg-teal-100 text-teal-dark' : 'bg-amber-100 text-amber-600'}`}>
                   <ImageIcon size={18} />
@@ -474,12 +472,16 @@ export function AdminEditKonten() {
                 {assetDetails.vb.canonical_references?.map((ref: any, idx: number) => (
                   <div key={idx} className="border p-3 rounded-lg flex items-start gap-4">
                     {ref.image_path ? (
-                      <img src={supabase.storage.from('story-media').getPublicUrl(ref.image_path).data.publicUrl} alt={ref.name} className="w-24 h-24 object-cover rounded-md" />
+                      <img src={ref.image_path} alt={ref.name} className="w-24 h-24 object-cover rounded-md" />
                     ) : (
                       <div className="w-24 h-24 bg-stone-200 rounded-md flex items-center justify-center text-xs text-stone-500">No Image</div>
                     )}
                     <div>
-                      <h4 className="font-bold">{ref.name}</h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-bold text-stone-800">{ref.name}</h4>
+                        <span className="text-xs text-stone-400 uppercase">{ref.type}</span>
+                        {ref.is_canonical && <span className="text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded font-bold">Canonical</span>}
+                      </div>
                       <p className="text-xs text-stone-500 mt-1">{ref.description}</p>
                     </div>
                   </div>
@@ -500,7 +502,7 @@ export function AdminEditKonten() {
                   <div key={idx} className="border p-3 rounded-lg flex flex-col gap-2">
                     <div className="font-bold text-sm">Scene {scene.idx}</div>
                     {scene.image_path ? (
-                      <img src={supabase.storage.from('story-media').getPublicUrl(scene.image_path).data.publicUrl} alt="Scene" className="w-full h-auto object-cover rounded-md" />
+                      <img src={scene.image_path} alt="Scene" className="w-full h-auto object-cover rounded-md" />
                     ) : (
                       <div className="w-full h-32 bg-stone-200 rounded-md flex items-center justify-center text-xs text-stone-500">Proses...</div>
                     )}
