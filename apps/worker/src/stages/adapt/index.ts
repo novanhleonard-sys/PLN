@@ -100,7 +100,8 @@ ${originalPagesJSON}
       kind: "adapt_check",
       ref_type: "adaptation",
       ref_id: adaptation.id,
-      idempotency_key: `adapt_check:${adaptation.id}`
+      process_run_id: job.process_run_id,
+      idempotency_key: `adapt_check_${job.process_run_id || ""}_${adaptation.id}`
   });
 
   if (jobError) throw jobError;

@@ -132,7 +132,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
       attempts: 0,
       cost_usd: 0,
       run_after: new Date().toISOString(),
-      idempotency_key: "audio_" + pageData.id
+      idempotency_key: `audio_${job.process_run_id || ""}_${pageData.id}`
     }]);
 
     if (jobErr) throw new Error("Failed to queue jobs for scene " + scene.idx + ": " + jobErr.message);
@@ -150,7 +150,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
       attempts: 0,
       cost_usd: 0,
       run_after: new Date().toISOString(),
-      idempotency_key: "bible_" + version.id
+      idempotency_key: `bible_${job.process_run_id || ""}_${version.id}`
     });
     if (bibleJobErr) throw new Error("Failed to queue story-visual-bible: " + bibleJobErr.message);
   }

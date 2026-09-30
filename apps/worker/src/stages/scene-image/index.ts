@@ -118,9 +118,11 @@ Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter
 
   await ctx.supabase.from("scenes").update({
     image_path: publicUrlData.publicUrl,
-    image_status: "ready"
+    image_status: "ready",
+    image_prompt: prompt
   }).eq("id", scene.id);
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
+  try { fs.unlinkSync(tempFile); } catch (e) {}
   console.log("Scene image completed:", scene.idx);
 };

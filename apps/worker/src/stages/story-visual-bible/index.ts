@@ -114,7 +114,8 @@ ${sceneListForPrompt}`,
   }
 
   // Idempotency: Delete existing visual bible for this version
-  await ctx.supabase.from("story_visual_bibles").delete().eq("version_id", versionId);
+  const { error: delErr } = await ctx.supabase.from("story_visual_bibles").delete().eq("version_id", versionId);
+  if (delErr) throw new Error("Failed to clean up old bible: " + delErr.message);
 
   const { data: bibleRecord, error: bibleErr } = await ctx.supabase.from("story_visual_bibles").insert({
     version_id: versionId,

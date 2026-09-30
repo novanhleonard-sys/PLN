@@ -80,8 +80,15 @@ export class GeminiProvider implements AIProvider {
 
     if (!response.text) throw new Error('Empty response from Gemini');
     
+    let cleanText = response.text.trim();
+    if (cleanText.startsWith('```json')) {
+      cleanText = cleanText.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    } else if (cleanText.startsWith('```')) {
+      cleanText = cleanText.replace(/^```\n?/, '').replace(/\n?```$/, '');
+    }
+
     // Parse and validate with zod
-    const parsed = JSON.parse(response.text);
+    const parsed = JSON.parse(cleanText);
     const data = schema.parse(parsed);
 
     return {

@@ -64,6 +64,7 @@ Aturan penting:
   }).eq("id", cRef.id);
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
+  try { fs.unlinkSync(tempFile); } catch (e) {}
   console.log("Canonical ref completed:", cRef.name);
 };
 

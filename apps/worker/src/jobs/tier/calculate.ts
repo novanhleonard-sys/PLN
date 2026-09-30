@@ -17,7 +17,7 @@ export async function checkAndRunTierJob(supabase: SupabaseClient) {
     await calculateTier(supabase);
 
     // Save today as last run
-    await supabase.from('app_settings').upsert({ key: 'tier_job_last_run', value: `"${today}"` });
+    await supabase.from('app_settings').upsert({ key: 'tier_job_last_run', value: today });
     console.log(`[Tier] Job completed for ${today}`);
   } catch (error) {
     console.error('[Tier] Error running tier job:', error);
