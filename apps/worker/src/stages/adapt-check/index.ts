@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const adaptCheckStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -51,7 +51,7 @@ ${JSON.stringify(adaptedPages.map((p: any) => p.text))}
 
   const result = await registry.generateJSON(schema, {
     provider: "gemini", // or zai for cheaper check
-    model: "gemini-3.6-flash",
+    model: "gemini-3.1-flash-lite",
     prompt,
     systemInstruction: "Kamu adalah penilai kualitas teks. Berikan 'faithful: true' jika adaptasi setia pada sumbernya, atau berikan daftar 'issues' jika melenceng.",
     stage: "adapt_check",

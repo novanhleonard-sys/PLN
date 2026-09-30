@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const adaptStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -64,7 +64,7 @@ ${originalPagesJSON}
   console.log(`Calling Gemini for adaptation ${adaptation.age_band}...`);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
-    model: "gemini-3.6-flash",
+    model: "gemini-3.1-flash-lite",
     prompt,
     systemInstruction: "Kamu adalah spesialis sastra anak yang ahli menyederhanakan teks.",
     stage: "adapt",
