@@ -1,4 +1,4 @@
-﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { ProviderRegistry } from "../../providers/registry";
 import * as path from "path";
 import * as os from "os";
@@ -93,7 +93,7 @@ Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter
 
   const resultBase64 = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-image",
+    model: "gemini-3.1-flash-lite-image",
     prompt,
     referenceImages: referenceBase64s,
     ref: job.id,

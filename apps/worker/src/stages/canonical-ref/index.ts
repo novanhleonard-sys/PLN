@@ -1,4 +1,4 @@
-﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { ProviderRegistry } from "../../providers/registry";
 import * as path from "path";
 import * as os from "os";
@@ -33,7 +33,7 @@ Aturan penting:
   // Generate Image
   const result = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-image",
+    model: "gemini-3.1-flash-lite-image",
     prompt: prompt,
     ref: job.id,
     stage: "canonical-ref"

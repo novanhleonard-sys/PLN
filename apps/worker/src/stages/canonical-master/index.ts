@@ -1,4 +1,4 @@
-﻿import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { ProviderRegistry } from "../../providers/registry";
 import * as path from "path";
 import * as os from "os";
@@ -50,7 +50,7 @@ export const processCanonicalMasterStage = async (ctx: { supabase: SupabaseClien
 
   const resultBase64 = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-image",
+    model: "gemini-3.1-flash-lite-image",
     prompt,
     ref: job.id,
     stage: "canonical-master"
