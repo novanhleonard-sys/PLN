@@ -128,6 +128,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
       kind: "audio",
       ref_type: "page",
       ref_id: pageData.id,
+      process_run_id: job.process_run_id,
       status: "queued",
       attempts: 0,
       cost_usd: 0,
