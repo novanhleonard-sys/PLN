@@ -38,39 +38,49 @@ serve(async (req) => {
       const { data: adminProfiles } = await supabase.from('profiles').select('id, display_name').eq('role', 'admin');
       if (!adminProfiles) return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-      const emailMap = new Map((authUsers?.users ?? []).map(u => [u.id, u.email ?? '']));
-      const result = adminProfiles.map(p => ({ ...p, email: emailMap.get(p.id) || '' }));
+      const emailMap = new Map((authUsers?.users ?? []).map((u) => [u.id, u.email ?? '']));
+      const result = adminProfiles.map((p) => ({ ...p, email: emailMap.get(p.id) || '' }));
       return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (action === 'add') {
-
       // Look up auth.users by email
       const { data: users, error: findError } = await supabase.auth.admin.listUsers();
       if (findError) throw findError;
-      
-      const targetUser = users.users.find(u => u.email === email);
+
+      const targetUser = users.users.find((u) => u.email === email);
       if (!targetUser) {
         return new Response(JSON.stringify({ error: "Email belum terdaftar" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
       }
 
-      await supabase.from('profiles').update({ role: 'admin' }).eq('id', targetUser.id);
+      // Upsert profile: create if not exists, then ensure role=admin
+      const meta = targetUser.user_metadata as Record<string, string> | null;
+      const displayName = meta?.full_name || meta?.name || targetUser.email?.split('@')[0] || 'Pengguna Anonim';
+
+      const { error: upsertError } = await supabase.from('profiles').upsert(
+        { id: targetUser.id, display_name: displayName, role: 'admin' },
+        { onConflict: 'id' }
+      );
+      if (upsertError) throw new Error(`Gagal update profil: ${upsertError.message}`);
+
       await supabase.from('admin_audit_logs').insert({ actor_id: user.id, target_id: targetUser.id, action: 'add_admin' });
       return new Response(JSON.stringify({ success: true, message: "Berhasil menambahkan admin" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    
+
     if (action === 'remove') {
       if (profileId === user.id) {
         return new Response(JSON.stringify({ error: "Tidak dapat mencabut hak admin diri sendiri" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-      
+
       // Prevent deleting last admin
-      const { data: adminUsers, count } = await supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'admin');
+      const { count } = await supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'admin');
       if (count && count <= 1) {
         return new Response(JSON.stringify({ error: "Tidak dapat mencabut admin terakhir" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
       }
-      
-      await supabase.from('profiles').update({ role: 'user' }).eq('id', profileId);
+
+      const { error: revokeError } = await supabase.from('profiles').update({ role: 'user' }).eq('id', profileId);
+      if (revokeError) throw new Error(`Gagal mencabut akses: ${revokeError.message}`);
+
       await supabase.from('admin_audit_logs').insert({ actor_id: user.id, target_id: profileId, action: 'remove_admin' });
       return new Response(JSON.stringify({ success: true, message: "Berhasil mencabut admin" }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
