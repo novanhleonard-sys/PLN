@@ -84,21 +84,26 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check quota
-    const { data: settings } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'submissions_per_day').maybeSingle();
-    const limit = settings?.value || 3;
+    // Check quota (skip for admins)
+    const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).maybeSingle();
+    const isAdmin = profile?.role === 'admin';
 
-    const startOfDay = new Date();
-    startOfDay.setUTCHours(0,0,0,0);
-    
-    const { count } = await supabaseAdmin
-      .from('submissions')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', startOfDay.toISOString());
+    if (!isAdmin) {
+      const { data: settings } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'submissions_per_day').maybeSingle();
+      const limit = settings?.value || 3;
 
-    if (count !== null && count >= limit) {
-      return new Response(JSON.stringify({ error: 'Batas kontribusi harian tercapai' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const startOfDay = new Date();
+      startOfDay.setUTCHours(0,0,0,0);
+      
+      const { count } = await supabaseAdmin
+        .from('submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', startOfDay.toISOString());
+
+      if (count !== null && count >= limit) {
+        return new Response(JSON.stringify({ error: 'Batas kontribusi harian tercapai' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     }
 
     // Insert submission

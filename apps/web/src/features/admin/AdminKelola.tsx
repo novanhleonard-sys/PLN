@@ -25,10 +25,23 @@ export function AdminKelola() {
 
   const { data: admins, isLoading } = useQuery({
     queryKey: ['admin_users'],
+    enabled: !!session?.access_token,
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('id, display_name').eq('role', 'admin');
-      if (error) throw error;
-      return data;
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage_admin`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session!.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'list' })
+      });
+      if (!res.ok) {
+        // fallback to direct query if edge function fails
+        const { data, error } = await supabase.from('profiles').select('id, display_name').eq('role', 'admin');
+        if (error) throw error;
+        return (data || []).map(p => ({ ...p, email: '' }));
+      }
+      return res.json() as Promise<{ id: string; display_name: string; email: string }[]>;
     }
   });
 
@@ -102,7 +115,10 @@ export function AdminKelola() {
         <div className="flex flex-col gap-3">
           {admins?.map((admin) => (
             <div key={admin.id} className="flex justify-between items-center p-3 border border-stone-100 bg-stone-50 rounded-xl">
-              <div className="font-bold text-stone-700">{admin.display_name}</div>
+              <div>
+                <div className="font-bold text-stone-700">{admin.display_name || '(Tanpa Nama)'}</div>
+                {admin.email && <div className="text-xs text-stone-400 mt-0.5">{admin.email}</div>}
+              </div>
               {session?.user.id !== admin.id && (
                 <Button variant="ghost" className="!text-red-500 hover:!bg-red-50" onClick={() => setTargetRevoke({ id: admin.id, name: admin.display_name })}>
                   Cabut Akses

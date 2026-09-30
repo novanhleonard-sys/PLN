@@ -34,7 +34,17 @@ serve(async (req) => {
     // 2. Parse request payload
     const { action, email, profileId } = await req.json();
 
+    if (action === 'list') {
+      const { data: adminProfiles } = await supabase.from('profiles').select('id, display_name').eq('role', 'admin');
+      if (!adminProfiles) return new Response(JSON.stringify([]), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      const emailMap = new Map((authUsers?.users ?? []).map(u => [u.id, u.email ?? '']));
+      const result = adminProfiles.map(p => ({ ...p, email: emailMap.get(p.id) || '' }));
+      return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (action === 'add') {
+
       // Look up auth.users by email
       const { data: users, error: findError } = await supabase.auth.admin.listUsers();
       if (findError) throw findError;

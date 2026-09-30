@@ -98,8 +98,11 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
           if (error.context) {
             try {
               const txt = await error.context.text();
-              msg = `Error: ${txt}`;
-            } catch (e) {}
+              const parsed = JSON.parse(txt);
+              msg = parsed.error || parsed.message || txt;
+            } catch (e) {
+              msg = error.message;
+            }
           }
           throw new Error(msg);
         }
