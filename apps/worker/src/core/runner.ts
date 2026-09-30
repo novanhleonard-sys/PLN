@@ -70,7 +70,7 @@ export class JobRunner {
       const msg = err.message || 'Unknown error';
       if (msg.includes('BUDGET_EXCEEDED')) {
         await this.markDeferred(job.id, msg);
-      } else if (msg.includes('429') || msg.includes('Quota exceeded') || msg.includes('RESOURCE_EXHAUSTED')) {
+      } else if (msg.includes('429') || msg.includes('Quota exceeded') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('500') || msg.includes('503')) {
         await this.handleRateLimit(job, msg);
       } else {
         await this.handleRetry(job, msg);
@@ -116,10 +116,10 @@ export class JobRunner {
     let status = 'queued';
     
     // SAFETY GUARDRAIL: Max 2 attempts
-    if (job.attempts >= 2) {
+    if (job.attempts >= 4) {
       status = 'failed';
       console.error(`\n🚨 ADMIN ALERT: SAFETY GUARDRAIL TRIGGERED! 🚨`);
-      console.error(`Job [${job.kind}] ID: ${job.id} has failed 2 times.`);
+      console.error(`Job [${job.kind}] ID: ${job.id} has failed 4 times.`);
       console.error(`Last Error: ${errorMsg}`);
       console.error(`Action: STOPPING ALL QUEUED AI JOBS automatically.\n`);
       
