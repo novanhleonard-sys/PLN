@@ -98,7 +98,7 @@ export function AdminEditKonten() {
     try {
       const { data: story, error: storyError } = await supabase
           .from('stories')
-          .select('title, type, region_id, status, tier, lat, lng, synopsis, hero_image_path, pin_image_path, asset_credits')
+          .select('title, type, region_id, status, tier, lat, lng, synopsis, hero_image_path, pin_image_path')
           .eq('id', id)
           .single();
 
@@ -203,8 +203,7 @@ export function AdminEditKonten() {
         lng: data.lng,
         synopsis: data.synopsis,
         hero_image_path: data.hero_image_path,
-        pin_image_path: data.pin_image_path,
-        asset_credits: data.asset_credits
+        pin_image_path: data.pin_image_path
       }).eq('id', id);
       if (storyErr) throw storyErr;
       
