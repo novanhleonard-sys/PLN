@@ -214,14 +214,57 @@ export function AdminEditKonten() {
     }
   };
 
-  const handleRegenerateVB = () => {
+  const handleRegenerateVB = async () => {
+    if (!selectedVersionId) return;
     if (confirm('Ini akan memengaruhi canonical references dan scenes. Lanjut?')) {
-      setToast('Visual Bible sedang di-regenerate (MOCK)');
+      try {
+        setToast('Visual Bible sedang di-regenerate...');
+        await supabase.rpc('start_ai_process_run', {
+          p_version_id: selectedVersionId,
+          p_scope: 'image_only',
+          p_config_snapshot: { source: 'admin_regenerate_vb' }
+        });
+        setToast('Berhasil memicu antrean Visual Bible.');
+        fetchAssetStats(selectedVersionId);
+      } catch (e: any) {
+        setToast('Gagal memicu antrean: ' + e.message);
+      }
     }
   };
 
-  const handleGenerateMissing = () => {
-    setToast('Memproses aset yang hilang... (MOCK)');
+  const handleGenerateMissing = async () => {
+    if (!selectedVersionId) return;
+    try {
+      setToast('Memicu pembuatan aset yang hilang...');
+      
+      let triggered = false;
+      if (assetStats.audioTotal > 0 && assetStats.audioComplete < assetStats.audioTotal) {
+        await supabase.rpc('start_ai_process_run', { 
+          p_version_id: selectedVersionId, 
+          p_scope: 'audio_only', 
+          p_config_snapshot: { source: 'admin_generate_missing' } 
+        });
+        triggered = true;
+      }
+      
+      if (assetStats.scenesTotal > 0 && assetStats.scenesComplete < assetStats.scenesTotal) {
+        await supabase.rpc('start_ai_process_run', { 
+          p_version_id: selectedVersionId, 
+          p_scope: 'image_only', 
+          p_config_snapshot: { source: 'admin_generate_missing' } 
+        });
+        triggered = true;
+      }
+      
+      if (triggered) {
+        setToast('Berhasil memicu antrean generate aset.');
+        fetchAssetStats(selectedVersionId);
+      } else {
+        setToast('Semua aset sudah lengkap.');
+      }
+    } catch (e: any) {
+      setToast('Gagal memicu antrean: ' + e.message);
+    }
   };
 
   const handleHideAsset = () => {
