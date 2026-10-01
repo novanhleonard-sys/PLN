@@ -2,11 +2,11 @@
 import { motion, useReducedMotion } from 'framer-motion';
 
 const CloudLobe = ({ className, color = 'bg-white' }: { className?: string, color?: string }) => (
-  <div className={bsolute \ rounded-[45%] \} />
+  <div className={`absolute ${color} rounded-[45%] ${className}`} />
 );
 
 const CloudBlob = ({ className, color = 'bg-white', flipped = false }: { className?: string, color?: string, flipped?: boolean }) => (
-  <div className={bsolute filter drop-shadow-[0_12px_24px_rgba(20,90,130,0.15)] \ \}>
+  <div className={`absolute filter drop-shadow-[0_12px_24px_rgba(20,90,130,0.15)] ${className} ${flipped ? '-scale-x-100' : ''}`}>
     <CloudLobe color={color} className="w-[50%] h-[60%] top-[10%] left-[10%]" />
     <CloudLobe color={color} className="w-[60%] h-[80%] top-[0%] left-[20%]" />
     <CloudLobe color={color} className="w-[70%] h-[90%] top-[5%] left-[40%]" />
@@ -15,7 +15,7 @@ const CloudBlob = ({ className, color = 'bg-white', flipped = false }: { classNa
     <CloudLobe color={color} className="w-[60%] h-[70%] bottom-[10%] left-[15%]" />
     <CloudLobe color={color} className="w-[65%] h-[80%] bottom-[0%] left-[35%]" />
     <CloudLobe color={color} className="w-[55%] h-[65%] bottom-[5%] right-[15%]" />
-    <div className={bsolute \ w-[80%] h-[70%] top-[15%] left-[10%] rounded-3xl} />
+    <div className={`absolute ${color} w-[80%] h-[70%] top-[15%] left-[10%] rounded-3xl`} />
   </div>
 );
 
@@ -142,5 +142,3 @@ export function CloudLoadingOverlay() {
     </div>
   );
 }
-
-
