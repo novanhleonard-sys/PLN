@@ -209,7 +209,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
       // 5. Story Pins Source (Initialized empty, populated in separate effect)
       // Markers handled by React in useEffect
 
-      setLoaded(true);  setTimeout(() => m.resize(), 500);
+      setLoaded(true); setTimeout(() => m.resize(), 500); window.dispatchEvent(new Event('pln-map-ready'));
     });
 
     return () => {

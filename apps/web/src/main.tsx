@@ -7,6 +7,7 @@ import { useAuth } from './features/auth/AuthStore.ts'
 
 import { RequireAuth } from './features/auth/RequireAuth.tsx';
 import { SessionTracker } from './features/analytics/SessionTracker';
+import { CloudLoadingOverlay } from './features/splash/CloudLoadingOverlay';
 
 import '@fontsource/fredoka/400.css'
 import '@fontsource/fredoka/500.css'
@@ -64,7 +65,9 @@ const AppContent = () => {
   }, [initialize]);
 
   return (
-    <Suspense fallback={<div className="p-8 text-stone-500 font-nunito flex justify-center mt-20">Memuat aplikasi...</div>}>
+    <>
+      <CloudLoadingOverlay />
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/cerita/:slug" element={<Home />} />
@@ -80,7 +83,8 @@ const AppContent = () => {
         <Route path="/kontribusi/:id/edit" element={<RequireAuth><EditContributionWrapper /></RequireAuth>} />
         <Route path="/admin/*" element={<AdminCenter />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </>
   );
 };
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Splash } from '../features/splash/Splash';
 import { MainMap } from '../features/map/MainMap';
 import { Search } from '../features/search/Search';
 import { StoryCard } from '../features/story-card/StoryCard';
@@ -9,8 +8,7 @@ import { MapStyleToggle } from '../ui/basic/Misc';
 import { UserMenu } from '../features/auth/UserMenu';
 
 export default function Home() {
-  const [splashDone, setSplashDone] = useState(false);
-  const [selectedStory, setSelectedStory] = useState<StoryPin | null>(null);
+    const [selectedStory, setSelectedStory] = useState<StoryPin | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<[number, number] | null>(null);
   const [filteredStories, setFilteredStories] = useState<StoryPin[] | null>(null);
   const { slug } = useParams();
@@ -38,7 +36,7 @@ export default function Home() {
 
   return (
     <div className="w-full h-screen flex flex-col font-nunito relative overflow-hidden bg-[#d1f4f9]">
-      <Splash onComplete={() => setSplashDone(true)} />
+      
       
       {/* Peta ada di belakang, load lebih awal */}
       <MainMap 
@@ -48,8 +46,7 @@ export default function Home() {
           stories={filteredStories || stories}
       />
       
-      {splashDone && (
-        <>
+      <>
           <Search stories={stories} onSelectStory={setSelectedStory} onSelectLocation={setSearchedLocation} onFilterChange={setFilteredStories} />
           
           <StoryCard 
@@ -67,8 +64,7 @@ export default function Home() {
             <UserMenu />
           </div>
         </>
-      )}
-    </div>
+      </div>
   );
 }
 
