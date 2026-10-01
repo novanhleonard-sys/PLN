@@ -111,12 +111,12 @@ export class JobRunner {
     }).eq('id', job.id);
   }
 
-  private async handleRetry(job: Job, errorMsg: string) {
+  private async handleRetry(job: Job, errorMsg: string, forceFail: boolean = false) {
     const nextRunAfter = new Date();
     let status = 'queued';
     
     // SAFETY GUARDRAIL: Max 2 attempts
-    if (job.attempts >= 1) {
+    if (job.attempts >= 1 || forceFail) {
       status = 'failed';
       console.error(`\n🚨 ADMIN ALERT: SAFETY GUARDRAIL TRIGGERED! 🚨`);
       console.error(`Job [${job.kind}] ID: ${job.id} has failed 2 times.`);
