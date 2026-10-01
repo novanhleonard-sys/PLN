@@ -55,11 +55,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized', details: userError?.message || 'User not found', token_present: !!authHeader }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    if (!user.email_confirmed_at) {
-      // In local testing, email might not be confirmed, so we just log it. But spec says: "memeriksa login dan email terverifikasi"
-      // We will strictly enforce it unless we hit issues in QA.
-      // Wait, my setup_users script used `email_confirm: true`, so they are confirmed!
-    }
+    if (!user.email_confirmed_at) { return new Response(JSON.stringify({ error: 'Email must be verified' }), { status: 403, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } }); }
 
             const payload = await req.json();
     

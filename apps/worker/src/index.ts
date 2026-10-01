@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import WebSocket from 'ws';
 globalThis.WebSocket = WebSocket as any;
@@ -7,7 +7,7 @@ import http from 'http';
 import { BudgetGuard } from './core/budget';
 import { ProviderRegistry } from './providers/registry';
 import { GeminiProvider } from './providers/gemini';
-import { ZaiProvider } from './providers/zai';
+
 import { JobRunner } from './core/runner';
 import { checkAndRunTierJob } from './jobs/tier/calculate';
 
@@ -15,7 +15,6 @@ import { checkAndRunTierJob } from './jobs/tier/calculate';
 import { triageStage } from './stages/triage';
 import { verifyStage } from './stages/verify';
 import { segmentStage } from './stages/segment';
-import { characterStage } from './stages/character';
 import { processSceneImageStage } from './stages/scene-image';
 import { processStoryVisualBibleStage } from './stages/story-visual-bible';
 import { processCanonicalRefStage } from './stages/canonical-ref';
@@ -41,7 +40,7 @@ const budgetGuard = new BudgetGuard(supabase);
 const registry = new ProviderRegistry(supabase, budgetGuard);
 
 registry.register(new GeminiProvider());
-registry.register(new ZaiProvider());
+
 
 const runner = new JobRunner(supabase);
 
@@ -49,7 +48,6 @@ const runner = new JobRunner(supabase);
 runner.register('triage', async (ctx, job) => await triageStage(ctx, job, registry));
 runner.register('verify', async (ctx, job) => await verifyStage(ctx, job, registry));
 runner.register('segment', async (ctx, job) => await segmentStage(ctx, job, registry));
-runner.register('character', async (ctx, job) => await characterStage(ctx, job, registry));
 runner.register('scene-image', async (ctx, job) => await processSceneImageStage(ctx, job, registry));
 runner.register('story-visual-bible', async (ctx, job) => await processStoryVisualBibleStage(ctx, job, registry));
 runner.register('canonical-ref', async (ctx, job) => await processCanonicalRefStage(ctx, job, registry));
@@ -58,7 +56,21 @@ runner.register('audio', async (ctx, job) => await audioStage(ctx, job, registry
 runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry));
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));
 
-const isPolling = true;
+let isPolling = true;
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT. Shutting down gracefully...');
+  isPolling = false;
+  runner.shutdown();
+  server.close();
+});
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM. Shutting down gracefully...');
+  isPolling = false;
+  runner.shutdown();
+  server.close();
+});
 
 // START SIMPLE HTTP SERVER FOR RENDER WEB SERVICE FREE TIER
 const port = process.env.PORT || 8080;

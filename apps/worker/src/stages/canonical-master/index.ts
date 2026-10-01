@@ -110,7 +110,7 @@ export const processCanonicalMasterStage = async (ctx: { supabase: SupabaseClien
   }
 
   // Cleanup
-  try { fs.unlinkSync(masterFilePath); } catch (e) {}
+  try { fs.unlinkSync(masterFilePath); } catch (e: any) { console.warn('Failed to delete temp file:', e.message); }
   
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };

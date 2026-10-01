@@ -1,4 +1,4 @@
-﻿# STATE
+# STATE
 
 Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 
@@ -14,7 +14,8 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B4 Kontribusi, profil, admin, deploy | **selesai** | b4-done | Form wizard (S12), Profil (S11), Dashboard Admin, Edge Function submit_contribution, Integrasi Komponen B0.5. |
 | B5 Kustomisasi Preferensi & AI | **selesai** | b5e-done | Fitur 5a (Sesuaikan usia), 5b (Gaya peta B), 5c (Tier), 5d (Preferensi & Hapus Akun), 5e (Laporan & Dashboard Biaya AI). |
 | B6 Pengerasan dan evaluasi | **selesai** | b6-done | QA, Evaluasi (Golden set), PWA, Perbaikan Performa |
-| B11 Kelompok Daerah | **berjalan** | - | Dynamic region groups untuk gaya AI dan filter (Migrasi dari ENUM). |
+| B11 Kelompok Daerah | **selesai** | b11-done | Dynamic region groups untuk gaya AI dan filter (Migrasi dari ENUM). |
+| B12 Audit Review | **selesai** | b12-done | Audit penuh & perbaikan guardrail, auth bypass, dan migrasi Gemini. |
 
 ## Kontrak beku
 
@@ -41,7 +42,7 @@ Versi: **contract-v1**.
 
 Selesai secara keseluruhan. B6 Pengerasan dan Evaluasi telah rampung. Semua fitur PRD telah selesai diimplementasikan.
 
-**B2_EXT (2026-09-25):** Implementasi AI nyata untuk segment, gambar, dan audio berhasil. Worker menghasilkan scenes+pages via `gemini-3.6-flash` (generateJSON), gambar per scene via `gemini-3.1-flash-image` (interactions.create → WebP di story-media), audio via `gemini-2.5-flash-preview-tts`. 22/22 gambar ready, 22/22 audio ready untuk 3 cerita seed (Kancil, Si Pitung, Rawa Pening).
+**B2_EXT (2026-09-25):** Implementasi AI nyata untuk segment, gambar, dan audio berhasil. Worker menghasilkan scenes+pages via `gemini-3.6-flash` (generateJSON), gambar per scene via `gemini-3.1-flash-image` (interactions.create ? WebP di story-media), audio via `gemini-2.5-flash-preview-tts`. 22/22 gambar ready, 22/22 audio ready untuk 3 cerita seed (Kancil, Si Pitung, Rawa Pening).
 
 
 

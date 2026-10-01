@@ -19,7 +19,7 @@ export class BudgetGuard {
     const { data: dailyData, error: dailyError } = await this.supabase
       .from('ai_usage')
       .select('cost_usd')
-      .gte('created_at', today.toISOString());
+      .gte('created_at', today.toISOString()).eq('operation_status', 'succeeded');
       
     if (dailyError) throw new Error('Failed to fetch daily usage: ' + dailyError.message);
     
@@ -33,7 +33,7 @@ export class BudgetGuard {
       const { data: storyData, error: storyError } = await this.supabase
         .from('ai_usage')
         .select('cost_usd')
-        .eq('ref', storyId);
+        .eq('ref', storyId).eq('operation_status', 'succeeded');
         
       if (storyError) throw new Error('Failed to fetch story usage: ' + storyError.message);
       

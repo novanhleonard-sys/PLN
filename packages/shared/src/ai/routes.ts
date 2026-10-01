@@ -2,8 +2,8 @@
 
 export const AI_ROUTES = {
   triage: {
-    provider: 'zai',
-    model: 'glm-4',
+    provider: 'gemini',
+    model: 'gemini-3.1-flash-lite',
   },
   verify: {
     provider: 'gemini',

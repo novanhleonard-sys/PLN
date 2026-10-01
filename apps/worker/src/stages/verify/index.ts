@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -21,8 +21,8 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   console.log("Calling Gemini for verify...", submission.title);
   const result = await registry.generateJSON(schema, {
-    provider: "zai",
-    model: "glm-4-flash",
+    provider: "gemini",
+    model: "gemini-3.1-flash-lite",
     prompt,
     systemInstruction: "Anda adalah verifikator ahli folklor Nusantara. Lakukan pencarian web untuk memvalidasi folklor, lalu kembalikan JSON hasil verifikasi dengan lokasi akurat (lat, lng).",
     ref: job.id,

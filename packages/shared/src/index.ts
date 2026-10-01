@@ -11,25 +11,6 @@ export const tierForZoom = (z: number) => {
     return 4;
 };
 
-export const applyVerdict = (
-    verdict: 'pass' | 'no_pass' | 'needs_human_review',
-    confidence: number,
-    settings: { auto_publish_enabled: boolean, auto_publish_min_confidence: number },
-    safety_flags: string[] = [],
-    sensitivity: number = 0
-): 'approved' | 'rejected' | 'needs_review' => {
-    if (safety_flags.length > 0 || sensitivity >= 1) return 'needs_review';
-    
-    if (verdict === 'pass' && confidence >= settings.auto_publish_min_confidence && settings.auto_publish_enabled) {
-        return 'approved';
-    }
-    
-    if (verdict === 'no_pass' && confidence >= settings.auto_publish_min_confidence) {
-        return 'rejected';
-    }
-    
-    return 'needs_review';
-};
 export * from './voice_personas';
 
 import { z } from 'zod';

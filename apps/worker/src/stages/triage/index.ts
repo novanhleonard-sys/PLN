@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -15,7 +15,7 @@ export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   console.log("Calling Zai for triage...", submission.title);
   const result = await registry.generateJSON(schema, {
-    provider: "zai",
+    provider: "gemini",
     model: "glm-5.3-flash",
     prompt,
     systemInstruction: "Anda adalah asisten kurator Peta Legenda Nusantara. Tolak cerita modern atau non-Indonesia. Return JSON matching the schema EXACTLY with properties `status` and `reason`.",

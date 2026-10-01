@@ -119,9 +119,9 @@ export class JobRunner {
     if (job.attempts >= 1) {
       status = 'failed';
       console.error(`\n🚨 ADMIN ALERT: SAFETY GUARDRAIL TRIGGERED! 🚨`);
-      console.error(`Job [${job.kind}] ID: ${job.id} has failed 4 times.`);
+      console.error(`Job [${job.kind}] ID: ${job.id} has failed 2 times.`);
       console.error(`Last Error: ${errorMsg}`);
-      console.error(`Action: STOPPING ALL QUEUED AI JOBS automatically.\n`);
+      console.error(`Action: STOPPING SIBLING JOBS automatically.\n`);
       
       // Stop queued jobs to prevent runaway cost
       if (job.process_run_id) {
@@ -136,15 +136,8 @@ export class JobRunner {
         await this.supabase.from('ai_process_runs')
           .update({ status: 'failed' })
           .eq('id', job.process_run_id);
-      } else {
-        await this.supabase.from('jobs')
-          .update({ 
-             status: 'failed', 
-             error: `AUTO_CANCELLED: System paused due to repeated failure in job ${job.id}. Original Error: ${errorMsg}` 
-          })
-          .eq('status', 'queued');
       }
-    } else if (job.attempts === 1) {
+    } else if (job.attempts === 0) {
       nextRunAfter.setSeconds(nextRunAfter.getSeconds() + 30);
     }
 

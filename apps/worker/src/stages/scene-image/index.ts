@@ -59,8 +59,8 @@ export const processSceneImageStage = async (ctx: { supabase: SupabaseClient }, 
             const arrBuffer = await resp.arrayBuffer();
             referenceBase64s.push(Buffer.from(arrBuffer).toString("base64"));
           }
-        } catch (e) {
-          console.error("Failed to fetch canonical ref image", ref.name);
+        } catch (e: any) {
+          throw new Error(`Failed to fetch canonical ref image ${ref.name}: ${e.message}`);
         }
       }
     }
@@ -123,6 +123,6 @@ Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter
   }).eq("id", scene.id);
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
-  try { fs.unlinkSync(tempFile); } catch (e) {}
+  try { fs.unlinkSync(tempFile); } catch (e: any) { console.warn('Failed to delete temp file:', e.message); }
   console.log("Scene image completed:", scene.idx);
 };
