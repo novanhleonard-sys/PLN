@@ -97,10 +97,10 @@ export function AdminEditKonten() {
     setLoading(true);
     try {
       const { data: story, error: storyError } = await supabase
-        .from('stories')
-        .select('title, type, region_id, status, tier')
-        .eq('id', id)
-        .single();
+          .from('stories')
+          .select('title, type, region_id, status, tier, lat, lng, synopsis, hero_image_path, pin_image_path, asset_credits')
+          .eq('id', id)
+          .single();
 
       if (storyError) throw storyError;
       
@@ -140,7 +140,14 @@ export function AdminEditKonten() {
       version_label: version?.label || 'Versi Admin',
       body: version?.body || '',
       sources: version?.sources || [{ type: 'buku', citation: '', author: '' }],
-      rights_declared: true, lat: null, lng: null, synopsis: '', hero_image_path: null, pin_image_path: null, asset_credits: '', force_new_reason: null
+      rights_declared: true,
+      lat: story.lat || null,
+      lng: story.lng || null,
+      synopsis: story.synopsis || '',
+      hero_image_path: story.hero_image_path || null,
+      pin_image_path: story.pin_image_path || null,
+      asset_credits: story.asset_credits || '',
+      force_new_reason: null
     });
   };
 
@@ -191,7 +198,13 @@ export function AdminEditKonten() {
       const { error: storyErr } = await supabase.from('stories').update({
         title: data.title,
         type: data.type,
-        region_id: data.region_id || null
+        region_id: data.region_id || null,
+        lat: data.lat,
+        lng: data.lng,
+        synopsis: data.synopsis,
+        hero_image_path: data.hero_image_path,
+        pin_image_path: data.pin_image_path,
+        asset_credits: data.asset_credits
       }).eq('id', id);
       if (storyErr) throw storyErr;
       
