@@ -45,7 +45,7 @@ serve(async (req) => {
 
     if (action === 'add') {
       // Look up auth.users by email
-      const { data: users, error: findError } = await supabase.auth.admin.listUsers();
+      const { data: users, error: findError } = await supabase.auth.admin.listUsers({ perPage: 1000 });
       if (findError) throw findError;
 
       const targetUser = users.users.find((u) => u.email === email);
