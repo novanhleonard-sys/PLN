@@ -1,4 +1,4 @@
-﻿import { AIProvider } from '../../providers/registry';
+import { AIProvider } from '../../providers/registry';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
@@ -111,9 +111,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
       if (insErr) throw new Error("Failed to insert page_audio: " + insErr.message);
     }
 
-    // Update page audio_status
-    await ctx.supabase.from("pages").update({ audio_status: "ready" }).eq("id", page.id);
-
+    
     // Update job status
     await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
     console.log("Audio generation succeeded for page", page.id);
