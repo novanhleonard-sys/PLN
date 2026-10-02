@@ -72,6 +72,8 @@ export class JobRunner {
         await this.markDeferred(job.id, msg);
       } else if (msg.includes('429') || msg.includes('Quota exceeded') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('500') || msg.includes('503')) {
         await this.handleRateLimit(job, msg);
+        } else if (msg.includes('WAITING_FOR') || msg.includes('not ready yet')) {
+          await this.handleWait(job, msg);
       } else {
         await this.handleRetry(job, msg);
       }
