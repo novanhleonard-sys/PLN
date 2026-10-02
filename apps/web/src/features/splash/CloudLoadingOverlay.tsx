@@ -1,23 +1,26 @@
 ﻿import { useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
-const CloudLobe = ({ className, color = 'bg-white' }: { className?: string, color?: string }) => (
-  <div className={`absolute ${color} rounded-[45%] ${className}`} />
-);
+const WatercolorCloud = ({ variant = 1, className, flipped = false }: { variant?: 1 | 2 | 3, className?: string, flipped?: boolean }) => {
+  const positions = {
+    1: '0 0',
+    2: '0 50%',
+    3: '0 100%'
+  };
 
-const CloudBlob = ({ className, color = 'bg-white', flipped = false }: { className?: string, color?: string, flipped?: boolean }) => (
-  <div className={`absolute filter drop-shadow-[0_12px_24px_rgba(20,90,130,0.15)] ${className} ${flipped ? '-scale-x-100' : ''}`}>
-    <CloudLobe color={color} className="w-[50%] h-[60%] top-[10%] left-[10%]" />
-    <CloudLobe color={color} className="w-[60%] h-[80%] top-[0%] left-[20%]" />
-    <CloudLobe color={color} className="w-[70%] h-[90%] top-[5%] left-[40%]" />
-    <CloudLobe color={color} className="w-[55%] h-[70%] top-[15%] right-[10%]" />
-    <CloudLobe color={color} className="w-[45%] h-[55%] top-[30%] right-[0%]" />
-    <CloudLobe color={color} className="w-[60%] h-[70%] bottom-[10%] left-[15%]" />
-    <CloudLobe color={color} className="w-[65%] h-[80%] bottom-[0%] left-[35%]" />
-    <CloudLobe color={color} className="w-[55%] h-[65%] bottom-[5%] right-[15%]" />
-    <div className={`absolute ${color} w-[80%] h-[70%] top-[15%] left-[10%] rounded-3xl`} />
-  </div>
-);
+  return (
+    <div 
+      className={`absolute ${className} ${flipped ? '-scale-x-100' : ''}`}
+      style={{
+        backgroundImage: 'url(/assets/clouds_watercolor.png)',
+        backgroundSize: '100% 300%',
+        backgroundPosition: positions[variant],
+        backgroundRepeat: 'no-repeat',
+        filter: 'drop-shadow(0 25px 45px rgba(20,80,120,0.35))'
+      }}
+    />
+  );
+};
 
 export function CloudLoadingOverlay() {
   const [isReady, setIsReady] = useState(false);
@@ -64,18 +67,22 @@ export function CloudLoadingOverlay() {
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-hidden pointer-events-auto">
-      {/* Background fill fade out */}
+      {/* 
+        Solid background fallback to absolutely prevent the map from peeking 
+        through if viewport is extremely tall/wide and clouds have micro-gaps.
+        It fades out before the clouds finish sliding.
+      */}
       <motion.div 
          className="absolute inset-0 bg-[#e0f2fe]"
          animate={out ? { opacity: 0 } : { opacity: 1 }}
-         transition={{ duration: 0.8, ease: 'easeOut' }}
+         transition={{ duration: 0.7, ease: 'easeOut' }}
       />
 
       {/* Title */}
       <motion.div 
         className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
         initial={{ opacity: 1, scale: 1 }}
-        animate={out ? { opacity: 0, scale: 0.97 } : { opacity: 1, scale: 1 }}
+        animate={out ? { opacity: 0, scale: 0.96 } : { opacity: 1, scale: 1 }}
         transition={{ duration: 0.45, ease: 'easeOut' }}
       >
         <h1 className="text-5xl md:text-7xl font-fredoka text-teal font-bold drop-shadow-md text-center px-4">
@@ -83,62 +90,63 @@ export function CloudLoadingOverlay() {
         </h1>
       </motion.div>
 
-      {/* BACK LAYER (Light Blueish) */}
-      <motion.div className="absolute -top-[15vh] -left-[15vw] w-[80vw] h-[80vh]" animate={out ? { x: '-120vw', y: '-80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-[#e0f2fe]" />
+      {/* CLOUDS LAYER 1 (Background - slightly larger to cover everything) */}
+      <motion.div className="absolute -top-[15vh] -left-[15vw] w-[85vw] h-[85vh]" animate={out ? { x: '-120vw', y: '-80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={3} className="w-full h-full opacity-60 mix-blend-multiply" />
       </motion.div>
-      <motion.div className="absolute -top-[15vh] -right-[15vw] w-[80vw] h-[80vh]" animate={out ? { x: '120vw', y: '-80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.45, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-[#e0f2fe]" flipped />
+      <motion.div className="absolute -top-[15vh] -right-[15vw] w-[85vw] h-[85vh]" animate={out ? { x: '120vw', y: '-80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.45, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={2} className="w-full h-full opacity-60 mix-blend-multiply" flipped />
       </motion.div>
-      <motion.div className="absolute -bottom-[15vh] -left-[15vw] w-[80vw] h-[80vh]" animate={out ? { x: '-120vw', y: '80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.4, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-[#e0f2fe]" flipped />
+      <motion.div className="absolute -bottom-[15vh] -left-[15vw] w-[85vw] h-[85vh]" animate={out ? { x: '-120vw', y: '80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.4, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={1} className="w-full h-full opacity-60 mix-blend-multiply" flipped />
       </motion.div>
-      <motion.div className="absolute -bottom-[15vh] -right-[15vw] w-[80vw] h-[80vh]" animate={out ? { x: '120vw', y: '80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.55, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-[#e0f2fe]" />
+      <motion.div className="absolute -bottom-[15vh] -right-[15vw] w-[85vw] h-[85vh]" animate={out ? { x: '120vw', y: '80vh' } : { x: 0, y: 0 }} transition={{ duration: 1.55, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={3} className="w-full h-full opacity-60 mix-blend-multiply" />
       </motion.div>
 
-      {/* FRONT LAYER (White) */}
+      {/* CLOUDS LAYER 2 (Foreground - primary visibility) */}
       
       {/* Top Left */}
-      <motion.div className="absolute -top-[25vh] -left-[20vw] w-[75vw] h-[85vh]" animate={out ? { x: '-130vw', y: '-90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.35, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" />
+      <motion.div className="absolute -top-[25vh] -left-[20vw] w-[85vw] h-[85vh]" animate={out ? { x: '-130vw', y: '-90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.35, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={1} className="w-full h-full" />
       </motion.div>
 
       {/* Top Center */}
-      <motion.div className="absolute -top-[35vh] left-[15vw] w-[70vw] h-[75vh]" animate={out ? { y: '-100vh' } : { y: 0 }} transition={{ duration: 1.25, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" flipped />
+      <motion.div className="absolute -top-[35vh] left-[5vw] w-[90vw] h-[75vh]" animate={out ? { y: '-100vh' } : { y: 0 }} transition={{ duration: 1.25, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={2} className="w-full h-full" flipped />
       </motion.div>
 
       {/* Top Right */}
-      <motion.div className="absolute -top-[25vh] -right-[20vw] w-[75vw] h-[85vh]" animate={out ? { x: '130vw', y: '-90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.45, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" flipped />
+      <motion.div className="absolute -top-[25vh] -right-[20vw] w-[85vw] h-[85vh]" animate={out ? { x: '130vw', y: '-90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.45, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={3} className="w-full h-full" flipped />
       </motion.div>
 
       {/* Middle Left */}
-      <motion.div className="absolute top-[10vh] -left-[30vw] w-[70vw] h-[80vh]" animate={out ? { x: '-130vw' } : { x: 0 }} transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" flipped />
+      <motion.div className="absolute top-[10vh] -left-[30vw] w-[80vw] h-[80vh]" animate={out ? { x: '-130vw' } : { x: 0 }} transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={2} className="w-full h-full" />
       </motion.div>
 
       {/* Middle Right */}
-      <motion.div className="absolute top-[10vh] -right-[30vw] w-[70vw] h-[80vh]" animate={out ? { x: '130vw' } : { x: 0 }} transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" />
+      <motion.div className="absolute top-[10vh] -right-[30vw] w-[80vw] h-[80vh]" animate={out ? { x: '130vw' } : { x: 0 }} transition={{ duration: 1.3, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={1} className="w-full h-full" flipped />
       </motion.div>
 
       {/* Bottom Left */}
-      <motion.div className="absolute -bottom-[25vh] -left-[20vw] w-[75vw] h-[85vh]" animate={out ? { x: '-130vw', y: '90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.45, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" />
+      <motion.div className="absolute -bottom-[25vh] -left-[20vw] w-[85vw] h-[85vh]" animate={out ? { x: '-130vw', y: '90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.45, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={3} className="w-full h-full" />
       </motion.div>
 
       {/* Bottom Center */}
-      <motion.div className="absolute -bottom-[35vh] left-[15vw] w-[70vw] h-[75vh]" animate={out ? { y: '100vh' } : { y: 0 }} transition={{ duration: 1.25, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={() => { if (out) setIsUnmounted(true); }}>
-         <CloudBlob className="w-full h-full" color="bg-white" flipped />
+      <motion.div className="absolute -bottom-[35vh] left-[5vw] w-[90vw] h-[75vh]" animate={out ? { y: '100vh' } : { y: 0 }} transition={{ duration: 1.25, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={() => { if (out) setIsUnmounted(true); }}>
+         <WatercolorCloud variant={1} className="w-full h-full" flipped />
       </motion.div>
 
       {/* Bottom Right */}
-      <motion.div className="absolute -bottom-[25vh] -right-[20vw] w-[75vw] h-[85vh]" animate={out ? { x: '130vw', y: '90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.35, ease: [0.4, 0, 0.2, 1] }}>
-         <CloudBlob className="w-full h-full" color="bg-white" flipped />
+      <motion.div className="absolute -bottom-[25vh] -right-[20vw] w-[85vw] h-[85vh]" animate={out ? { x: '130vw', y: '90vh' } : { x: 0, y: 0 }} transition={{ duration: 1.35, ease: [0.4, 0, 0.2, 1] }}>
+         <WatercolorCloud variant={2} className="w-full h-full" flipped />
       </motion.div>
       
     </div>
   );
 }
+
