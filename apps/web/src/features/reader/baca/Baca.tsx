@@ -15,7 +15,7 @@ import { ReaderHeader } from './ReaderHeader';
 import { cn } from '../../../utils/cn';
 
 import { useAdaptationSubscription } from '../adapt/useAdaptationSubscription';
-import { AdaptationLoadingShimmer } from '../adapt/AdaptationLoadingShimmer';
+import { ReaderProcessingState } from '../adapt/ReaderProcessingState';
 
 export const Baca: React.FC = () => {
   const { versionId } = useParams<{ versionId: string }>();
@@ -165,14 +165,14 @@ export const Baca: React.FC = () => {
     return (
       <div className={cn("relative w-full h-[100dvh]", themeClasses.bg)}>
         {pendingAdaptId && pendingBand && (
-          <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} onCancel={() => {
+          <ReaderProcessingState title={"Menyesuaikan cerita untuk usia " + pendingBand + " tahun"} subtitles={["Menyelaraskan tingkat kesulitan...", "Menjaga alur dan pesan cerita...", "Mempertahankan unsur budaya..."]} mode="adapt" themeClasses={themeClasses} onCancel={() => {
               supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
                 setPendingAdaptId(null);
                 setPendingBand(null);
               });
             }} />
         )}
-        <div className={cn("w-full h-full transition-opacity duration-300", pendingAdaptId ? "opacity-20" : "opacity-100")}>
+        <div className={cn("w-full h-full transition-opacity duration-300", pendingAdaptId ? "opacity-10" : "opacity-100")}>
           <DongengMode 
             pages={pages} 
             initialPage={currentPage} 
@@ -240,7 +240,7 @@ export const Baca: React.FC = () => {
         <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300 relative", themeClasses.surface)}>
           
           {pendingAdaptId && pendingBand && (
-            <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} onCancel={() => {
+            <ReaderProcessingState title={"Menyesuaikan cerita untuk usia " + pendingBand + " tahun"} subtitles={["Menyelaraskan tingkat kesulitan...", "Menjaga alur dan pesan cerita...", "Mempertahankan unsur budaya..."]} mode="adapt" themeClasses={themeClasses} onCancel={() => {
               supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
                 setPendingAdaptId(null);
                 setPendingBand(null);
@@ -248,13 +248,13 @@ export const Baca: React.FC = () => {
             }} />
           )}
 
-          <div className={cn("flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative transition-opacity duration-300", pendingAdaptId ? "opacity-20" : "opacity-100")}>
+          <div className={cn("flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative transition-opacity duration-300", pendingAdaptId ? "opacity-10" : "opacity-100")}>
             <p className={cn("font-nunito max-w-2xl mx-auto w-full transition-all duration-300", fontClass, themeClasses.textMain)}>
               {page.text}
             </p>
           </div>
           
-          <div className={cn("flex-none p-4 flex items-center justify-between border-t transition-colors duration-300", themeClasses.navBg, themeClasses.border)}>
+          <div className={cn("flex-none p-4 flex items-center justify-between border-t transition-all duration-300", themeClasses.navBg, themeClasses.border, pendingAdaptId && "opacity-0 pointer-events-none")}>
             <Button variant="secondary" className="!bg-black/5 !border-transparent hover:!bg-black/10 text-inherit" disabled={currentPage === 0} onClick={() => setCurrentPage((p: number) => Math.max(0, p - 1))}>Sebelumnya</Button>
             <div className={cn("font-nunito text-sm font-bold", themeClasses.textMuted)}>
               {currentPage + 1} / {totalAdaptPages}
@@ -272,5 +272,6 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
 
 
