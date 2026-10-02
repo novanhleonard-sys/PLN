@@ -51,9 +51,14 @@ export const adaptCheckStage = async (ctx: any, job: any, registry: ProviderRegi
     })
   });
 
-  const checkPromptBase = `Periksa adaptasi cerita anak untuk usia ${adaptation.age_band} tahun ini.
+    const checkPromptBase = `Periksa adaptasi cerita anak untuk usia ${adaptation.age_band} tahun ini.
 
-TUGASMU: Evaluasi 4 domain (Fidelity, Age Fit, Cultural Integrity, Writing Quality).
+Kriteria Ketat (WAJIB DIPATUHI, DILARANG MENILAI BERDASARKAN STANDAR UMUM):
+1. Adaptasi kesulitan, BUKAN identitas cerita.
+2. Jika ada kekerasan/hukuman mati/bencana di cerita asli, itu WAJIB ADA di adaptasi (hanya dihaluskan penyampaiannya, misal: kurangi detail grafis/darah). JANGAN menolak karena alasan "terlalu traumatik" atau "tidak sesuai usia balita".
+3. Unsur budaya, tokoh, ending, dan konflik inti TIDAK BOLEH berubah atau disensor. (misal: "tombak pusaka" dilarang diubah jadi "tombak mainan").
+
+TUGASMU: Evaluasi 4 domain (Fidelity, Age Fit, Cultural Integrity, Writing Quality) berdasarkan Kriteria Ketat di atas.
 Kembalikan JSON dengan "passed": true jika semua syarat terpenuhi.
 Jika gagal, sebutkan detail masalah di array "issues". Pada "checks", tulis "pass" atau detail pelanggarannya.
 
@@ -145,3 +150,4 @@ ${currentAdaptedJSON}
     }
   }
 };
+
