@@ -53,15 +53,17 @@ export const Baca: React.FC = () => {
   const themeClasses = getThemeClasses(prefs.theme);
   const fontClass = getFontSizeClass(prefs.fontSizeBaca);
 
+  const targetLanguage = mode === 'Dongeng' ? 'id' : language;
+
   useEffect(() => {
     if (!currentAdapt || !versionData) return;
     
     // If the selected adaptation already matches the requested language, do nothing
-    if (currentAdapt.language === language) return;
+    if (currentAdapt.language === targetLanguage) return;
     
     // Find if the requested language version exists for this age band
     const existing = versionData.adaptations.find(
-      (a: any) => a.age_band === currentAdapt.age_band && a.language === language
+      (a: any) => a.age_band === currentAdapt.age_band && a.language === targetLanguage
     );
     
     if (existing) {
@@ -75,7 +77,7 @@ export const Baca: React.FC = () => {
       // Request new translation or adaptation
       setPendingBand(currentAdapt.age_band);
       supabase.functions.invoke('request_adaptation', {
-        body: { version_id: versionId, band: currentAdapt.age_band, language }
+        body: { version_id: versionId, band: currentAdapt.age_band, language: targetLanguage }
       }).then(({ data, error }) => {
         if (error) {
           alert('Gagal meminta terjemahan: ' + error.message);
@@ -97,7 +99,7 @@ export const Baca: React.FC = () => {
         }
       });
     }
-  }, [language, currentAdapt?.age_band, versionData, versionId]);
+  }, [targetLanguage, currentAdapt?.age_band, currentAdapt?.language, versionData, versionId, setLanguage]);
 
   useAmbientSound(mode, versionData?.version?.story_id);
 
@@ -191,7 +193,7 @@ export const Baca: React.FC = () => {
     return (
       <div className={cn("relative w-full h-[100dvh]", themeClasses.bg)}>
         {pendingAdaptId && pendingBand && (
-          <ReaderProcessingState title={language === 'en' ? 'Menerjemahkan cerita...' : 'Menyesuaikan cerita untuk usia ' + pendingBand + ' tahun'} subtitles={language === 'en' ? ['Translating into English...', 'Preserving cultural contexts...', 'Please wait...'] : ['Menyelaraskan tingkat kesulitan...', 'Menjaga alur dan pesan cerita...', 'Mempertahankan unsur budaya...']} mode="adapt" themeClasses={themeClasses} onCancel={() => {
+          <ReaderProcessingState title={targetLanguage === 'en' ? 'Menerjemahkan cerita...' : 'Menyesuaikan cerita untuk usia ' + pendingBand + ' tahun'} subtitles={targetLanguage === 'en' ? ['Translating into English...', 'Preserving cultural contexts...', 'Please wait...'] : ['Menyelaraskan tingkat kesulitan...', 'Menjaga alur dan pesan cerita...', 'Mempertahankan unsur budaya...']} mode="adapt" themeClasses={themeClasses} onCancel={() => {
               supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
                 setPendingAdaptId(null);
                 setPendingBand(null);
@@ -267,7 +269,7 @@ export const Baca: React.FC = () => {
         <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300 relative", themeClasses.surface)}>
           
           {pendingAdaptId && pendingBand && (
-            <ReaderProcessingState title={language === 'en' ? 'Menerjemahkan cerita...' : 'Menyesuaikan cerita untuk usia ' + pendingBand + ' tahun'} subtitles={language === 'en' ? ['Translating into English...', 'Preserving cultural contexts...', 'Please wait...'] : ['Menyelaraskan tingkat kesulitan...', 'Menjaga alur dan pesan cerita...', 'Mempertahankan unsur budaya...']} mode="adapt" themeClasses={themeClasses} onCancel={() => {
+            <ReaderProcessingState title={targetLanguage === 'en' ? 'Menerjemahkan cerita...' : 'Menyesuaikan cerita untuk usia ' + pendingBand + ' tahun'} subtitles={targetLanguage === 'en' ? ['Translating into English...', 'Preserving cultural contexts...', 'Please wait...'] : ['Menyelaraskan tingkat kesulitan...', 'Menjaga alur dan pesan cerita...', 'Mempertahankan unsur budaya...']} mode="adapt" themeClasses={themeClasses} onCancel={() => {
               supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
                 setPendingAdaptId(null);
                 setPendingBand(null);
