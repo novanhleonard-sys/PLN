@@ -23,6 +23,7 @@ import { audioStage } from './stages/audio';
 import { adaptStage } from './stages/adapt';
 import { adaptCheckStage } from './stages/adapt-check';
 import { translateStage } from './stages/translate';
+import { syncAudioStage } from './stages/sync-audio';
 
 // Try to load local env if present
 dotenv.config({ path: '../../.env.local' });
@@ -57,6 +58,7 @@ runner.register('audio', async (ctx, job) => await audioStage(ctx, job, registry
 runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry));
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));
 runner.register('translate', async (ctx, job) => await translateStage(ctx, job, registry));
+runner.register('sync_audio', async (ctx, job) => await syncAudioStage(ctx, job));
 
 let isPolling = true;
 
