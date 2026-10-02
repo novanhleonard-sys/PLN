@@ -27,8 +27,7 @@ export const Baca: React.FC = () => {
   const [mode, setMode] = useState<'Baca' | 'Dongeng'>('Baca');
   const [gateOpen, setGateOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [showVersions, setShowVersions] = useState(false);
-  const [pendingAdaptId, setPendingAdaptId] = useState<string | null>(null);
+    const [pendingAdaptId, setPendingAdaptId] = useState<string | null>(null);
   const [pendingBand, setPendingBand] = useState<string | null>(null);
 
   const { setActiveStoryId, language, setLanguage } = useReaderStore();
@@ -102,19 +101,14 @@ export const Baca: React.FC = () => {
 
   useAmbientSound(mode, versionData?.version?.story_id);
 
-  useEffect(() => {
+    useEffect(() => {
     if (versionData?.adaptations && !selectedAdaptation) {
       if (readHistory && readHistory.adaptation_id) {
         setSelectedAdaptation(readHistory.adaptation_id);
         setCurrentPage(Math.max(0, (readHistory.last_page || 1) - 1));
       } else {
-        const idAdaptations = versionData.adaptations.filter((a: any) => a.language === 'id');
-        if (idAdaptations.length > 1) {
-        setShowVersions(true);
-      } else {
         const asli = versionData.adaptations.find((a: any) => a.age_band === 'asli' && a.language === 'id') || versionData.adaptations.find((a: any) => a.language === 'id') || versionData.adaptations[0];
         if (asli) setSelectedAdaptation(asli.id);
-        }
       }
     }
   }, [versionData, selectedAdaptation, readHistory]);
@@ -161,27 +155,7 @@ export const Baca: React.FC = () => {
     );
   }
   
-  if (showVersions) {
-    return (
-      <div className={cn("flex flex-col items-center justify-center h-screen font-nunito p-4", themeClasses.bg)}>
-        <h2 className={cn("text-2xl font-bold font-fredoka mb-8", themeClasses.textMain)}>Pilih Versi Bacaan</h2>
-        <div className="flex flex-col gap-4 w-full max-w-sm">
-          {versionData.adaptations.filter((a: any) => a.language === 'id').map((ad: any) => (
-            <button 
-              key={ad.id}
-              onClick={() => {
-                setSelectedAdaptation(ad.id);
-                setShowVersions(false);
-              }}
-              className={cn("px-6 py-4 border-2 rounded-xl font-bold transition-colors hover:border-teal", themeClasses.surface, themeClasses.border, themeClasses.textMain)}
-            >
-              Versi {ad.age_band}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  
 
   if (!pages || pages.length === 0) {
     return (
@@ -257,6 +231,7 @@ export const Baca: React.FC = () => {
         storyId={versionData.version.story_id}
         onAdaptationReady={setSelectedAdaptation}
         onAdaptationPending={(id, band) => { setPendingAdaptId(id); setPendingBand(band); }}
+        disabled={!!pendingAdaptId}
       />
       
       {currentAdapt?.age_band && currentAdapt.age_band !== 'asli' && (
@@ -324,6 +299,8 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
+
 
 
 

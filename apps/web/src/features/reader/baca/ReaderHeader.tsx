@@ -16,10 +16,11 @@ interface ReaderHeaderProps {
   storyId: string;
   onAdaptationReady: (id: string) => void;
   onAdaptationPending?: (id: string, band: string) => void;
+  disabled?: boolean;
 }
 
 export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
-  title, mode, onModeChange, themeClasses, versionId, storyId, onAdaptationReady, onAdaptationPending
+  title, mode, onModeChange, themeClasses, versionId, storyId, onAdaptationReady, onAdaptationPending, disabled
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -50,7 +51,7 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
       
       <div className="flex items-center gap-2 shrink-0">
         {mode === 'Baca' && (
-           <TranslateToggle language={language} onChange={setLanguage} />
+           <TranslateToggle language={language} onChange={setLanguage} disabled={disabled} />
         )}
         <div className="scale-90 md:scale-100 origin-right ml-1">
           <SegmentedControl 
@@ -89,3 +90,5 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
     </header>
   );
 };
+
+
