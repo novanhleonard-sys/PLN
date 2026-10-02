@@ -27,7 +27,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
   console.log("Calling Gemini for segment...", version.story.title);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
-    model: "gemini-1.5-flash-lite",
+    model: "gemini-3.1-flash-lite",
     prompt,
     systemInstruction: "Anda adalah pembuat naskah buku anak. Bagi cerita ke bagian-bagian dengan panjang merata. Hasilkan deskripsi visual yang detail untuk tiap bagian agar bisa digambar oleh AI.",
     ref: job.id,

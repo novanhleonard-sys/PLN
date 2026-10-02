@@ -116,7 +116,7 @@ export function AdminPengaturan() {
               <label className="text-sm font-bold text-stone-700">Model Teks Utama</label>
               <input type="text"
                 className="border border-stone-200 rounded-lg p-2 focus:border-teal outline-none"
-                value={localSettings['ai_production']?.textModel || 'gemini-1.5-flash-lite'}
+                value={localSettings['ai_production']?.textModel || 'gemini-3.1-flash-lite'}
                 onChange={(e) => updateLocal('ai_production', 'textModel', e.target.value)}
               />
             </div>
@@ -124,7 +124,7 @@ export function AdminPengaturan() {
               <label className="text-sm font-bold text-stone-700">Model Gambar</label>
               <input type="text"
                 className="border border-stone-200 rounded-lg p-2 focus:border-teal outline-none"
-                value={localSettings['ai_production']?.imageModel || 'gemini-1.5-flash-lite-image'}
+                value={localSettings['ai_production']?.imageModel || 'gemini-3.1-flash-image'}
                 onChange={(e) => updateLocal('ai_production', 'imageModel', e.target.value)}
               />
             </div>

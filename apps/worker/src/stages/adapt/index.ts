@@ -112,7 +112,7 @@ ${originalPagesJSON}
   console.log(`Calling Gemini for adaptation ${adaptation.age_band}...`);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
-    model: "gemini-1.5-flash", // Use flash instead of flash-lite for reasoning ability on complex constraints
+    model: "gemini-3.1-flash-lite", // Use flash instead of flash-lite for reasoning ability on complex constraints
     prompt,
     systemInstruction: "Kamu adalah editor cerita anak berbahasa Indonesia yang teliti dan patuh pada instruksi.",
     stage: "adapt",

@@ -80,7 +80,7 @@ TEKS ADAPTASI SAAT INI:
 
     const result = await registry.generateJSON(schema, {
       provider: "gemini",
-      model: "gemini-1.5-flash",
+      model: "gemini-3.1-flash-lite",
       prompt: checkPromptBase + currentAdaptedJSON,
       systemInstruction: "Kamu adalah penilai kualitas teks sastra anak yang ketat (Auditor).",
       stage: "adapt_check",
@@ -129,7 +129,7 @@ ${currentAdaptedJSON}
 
     const repairResult = await registry.generateJSON(repairSchema, {
       provider: "gemini",
-      model: "gemini-1.5-flash", // Use a capable model for targeted repair
+      model: "gemini-3.1-flash-lite", // Use a capable model for targeted repair
       prompt: repairPrompt,
       systemInstruction: "Kamu adalah editor perbaikan. Perbaiki adaptasi berdasarkan feedback auditor.",
       stage: "adapt_repair",
