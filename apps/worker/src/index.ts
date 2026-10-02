@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import WebSocket from 'ws';
 globalThis.WebSocket = WebSocket as any;
@@ -22,6 +22,7 @@ import { processCanonicalMasterStage } from './stages/canonical-master';
 import { audioStage } from './stages/audio';
 import { adaptStage } from './stages/adapt';
 import { adaptCheckStage } from './stages/adapt-check';
+import { translateStage } from './stages/translate';
 
 // Try to load local env if present
 dotenv.config({ path: '../../.env.local' });
@@ -55,6 +56,7 @@ runner.register('canonical-master', async (ctx, job) => await processCanonicalMa
 runner.register('audio', async (ctx, job) => await audioStage(ctx, job, registry));
 runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry));
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));
+runner.register('translate', async (ctx, job) => await translateStage(ctx, job, registry));
 
 let isPolling = true;
 
@@ -97,4 +99,6 @@ async function main() {
 }
 
 main().catch(console.error);
+
+
 

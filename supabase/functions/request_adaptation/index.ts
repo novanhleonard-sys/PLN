@@ -4,7 +4,9 @@ import { z } from "https://esm.sh/zod@3.22.4";
 
 const requestSchema = z.object({
   version_id: z.string().uuid(),
-  age: z.number().int().min(1).max(99)
+  age: z.number().int().min(1).max(99).optional(),
+  band: z.string().optional(),
+  language: z.enum(['id', 'en']).default('id')
 });
 
 const corsHeaders = {
@@ -53,39 +55,61 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Invalid payload', details: result.error.errors }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
-    const { version_id, age } = result.data;
-    const band = ageToBand(age);
-
+    const { version_id, age, band: reqBand, language } = result.data;
+    const band = reqBand || (age ? ageToBand(age) : 'asli');
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (band === 'asli') {
+    if (band === 'asli' && language === 'id') {
         const { data: asliAdapt } = await supabaseAdmin.from('adaptations')
             .select('id')
             .eq('version_id', version_id)
             .eq('age_band', 'asli')
+            .eq('language', 'id')
             .single();
             
-        return new Response(JSON.stringify({ success: true, adaptation_id: asliAdapt?.id, status: 'ready', band: 'asli' }), {
+        return new Response(JSON.stringify({ success: true, adaptation_id: asliAdapt?.id, status: 'ready', band: 'asli', language: 'id' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
 
-    const { data: rules } = await supabaseAdmin.from('age_band_rules')
-        .select('prompt_version')
-        .eq('band', band)
-        .single();
+    // Determine prompt version and job kind based on language
+    let prompt_version = '';
+    let jobKind = '';
+    
+    if (language === 'en') {
+        prompt_version = 'translate-en-v1';
+        jobKind = 'translate';
         
-    if (!rules) {
-        return new Response(JSON.stringify({ error: 'Rules not found for band' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        // Ensure source adaptation is ready if we are translating!
+        const { data: sourceAdaptation } = await supabaseAdmin.from('adaptations')
+            .select('status')
+            .eq('version_id', version_id)
+            .eq('age_band', band)
+            .eq('language', 'id')
+            .single();
+            
+        if (!sourceAdaptation || sourceAdaptation.status !== 'ready') {
+             return new Response(JSON.stringify({ error: 'Source adaptation (ID) is not ready yet.' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+    } else {
+        const { data: rules } = await supabaseAdmin.from('age_band_rules')
+            .select('prompt_version')
+            .eq('band', band)
+            .single();
+            
+        if (!rules) {
+            return new Response(JSON.stringify({ error: 'Rules not found for band' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        prompt_version = rules.prompt_version;
+        jobKind = 'adapt';
     }
-
-    const prompt_version = rules.prompt_version;
 
     // Check cache 1st time
     const { data: existing } = await supabaseAdmin.from('adaptations')
         .select('id, status')
         .eq('version_id', version_id)
         .eq('age_band', band)
+        .eq('language', language)
         .eq('prompt_version', prompt_version)
         .single();
 
@@ -93,16 +117,16 @@ serve(async (req) => {
         if (existing.status === 'failed') {
             await supabaseAdmin.from('adaptations').update({ status: 'pending' }).eq('id', existing.id);
             await supabaseAdmin.from('jobs').insert({
-                kind: 'adapt',
+                kind: jobKind,
                 ref_type: 'adaptation',
                 ref_id: existing.id,
-                idempotency_key: 'adapt:' + existing.id + ':' + Date.now()
+                idempotency_key: jobKind + ':' + existing.id + ':' + Date.now()
             });
-            return new Response(JSON.stringify({ success: true, adaptation_id: existing.id, status: 'pending', band }), {
+            return new Response(JSON.stringify({ success: true, adaptation_id: existing.id, status: 'pending', band, language }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
-        return new Response(JSON.stringify({ success: true, adaptation_id: existing.id, status: existing.status, band }), {
+        return new Response(JSON.stringify({ success: true, adaptation_id: existing.id, status: existing.status, band, language }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
     }
@@ -121,14 +145,15 @@ serve(async (req) => {
       .gte('created_at', startOfDay.toISOString());
 
     if (count !== null && count >= limit) {
-      return new Response(JSON.stringify({ error: 'Batas adaptasi harian tercapai' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Batas adaptasi/translasi harian tercapai' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Get total pages
     const { data: asliAdaptation } = await supabaseAdmin.from('adaptations')
         .select('total_pages')
         .eq('version_id', version_id)
-        .eq('age_band', 'asli')
+        .eq('age_band', band) // Base total_pages on the source age_band
+        .eq('language', 'id')
         .single();
 
     // Try insert
@@ -137,6 +162,7 @@ serve(async (req) => {
       .insert({
         version_id,
         age_band: band,
+        language,
         prompt_version,
         status: 'pending',
         audio_status: 'none',
@@ -154,6 +180,7 @@ serve(async (req) => {
             .select('id, status')
             .eq('version_id', version_id)
             .eq('age_band', band)
+            .eq('language', language)
             .eq('prompt_version', prompt_version)
             .single();
 
@@ -161,16 +188,16 @@ serve(async (req) => {
             if (existing2.status === 'failed') {
                 await supabaseAdmin.from('adaptations').update({ status: 'pending' }).eq('id', existing2.id);
                 await supabaseAdmin.from('jobs').insert({
-                    kind: 'adapt',
+                    kind: jobKind,
                     ref_type: 'adaptation',
                     ref_id: existing2.id,
-                    idempotency_key: 'adapt:' + existing2.id + ':' + Date.now()
+                    idempotency_key: jobKind + ':' + existing2.id + ':' + Date.now()
                 });
-                return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: 'pending', band }), {
+                return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: 'pending', band, language }), {
                     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
                 });
             }
-            return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: existing2.status, band }), {
+            return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: existing2.status, band, language }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
         }
@@ -186,18 +213,18 @@ serve(async (req) => {
     const { error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({
-        kind: 'adapt',
+        kind: jobKind,
         ref_type: 'adaptation',
         ref_id: adaptation.id,
         status: 'queued',
-        idempotency_key: `adapt:${adaptation.id}`
+        idempotency_key: `${jobKind}:${adaptation.id}`
       });
 
     if (jobError) {
       throw jobError;
     }
 
-    return new Response(JSON.stringify({ success: true, adaptation_id: adaptation.id, status: 'pending', band }), {
+    return new Response(JSON.stringify({ success: true, adaptation_id: adaptation.id, status: 'pending', band, language }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
@@ -208,7 +235,3 @@ serve(async (req) => {
     });
   }
 });
-
-
-
-
