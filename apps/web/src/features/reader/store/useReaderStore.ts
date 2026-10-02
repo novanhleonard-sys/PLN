@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '../../../lib/supabase';
 
@@ -21,6 +21,8 @@ interface ReaderState {
   globalPrefs: ReaderPrefs;
   storyOverrides: Record<string, Partial<ReaderPrefs>>;
   activeStoryId: string | null;
+  language: 'id' | 'en';
+  setLanguage: (lang: 'id' | 'en') => void;
   
   setActiveStoryId: (id: string | null) => void;
   updateGlobal: (prefs: Partial<ReaderPrefs>) => void;
@@ -52,6 +54,8 @@ export const useReaderStore = create<ReaderState>()(
       },
       storyOverrides: {},
       activeStoryId: null,
+      language: 'id',
+      setLanguage: (lang) => set({ language: lang }),
       
       setActiveStoryId: (id) => set({ activeStoryId: id }),
       
@@ -142,3 +146,4 @@ export const getFontSizeClass = (size: FontSize) => {
     default: return 'text-lg md:text-2xl leading-relaxed';
   }
 };
+

@@ -31,7 +31,7 @@ export const Baca: React.FC = () => {
   const [pendingAdaptId, setPendingAdaptId] = useState<string | null>(null);
   const [pendingBand, setPendingBand] = useState<string | null>(null);
 
-  const { setActiveStoryId } = useReaderStore();
+  const { setActiveStoryId, language, setLanguage } = useReaderStore();
 
   useAdaptationSubscription(pendingAdaptId, (id) => {
     setSelectedAdaptation(id);
@@ -47,9 +47,58 @@ export const Baca: React.FC = () => {
     setActiveStoryId(versionData?.version?.story_id || null);
   }, [versionData?.version?.story_id, setActiveStoryId]);
 
+  const currentAdapt = versionData?.adaptations?.find((a: any) => a.id === selectedAdaptation);
+  
+
   const prefs = useComputedPrefs();
   const themeClasses = getThemeClasses(prefs.theme);
   const fontClass = getFontSizeClass(prefs.fontSizeBaca);
+
+  useEffect(() => {
+    if (!currentAdapt || !versionData) return;
+    
+    // If the selected adaptation already matches the requested language, do nothing
+    if (currentAdapt.language === language) return;
+    
+    // Find if the requested language version exists for this age band
+    const existing = versionData.adaptations.find(
+      (a: any) => a.age_band === currentAdapt.age_band && a.language === language
+    );
+    
+    if (existing) {
+      if (existing.status === 'ready') {
+         setSelectedAdaptation(existing.id);
+      } else {
+         setPendingAdaptId(existing.id);
+         setPendingBand(existing.age_band);
+      }
+    } else {
+      // Request new translation or adaptation
+      setPendingBand(currentAdapt.age_band);
+      supabase.functions.invoke('request_adaptation', {
+        body: { version_id: versionId, band: currentAdapt.age_band, language }
+      }).then(({ data, error }) => {
+        if (error) {
+          alert('Gagal meminta terjemahan: ' + error.message);
+          setLanguage(currentAdapt.language); // Revert
+          setPendingBand(null);
+          return;
+        }
+        if (data?.error) {
+          alert(data.error);
+          setLanguage(currentAdapt.language); // Revert
+          setPendingBand(null);
+          return;
+        }
+        if (data?.status === 'ready') {
+          setSelectedAdaptation(data.adaptation_id);
+          setPendingBand(null);
+        } else {
+          setPendingAdaptId(data.adaptation_id);
+        }
+      });
+    }
+  }, [language, currentAdapt?.age_band, versionData, versionId]);
 
   useAmbientSound(mode, versionData?.version?.story_id);
 
@@ -58,16 +107,20 @@ export const Baca: React.FC = () => {
       if (readHistory && readHistory.adaptation_id) {
         setSelectedAdaptation(readHistory.adaptation_id);
         setCurrentPage(Math.max(0, (readHistory.last_page || 1) - 1));
-      } else if (versionData.adaptations.length > 1) {
+      } else {
+        const idAdaptations = versionData.adaptations.filter((a: any) => a.language === 'id');
+        if (idAdaptations.length > 1) {
         setShowVersions(true);
       } else {
-        const asli = versionData.adaptations.find(a => a.age_band === 'asli') || versionData.adaptations[0];
+        const asli = versionData.adaptations.find((a: any) => a.age_band === 'asli' && a.language === 'id') || versionData.adaptations.find((a: any) => a.language === 'id') || versionData.adaptations[0];
         if (asli) setSelectedAdaptation(asli.id);
+        }
       }
     }
   }, [versionData, selectedAdaptation, readHistory]);
 
   const { data: pages, isLoading: isLoadingPages } = usePages(selectedAdaptation || '');
+  const totalAdaptPages = currentAdapt?.total_pages || pages?.length || 0;
 
   const isCompleted = pages && pages.length > 0 && currentPage >= pages.length - 1;
   useReadSessionTracker(versionData?.version?.story_id, versionId, selectedAdaptation || undefined, mode, isCompleted);
@@ -113,7 +166,7 @@ export const Baca: React.FC = () => {
       <div className={cn("flex flex-col items-center justify-center h-screen font-nunito p-4", themeClasses.bg)}>
         <h2 className={cn("text-2xl font-bold font-fredoka mb-8", themeClasses.textMain)}>Pilih Versi Bacaan</h2>
         <div className="flex flex-col gap-4 w-full max-w-sm">
-          {versionData.adaptations.map(ad => (
+          {versionData.adaptations.filter((a: any) => a.language === 'id').map((ad: any) => (
             <button 
               key={ad.id}
               onClick={() => {
@@ -142,8 +195,7 @@ export const Baca: React.FC = () => {
   const page = pages[currentPage];
   if (!page) return null;
   
-  const currentAdapt = versionData.adaptations.find(a => a.id === selectedAdaptation);
-  const totalAdaptPages = currentAdapt?.total_pages || pages.length; 
+  
   
   const handleNext = () => {
     if (currentPage + 1 >= pages.length && pages.length < totalAdaptPages) {
@@ -165,7 +217,7 @@ export const Baca: React.FC = () => {
     return (
       <div className={cn("relative w-full h-[100dvh]", themeClasses.bg)}>
         {pendingAdaptId && pendingBand && (
-          <ReaderProcessingState title={"Menyesuaikan cerita untuk usia " + pendingBand + " tahun"} subtitles={["Menyelaraskan tingkat kesulitan...", "Menjaga alur dan pesan cerita...", "Mempertahankan unsur budaya..."]} mode="adapt" themeClasses={themeClasses} onCancel={() => {
+          <ReaderProcessingState title={language === 'en' ? 'Menerjemahkan cerita...' : 'Menyesuaikan cerita untuk usia ' + pendingBand + ' tahun'} subtitles={language === 'en' ? ['Translating into English...', 'Preserving cultural contexts...', 'Please wait...'] : ['Menyelaraskan tingkat kesulitan...', 'Menjaga alur dan pesan cerita...', 'Mempertahankan unsur budaya...']} mode="adapt" themeClasses={themeClasses} onCancel={() => {
               supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
                 setPendingAdaptId(null);
                 setPendingBand(null);
@@ -211,7 +263,7 @@ export const Baca: React.FC = () => {
         <AdaptationBanner 
           band={currentAdapt.age_band} 
           onViewOriginal={() => {
-             const asli = versionData.adaptations.find(a => a.age_band === 'asli') || versionData.adaptations[0];
+             const asli = versionData.adaptations.find((a: any) => a.age_band === 'asli' && a.language === 'id') || versionData.adaptations.find((a: any) => a.language === 'id') || versionData.adaptations[0];
              if (asli) setSelectedAdaptation(asli.id);
           }} 
         />
@@ -240,7 +292,7 @@ export const Baca: React.FC = () => {
         <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300 relative", themeClasses.surface)}>
           
           {pendingAdaptId && pendingBand && (
-            <ReaderProcessingState title={"Menyesuaikan cerita untuk usia " + pendingBand + " tahun"} subtitles={["Menyelaraskan tingkat kesulitan...", "Menjaga alur dan pesan cerita...", "Mempertahankan unsur budaya..."]} mode="adapt" themeClasses={themeClasses} onCancel={() => {
+            <ReaderProcessingState title={language === 'en' ? 'Menerjemahkan cerita...' : 'Menyesuaikan cerita untuk usia ' + pendingBand + ' tahun'} subtitles={language === 'en' ? ['Translating into English...', 'Preserving cultural contexts...', 'Please wait...'] : ['Menyelaraskan tingkat kesulitan...', 'Menjaga alur dan pesan cerita...', 'Mempertahankan unsur budaya...']} mode="adapt" themeClasses={themeClasses} onCancel={() => {
               supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
                 setPendingAdaptId(null);
                 setPendingBand(null);
@@ -272,6 +324,13 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
+
+
+
+
+
+
 
 
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { Sheet } from '../../../ui/layers/Sheet';
 import { Icon } from '../../../ui/basic/Icon';
@@ -45,7 +45,7 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [availableSounds, setAvailableSounds] = useState<any[]>([]);
 
-  const { updateOverride, resetOverride, activeStoryId, storyOverrides } = useReaderStore();
+  const { updateOverride, resetOverride, activeStoryId, storyOverrides, setLanguage } = useReaderStore();
   const prefs = useComputedPrefs();
   const themeClasses = getThemeClasses(prefs.theme);
   
@@ -84,8 +84,9 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
     
     setAdaptLoading(true);
     try {
+      setLanguage('id');
       const { data, error } = await supabase.functions.invoke('request_adaptation', {
-        body: { version_id: versionId, age }
+        body: { version_id: versionId, age, language: 'id' }
       });
       
       if (error) throw error;
@@ -379,3 +380,4 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
     </Sheet>
   );
 };
+

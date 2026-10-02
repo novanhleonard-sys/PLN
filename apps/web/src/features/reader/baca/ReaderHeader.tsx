@@ -1,8 +1,10 @@
-import React, { useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SegmentedControl } from '../../../ui/basic/SegmentedControl';
 import { Icon } from '../../../ui/basic/Icon';
 import { ReaderMenu } from './ReaderMenu';
+import { TranslateToggle } from '../components/TranslateToggle';
+import { useReaderStore } from '../store/useReaderStore';
 import { cn } from '../../../utils/cn';
 
 interface ReaderHeaderProps {
@@ -21,6 +23,8 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  
+  const { language, setLanguage } = useReaderStore();
 
   return (
     <header className={cn(
@@ -45,7 +49,10 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-2 shrink-0">
-        <div className="scale-90 md:scale-100 origin-right">
+        {mode === 'Baca' && (
+           <TranslateToggle language={language} onChange={setLanguage} />
+        )}
+        <div className="scale-90 md:scale-100 origin-right ml-1">
           <SegmentedControl 
             options={['Baca', 'Dongeng']} 
             value={mode} 
