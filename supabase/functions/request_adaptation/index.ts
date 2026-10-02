@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.33.1";
 import { z } from "https://esm.sh/zod@3.22.4";
 
@@ -60,9 +60,7 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // If asli, nothing to do, just return
     if (band === 'asli') {
-        // We find the 'asli' adaptation
         const { data: asliAdapt } = await supabaseAdmin.from('adaptations')
             .select('id')
             .eq('version_id', version_id)
@@ -74,7 +72,6 @@ serve(async (req) => {
         });
     }
 
-    // Get prompt_version for this band
     const { data: rules } = await supabaseAdmin.from('age_band_rules')
         .select('prompt_version')
         .eq('band', band)
@@ -86,7 +83,7 @@ serve(async (req) => {
 
     const prompt_version = rules.prompt_version;
 
-    // Check cache
+    // Check cache 1st time
     const { data: existing } = await supabaseAdmin.from('adaptations')
         .select('id, status')
         .eq('version_id', version_id)
@@ -100,7 +97,7 @@ serve(async (req) => {
         });
     }
 
-    // Check quota
+    // Quota check
     const { data: settings } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'adaptations_per_day').single();
     const limit = settings?.value ?? 10;
 
@@ -117,14 +114,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Batas adaptasi harian tercapai' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Get total_pages from 'asli' adaptation
+    // Get total pages
     const { data: asliAdaptation } = await supabaseAdmin.from('adaptations')
         .select('total_pages')
         .eq('version_id', version_id)
         .eq('age_band', 'asli')
         .single();
 
-    // Insert new adaptation
+    // Try insert
     const { data: adaptation, error: insertError } = await supabaseAdmin
       .from('adaptations')
       .insert({
@@ -137,13 +134,33 @@ serve(async (req) => {
         requested_by: user.id
       })
       .select()
-      .single();
+      .maybeSingle();
 
-    if (insertError || !adaptation) {
-      throw insertError || new Error('Failed to insert adaptation');
+    if (insertError) {
+      // 23505 is unique_violation
+      if (insertError.code === '23505') {
+        // Someone else just inserted it! Check cache 2nd time
+        const { data: existing2 } = await supabaseAdmin.from('adaptations')
+            .select('id, status')
+            .eq('version_id', version_id)
+            .eq('age_band', band)
+            .eq('prompt_version', prompt_version)
+            .single();
+
+        if (existing2) {
+            return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: existing2.status, band }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+      }
+      throw insertError;
     }
 
-    // Enqueue job
+    if (!adaptation) {
+        throw new Error('Failed to insert adaptation');
+    }
+
+    // We inserted successfully. Enqueue job.
     const { error: jobError } = await supabaseAdmin
       .from('jobs')
       .insert({

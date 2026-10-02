@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const adaptStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -47,26 +47,74 @@ export const adaptStage = async (ctx: any, job: any, registry: ProviderRegistry)
     })).length(asliPages.length)
   });
 
-  const prompt = `Anda bertugas mengadaptasi teks cerita rakyat agar sesuai untuk anak usia ${adaptation.age_band} tahun.
-  
-ATURAN ADAPTASI:
-- Panjang kalimat maksimal: ${rules.max_sentence_words || 'bebas'} kata per kalimat.
-- Catatan kosakata: ${rules.vocab_note || 'gunakan kosakata umum'}.
-- Aturan pelembutan: ${rules.soften_rules || 'tidak ada'}.
-- Harus dipertahankan: ${rules.must_keep || 'tidak ada'}.
+  // Construct prompt based on new specification
+  const prompt = `
+TARGET USIA: ${adaptation.age_band} TAHUN
 
-JUMLAH HALAMAN HARUS TEPAT ${asliPages.length}. Jangan menambah atau mengurangi halaman. Pertahankan indeks halaman yang sama dengan teks asli.
+Kamu adalah editor cerita anak berbahasa Indonesia.
+Tugasmu adalah menyesuaikan tingkat kesulitan cerita dengan usia pembaca tanpa mengubah identitas cerita.
 
-TEKS ASLI (JSON):
+WAJIB DIPERTAHANKAN:
+- nama tokoh utama
+- hubungan antar tokoh
+- lokasi penting
+- urutan peristiwa inti
+- hubungan sebab-akibat
+- konflik utama
+- ending
+- asal-usul yang dijelaskan cerita
+- pesan moral
+- unsur budaya penting
+- unsur supernatural penting
+
+DILARANG:
+- mengarang peristiwa baru
+- menghapus peristiwa inti
+- mengubah ending
+- mengubah pesan moral
+- mengubah penyebab kejadian penting
+- mengganti siapa melakukan suatu tindakan
+- mengubah hubungan antar tokoh
+- mengganti unsur budaya menjadi konsep modern generik
+- menghilangkan unsur supernatural hanya karena sulit dipahami
+- menambahkan fakta budaya yang tidak ada di sumber
+
+TINDAKAN MINIMUM (saat teks sulit dipahami):
+- KEEP: pertahankan.
+- SIMPLIFY: sederhanakan bahasa atau struktur kalimat.
+- EXPLAIN: pertahankan istilah penting dan beri konteks singkat secara natural (misal: "Seorang pertapa, orang yang hidup menyendiri untuk berdoa..."). Jangan ganti "pertapa" jadi "orang".
+- SOFTEN: pertahankan kejadian tetapi kurangi detail grafis, mengganggu, atau terlalu intens.
+
+KONTEN SENSITIF:
+Jika cerita mengandung kematian, kutukan, hukuman, kekerasan, ancaman, pengkhianatan, ketakutan, atau bahaya supernatural penting, pertahankan faktanya. Sesuaikan penyampaiannya, bukan kenyataannya. Jangan menggunakan euphemism yang menyesatkan (misal: ganti "meninggal" jadi "tidur selamanya" itu DILARANG). Kurangi detail sensory sesuai target.
+
+PANDUAN BAHASA:
+Gunakan Bahasa Indonesia alami. Jangan terasa seperti ringkasan. Jangan membuat kalimat patah-patah/mengejar jumlah kata.
+
+ATURAN KHUSUS USIA ${adaptation.age_band}:
+- KOSAKATA & STRUKTUR: ${rules.vocab_note}
+- KONTEN SENSITIF & PELEMBUTAN: ${rules.soften_rules}
+- PANJANG KALIMAT MAKS (PANDUAN): ${rules.max_sentence_words} kata (bukan batas keras)
+- WAJIB DIPERTAHANKAN: ${rules.must_keep}
+
+FORMAT HALAMAN (PENTING!):
+Pertahankan jumlah halaman TEPAT SAMA dengan input (${asliPages.length} halaman).
+Setiap halaman output wajib:
+- menggunakan idx yang sama persis
+- mempertahankan fungsi naratif halaman tersebut
+- tidak digabung dengan halaman lain
+- tidak dipecah menjadi halaman baru
+
+TEKS ASLI (JSON Array Halaman):
 ${originalPagesJSON}
 `;
 
   console.log(`Calling Gemini for adaptation ${adaptation.age_band}...`);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-3.1-flash", // Use flash instead of flash-lite for reasoning ability on complex constraints
     prompt,
-    systemInstruction: "Kamu adalah spesialis sastra anak yang ahli menyederhanakan teks.",
+    systemInstruction: "Kamu adalah editor cerita anak berbahasa Indonesia yang teliti dan patuh pada instruksi.",
     stage: "adapt",
     ref: job.id
   });
@@ -79,8 +127,8 @@ ${originalPagesJSON}
 
   // Insert pages
   const pagesToInsert = adaptedPages.map((p: any) => {
-      // Find corresponding scene_id from asli
       const originalPage = asliPages.find((op: any) => op.idx === p.idx);
+      if (!originalPage) throw new Error(`Missing original page for idx ${p.idx}`);
       return {
           adaptation_id: adaptation.id,
           idx: p.idx,
@@ -106,4 +154,3 @@ ${originalPagesJSON}
 
   if (jobError) throw jobError;
 };
-
