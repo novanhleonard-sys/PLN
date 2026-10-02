@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+﻿import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.33.1";
 import { z } from "https://esm.sh/zod@3.22.4";
 
@@ -32,27 +32,25 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization')!;
     if (!authHeader) {
-        return new Response(JSON.stringify({ error: 'Missing auth header' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Missing auth header' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } }
-    });
-
-    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser();
+    const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey);
+    const jwt = authHeader.replace(/^Bearer /i, "");
+    const { data: { user }, error: userError } = await supabaseUserClient.auth.getUser(jwt);
     if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: `Unauthorized: ${userError?.message || "No user"}` }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     if (!user.email_confirmed_at) {
-        return new Response(JSON.stringify({ error: 'Email belum terverifikasi' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Email belum terverifikasi' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const payload = await req.json();
     const result = requestSchema.safeParse(payload);
     
     if (!result.success) {
-      return new Response(JSON.stringify({ error: 'Invalid payload', details: result.error.errors }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Invalid payload', details: result.error.errors }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     
     const { version_id, age } = result.data;
@@ -78,7 +76,7 @@ serve(async (req) => {
         .single();
         
     if (!rules) {
-        return new Response(JSON.stringify({ error: 'Rules not found for band' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'Rules not found for band' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const prompt_version = rules.prompt_version;
@@ -92,6 +90,18 @@ serve(async (req) => {
         .single();
 
     if (existing) {
+        if (existing.status === 'failed') {
+            await supabaseAdmin.from('adaptations').update({ status: 'pending' }).eq('id', existing.id);
+            await supabaseAdmin.from('jobs').insert({
+                kind: 'adapt',
+                ref_type: 'adaptation',
+                ref_id: existing.id,
+                idempotency_key: 'adapt:' + existing.id + ':' + Date.now()
+            });
+            return new Response(JSON.stringify({ success: true, adaptation_id: existing.id, status: 'pending', band }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
         return new Response(JSON.stringify({ success: true, adaptation_id: existing.id, status: existing.status, band }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -111,7 +121,7 @@ serve(async (req) => {
       .gte('created_at', startOfDay.toISOString());
 
     if (count !== null && count >= limit) {
-      return new Response(JSON.stringify({ error: 'Batas adaptasi harian tercapai' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(JSON.stringify({ error: 'Batas adaptasi harian tercapai' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     // Get total pages
@@ -148,6 +158,18 @@ serve(async (req) => {
             .single();
 
         if (existing2) {
+            if (existing2.status === 'failed') {
+                await supabaseAdmin.from('adaptations').update({ status: 'pending' }).eq('id', existing2.id);
+                await supabaseAdmin.from('jobs').insert({
+                    kind: 'adapt',
+                    ref_type: 'adaptation',
+                    ref_id: existing2.id,
+                    idempotency_key: 'adapt:' + existing2.id + ':' + Date.now()
+                });
+                return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: 'pending', band }), {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                });
+            }
             return new Response(JSON.stringify({ success: true, adaptation_id: existing2.id, status: existing2.status, band }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             });
@@ -181,8 +203,12 @@ serve(async (req) => {
 
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
+
+
+
