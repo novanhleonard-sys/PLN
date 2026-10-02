@@ -174,6 +174,9 @@ export function AdminEditKonten() {
     try {
       const newStatus = storyStatus === 'published' ? 'unpublished' : 'published';
       const { error } = await supabase.from('stories').update({ status: newStatus }).eq('id', id);
+        if (selectedVersionId) {
+          await supabase.from('story_versions').update({ status: newStatus }).eq('id', selectedVersionId);
+        }
       if (error) throw error;
       setStoryStatus(newStatus);
       setToast('Status berhasil diubah menjadi ' + newStatus);
@@ -236,7 +239,7 @@ export function AdminEditKonten() {
 
   const handleRegenerateVB = async () => {
     if (!selectedVersionId) return;
-    if (confirm('Ini akan memengaruhi canonical references dan scenes. Lanjut?')) {
+    if (confirm('PERINGATAN: Cerita ini mungkin sudah memiliki aset!\n\nJika Anda melanjutkan (Regenerate Visual Bible), sistem akan membuat daftar antrean AI baru yang dapat menimpa aset visual lama.\n\nYakin ingin melanjutkan?')) {
       try {
         setToast('Visual Bible sedang di-regenerate...');
         await supabase.rpc('start_ai_process_run', {
@@ -254,6 +257,7 @@ export function AdminEditKonten() {
 
   const handleGenerateMissing = async () => {
     if (!selectedVersionId) return;
+    if (!confirm('PERINGATAN: Cerita ini sudah memiliki beberapa aset.\n\nFitur ini akan mencari aset yang hilang/gagal (seperti audio yang belum jadi) dan mengantrekannya ulang ke AI.\n\nYakin ingin memicu pembuatan aset tambahan?')) return;
     try {
       setToast('Memicu pembuatan aset yang hilang...');
       

@@ -25,7 +25,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
   if (regions) regionGroupId = regions.region_group_id;
 
   // Get persona
-  let { data: persona, error: personaErr } = await ctx.supabase
+  const { data: persona, error: personaErr } = await ctx.supabase
     .from("voice_personas")
     .select("*")
     .eq("story_type", page.adaptation.version.story.type)
@@ -59,7 +59,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
   const audioBase64 = await registry.generateAudio({
     systemInstruction: finalInstruction,
     provider: 'gemini',
-    model: 'gemini-2.5-flash-preview-tts',
+    model: 'gemini-3.8-flash-tts',
     prompt: page.text,
     voiceName: voiceName,
     ref: job.id,

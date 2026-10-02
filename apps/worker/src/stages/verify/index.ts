@@ -52,7 +52,7 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   console.log(`Auto Publish Settings: Enabled=${autoPublishEnabled}, MinConf=${minConfDecimal}`);
 
-  let finalStatus = 'needs_review';
+  let finalStatus: string;
   
   if (result.isValid && result.confidence >= minConfDecimal && autoPublishEnabled) {
     finalStatus = 'approved';

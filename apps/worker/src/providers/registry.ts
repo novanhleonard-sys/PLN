@@ -119,7 +119,7 @@ export class ProviderRegistry {
     while (attempt < 2) {
       try {
         const result = await provider.generateImage(opts.model, opts.prompt, opts.referenceImages, opts);
-        let cost = result.costUsd || calculateCost(opts.provider, opts.model, 0, 1, true);
+        const cost = result.costUsd || calculateCost(opts.provider, opts.model, 0, 1, true);
         await this.logUsage(opts, 0, 1, true, 'succeeded', attempt + 1, null, cost);
         return result.imageBase64;
       } catch (err: any) {

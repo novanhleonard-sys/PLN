@@ -17,53 +17,7 @@ interface StoryCardProps {
   onClose: () => void;
 }
 
-interface VersionOption {
-  id: string;
-  label: string;
-  created_at: string;
-  status: string;
-}
-
 // -- Version Picker View --
-function VersionPicker({ story, versions, onBack }: { story: StoryPin; versions: VersionOption[]; onBack: () => void }) {
-  const navigate = useNavigate();
-
-  return (
-    <div className="flex flex-col h-full bg-white p-6">
-      <button onClick={onBack} className="flex items-center gap-2 text-sm text-stone-500 hover:text-stone-800 mb-6 self-start transition-colors">
-        <Icon name="ArrowLeft" size={16} />
-        <span className="font-nunito">Kembali</span>
-      </button>
-
-      <h2 className="text-2xl font-fredoka font-bold text-[#1a7f84] mb-1">Pilih versi cerita</h2>
-      <p className="text-stone-500 font-nunito text-sm mb-6">{story.title}</p>
-
-      <div className="flex flex-col gap-3 flex-1 overflow-y-auto">
-        {versions.map((v, i) => (
-          <button
-            key={v.id}
-            onClick={() => navigate(`/baca/${v.id}`)}
-            className="w-full text-left bg-stone-50 hover:bg-teal/5 border border-stone-200 hover:border-teal/40 rounded-2xl p-4 flex items-start justify-between gap-4 transition-all group"
-          >
-            <div className="flex-1">
-              <div className="font-nunito font-bold text-stone-800 text-sm group-hover:text-teal transition-colors">
-                {v.label || (i === 0 ? 'Versi pertama' : `Versi ${i + 1}`)}
-              </div>
-              <div className="text-xs text-stone-400 mt-1">
-                Ditambahkan {new Date(v.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-xs text-stone-400 shrink-0 mt-0.5">
-              <Icon name="Clock" size={13} />
-              <span>{story.duration} menit</span>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // -- Main Story Card --
 export function StoryCard({ story, onClose }: StoryCardProps) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -84,16 +38,12 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   const [reportReason, setReportReason] = useState("");
 
   // Version picker state
-  const [showVersionPicker, setShowVersionPicker] = useState(false);
-  const [publishedVersions, setPublishedVersions] = useState<VersionOption[]>([]);
-
+  
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Reset picker when story changes
   useEffect(() => {
-    setShowVersionPicker(false);
-    setPublishedVersions([]);
-  }, [story?.id]);
+      }, [story?.id]);
 
   useEffect(() => {
     if (!user || !story) return;
@@ -112,20 +62,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
 
   const handleRead = async () => {
     if (!story) return;
-    if (story.versionCount <= 1) {
-      // Single version — go directly
-      navigate(`/baca/${story.versionId}`);
-    } else {
-      // Fetch all published versions then show picker
-      const { data } = await supabase
-        .from('story_versions')
-        .select('id, label, created_at, status')
-        .eq('story_id', story.id)
-        .eq('status', 'published')
-        .order('created_at', { ascending: true });
-      setPublishedVersions(data || []);
-      setShowVersionPicker(true);
-    }
+    navigate(`/baca/${story.versionId}`);
   };
 
   const handleSave = async () => {
@@ -203,9 +140,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
   };
 
   const content = story ? (
-    showVersionPicker ? (
-      <VersionPicker story={story} versions={publishedVersions} onBack={() => setShowVersionPicker(false)} />
-    ) : (
+    (
       <div className="flex flex-col h-full bg-white relative">
         {/* Cover Area */}
         <div className="w-full aspect-square md:aspect-video bg-[#fdfaf3] flex flex-col items-center justify-center relative shrink-0">

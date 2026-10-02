@@ -85,9 +85,9 @@ async function calculateTier(supabase: SupabaseClient) {
   validStories.sort((a, b) => b.score - a.score); // DESC
 
   const totalValid = validStories.length;
-  let t1Count = Math.ceil(totalValid * (percentiles['1'] / 100));
-  let t2Count = Math.ceil(totalValid * (percentiles['2'] / 100));
-  let t3Count = Math.ceil(totalValid * (percentiles['3'] / 100));
+  const t1Count = Math.ceil(totalValid * (percentiles['1'] / 100));
+  const t2Count = Math.ceil(totalValid * (percentiles['2'] / 100));
+  const t3Count = Math.ceil(totalValid * (percentiles['3'] / 100));
 
   // Ensure minimum 1 if percentage > 0 and total > 0? No, let's just stick to the math rounding
   

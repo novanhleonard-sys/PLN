@@ -15,20 +15,20 @@ export const TranslateToggle: React.FC<TranslateToggleProps> = ({ language, onCh
       onClick={() => !disabled && onChange(isEn ? 'id' : 'en')}
       disabled={disabled}
       className={cn(
-        "relative w-[52px] h-8 rounded-full bg-black/10 hover:bg-black/20 transition-colors flex items-center shadow-inner overflow-hidden focus:outline-none",
-        disabled && "opacity-50 cursor-not-allowed hover:bg-black/10"
+        "relative w-[48px] h-8 rounded-full bg-black/5 hover:bg-black/10 transition-all flex items-center overflow-hidden focus:outline-none border border-black/5",
+        disabled && "opacity-50 cursor-wait bg-black/10"
       )}
       aria-label={`Switch language. Current: ${isEn ? 'English' : 'Indonesian'}`}
     >
-      {/* Track Container */}
       <div className="absolute inset-0 flex items-center px-1">
         <div className="relative w-full h-6">
           
           {/* Indonesian Flag */}
           <div 
             className={cn(
-              "absolute top-0 left-0 w-6 h-6 rounded-full overflow-hidden transition-all duration-300 ease-in-out shadow-sm border border-black/10 origin-center",
-              isEn ? "scale-75 opacity-50 translate-x-[4px] z-0" : "scale-100 opacity-100 translate-x-0 z-10"
+              "absolute top-0 left-0 w-6 h-6 rounded-full overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm border border-black/10 origin-center",
+              isEn ? "scale-75 opacity-60 translate-x-[16px] z-0" : "scale-100 opacity-100 translate-x-0 z-10",
+              disabled && "animate-pulse"
             )}
           >
             <svg viewBox="0 0 300 200" className="w-full h-full object-cover">
@@ -40,8 +40,9 @@ export const TranslateToggle: React.FC<TranslateToggleProps> = ({ language, onCh
           {/* UK Flag */}
           <div 
             className={cn(
-              "absolute top-0 right-0 w-6 h-6 rounded-full overflow-hidden transition-all duration-300 ease-in-out shadow-sm border border-black/10 origin-center",
-              isEn ? "scale-100 opacity-100 translate-x-0 z-10" : "scale-75 opacity-50 translate-x-[-4px] z-0"
+              "absolute top-0 right-0 w-6 h-6 rounded-full overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-sm border border-black/10 origin-center",
+              isEn ? "scale-100 opacity-100 translate-x-0 z-10" : "scale-75 opacity-60 translate-x-[-14px] z-0",
+              disabled && "animate-pulse"
             )}
           >
             <svg viewBox="0 0 60 30" className="w-full h-full object-cover">

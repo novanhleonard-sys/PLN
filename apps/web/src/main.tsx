@@ -91,7 +91,7 @@ const AppContent = () => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for(let registration of registrations) { registration.unregister(); }
+      for(const registration of registrations) { registration.unregister(); }
       console.log('SW unregistered successfully');
     }).catch((err) => {
       console.log('SW unregistration failed: ', err);

@@ -50,16 +50,17 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
       </div>
       
       <div className="flex items-center gap-2 shrink-0">
-        {mode === 'Baca' && (
-           <TranslateToggle language={language} onChange={setLanguage} disabled={disabled} />
-        )}
-        <div className="scale-90 md:scale-100 origin-right ml-1">
+        <div className="scale-90 md:scale-100 origin-right mr-1">
           <SegmentedControl 
             options={['Baca', 'Dongeng']} 
             value={mode} 
             onChange={(m) => onModeChange(m as 'Baca' | 'Dongeng')} 
           />
         </div>
+
+        {mode === 'Baca' && (
+           <TranslateToggle language={language} onChange={setLanguage} disabled={disabled} />
+        )}
         
         <div className="relative">
           <button
@@ -90,5 +91,3 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
     </header>
   );
 };
-
-

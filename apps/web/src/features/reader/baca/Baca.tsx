@@ -200,7 +200,7 @@ export const Baca: React.FC = () => {
               });
             }} />
         )}
-        <div className={cn("w-full h-full transition-opacity duration-300", pendingAdaptId ? "opacity-0 pointer-events-none" : "opacity-100")}>
+        <div className={cn("w-full h-full transition-opacity duration-300", pendingAdaptId ? "opacity-0 hidden" : "opacity-100")}>
           <DongengMode 
             pages={pages} 
             initialPage={currentPage} 
@@ -277,7 +277,7 @@ export const Baca: React.FC = () => {
             }} />
           )}
 
-          <div className={cn("flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative transition-opacity duration-300", pendingAdaptId ? "opacity-0 pointer-events-none" : "opacity-100")}>
+          <div className={cn("flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative transition-opacity duration-300", pendingAdaptId ? "opacity-0 hidden" : "opacity-100")}>
             <p className={cn("font-nunito max-w-2xl mx-auto w-full transition-all duration-300", fontClass, themeClasses.textMain)}>
               {page.text}
             </p>

@@ -109,9 +109,10 @@ export class GeminiProvider implements AIProvider {
 
   async generateAudio(model: string, prompt: string, voiceName: string, systemInstruction?: string, opts?: Record<string, any>) {
     const response = await this.ai.models.generateContent({
-      model: model || 'gemini-2.0-flash',
+      model: model || 'gemini-3.8-flash-tts',
       contents: prompt,
-      config: { systemInstruction: systemInstruction ? { role: 'user', parts: [{ text: systemInstruction }] } : undefined,
+      config: {
+          systemInstruction: (systemInstruction && !model.endsWith('-tts')) ? { role: 'user', parts: [{ text: systemInstruction }] } : undefined,
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {

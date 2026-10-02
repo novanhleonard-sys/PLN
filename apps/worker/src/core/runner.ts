@@ -99,16 +99,51 @@ export class JobRunner {
     }).eq('id', jobId);
   }
 
+  
+  private async handleWait(job: Job, errorMsg: string) {
+    const nextRunAfter = new Date();
+    nextRunAfter.setSeconds(nextRunAfter.getSeconds() + 30); // Check again in 30 seconds
+    console.log(`[Wait] Job ${job.id} waiting for dependencies. Next check in 30s.`);
+    await this.supabase.from('jobs').update({
+      status: 'queued',
+      error: errorMsg,
+      attempts: job.attempts, // Reset attempt count so it doesn't fail
+      run_after: nextRunAfter.toISOString()
+    }).eq('id', job.id);
+  }
+
   private async handleRateLimit(job: Job, errorMsg: string) {
     const nextRunAfter = new Date();
-    nextRunAfter.setSeconds(nextRunAfter.getSeconds() + 60);
-    console.warn(`[Rate Limit] Job ${job.id} deferred for 60s due to 429 Quota Exceeded.`);
+    let delaySeconds = 60;
+    
+    if (errorMsg.includes('per_day') || errorMsg.includes('Quota exceeded for metric')) {
+      delaySeconds = 24 * 60 * 60; 
+      const retryMatch = errorMsg.match(/retry in (?:(\d+)h)?(?:(\d+)m)?(?:([\d.]+)s)?/);
+      if (retryMatch) {
+        const h = parseInt(retryMatch[1] || '0');
+        const m = parseInt(retryMatch[2] || '0');
+        const s = parseFloat(retryMatch[3] || '0');
+        delaySeconds = (h * 3600) + (m * 60) + s + 300; 
+      }
+      console.warn(`[Rate Limit] Global daily quota hit! Deferring all '${job.kind}' jobs for ${delaySeconds}s.`);
+    } else {
+      console.warn(`[Rate Limit] Job ${job.id} deferred for 60s due to API limit.`);
+    }
+
+    nextRunAfter.setSeconds(nextRunAfter.getSeconds() + delaySeconds);
+    
     await this.supabase.from('jobs').update({
       status: 'queued',
       error: errorMsg,
       run_after: nextRunAfter.toISOString()
-      // Do not increment attempts so we don't hit the 2-attempt fail guardrail
     }).eq('id', job.id);
+    
+    if (delaySeconds > 60) {
+      await this.supabase.from('jobs').update({
+        error: `AUTO_DELAYED: Paused until quota resets. Original Error: ${errorMsg}`,
+        run_after: nextRunAfter.toISOString()
+      }).eq('status', 'queued').eq('kind', job.kind);
+    }
   }
 
   private async handleRetry(job: Job, errorMsg: string, forceFail: boolean = false) {

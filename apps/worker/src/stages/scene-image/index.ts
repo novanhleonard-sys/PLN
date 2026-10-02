@@ -60,7 +60,7 @@ export const processSceneImageStage = async (ctx: { supabase: SupabaseClient }, 
             referenceBase64s.push(Buffer.from(arrBuffer).toString("base64"));
           }
         } catch (e: any) {
-          throw new Error(`Failed to fetch canonical ref image ${ref.name}: ${e.message}`);
+          throw new Error(`Failed to fetch canonical ref image ${ref.name}: ${e.message}`, { cause: e });
         }
       }
     }
