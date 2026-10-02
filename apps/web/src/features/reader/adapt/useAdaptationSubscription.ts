@@ -23,12 +23,12 @@ export const useAdaptationSubscription = (pendingAdaptationId: string | null, on
     const interval = setInterval(checkStatus, 3000);
     checkStatus(); // Check immediately once
 
-    const channel = supabase.channel(dapt_)
+    const channel = supabase.channel(`adapt_${pendingAdaptationId}`)
       .on('postgres_changes', { 
         event: 'UPDATE', 
         schema: 'public', 
         table: 'adaptations', 
-        filter: id=eq. 
+        filter: `id=eq.${pendingAdaptationId}` 
       }, (payload) => {
         const status = payload.new.status;
         if (status === 'ready') {
