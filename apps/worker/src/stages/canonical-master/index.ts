@@ -50,7 +50,7 @@ export const processCanonicalMasterStage = async (ctx: { supabase: SupabaseClien
 
   const resultBase64 = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-lite-image",
+    model: "gemini-1.5-flash-lite-image",
     prompt,
     ref: job.id,
     stage: "canonical-master"

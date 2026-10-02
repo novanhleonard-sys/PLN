@@ -144,7 +144,7 @@ export class GeminiProvider implements AIProvider {
       : prompt;
 
     const response = await this.ai.models.generateContent({
-      model: model || 'gemini-3.1-flash-image',
+      model: model || 'gemini-1.5-flash-image',
       contents
     });
     

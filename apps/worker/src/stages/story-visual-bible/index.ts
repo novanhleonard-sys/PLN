@@ -41,7 +41,7 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
     }))
   });
 
-  // Scene plans are derived from actual DB scenes — NOT from AI free-form generation
+  // Scene plans are derived from actual DB scenes ï¿½ NOT from AI free-form generation
   // This prevents scene_idx mismatch between bible.scene_plans and actual scenes
   const scenePlanSchema = z.object({
     plans: z.array(z.object({
@@ -72,7 +72,7 @@ ${version.body}
   console.log("Generating Story Visual Bible for version", versionId);
   const bibleData = await registry.generateJSON(bibleSchema, {
     provider: "gemini",
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-1.5-flash-lite",
     prompt: sysPrompt,
     ref: job.id,
     stage: "story-visual-bible"
@@ -82,7 +82,7 @@ ${version.body}
   console.log("Generating scene plans for", scenes.length, "scenes");
   const planData = await registry.generateJSON(scenePlanSchema, {
     provider: "gemini",
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-1.5-flash-lite",
     prompt: `Anda adalah Art Director. Untuk setiap scene berikut, tentukan characters, locations, props yang muncul, dan narrative_focus visual.
 PENTING: Kembalikan tepat ${scenes.length} plans, satu untuk setiap scene_idx di bawah. Jangan tambah atau kurangi.
 
@@ -169,7 +169,7 @@ ${sceneListForPrompt}`,
 
     const sheetPlanData = await registry.generateJSON(plannerSchema, {
       provider: "gemini",
-      model: "gemini-3.1-flash-lite",
+      model: "gemini-1.5-flash-lite",
       prompt: plannerPrompt,
       ref: job.id,
       stage: "story-visual-bible"

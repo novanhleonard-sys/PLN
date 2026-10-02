@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { cn } from '../../../utils/cn';
 import { Icon } from '../../../ui/basic/Icon';
 
 interface AdaptationLoadingShimmerProps {
   band: string;
   themeClasses: { textMain: string; textMuted: string; surface: string };
+  onCancel?: () => void;
 }
 
 const MESSAGES = [
@@ -14,7 +15,8 @@ const MESSAGES = [
   "Menyelaraskan tingkat kesulitan..."
 ];
 
-export const AdaptationLoadingShimmer: React.FC<AdaptationLoadingShimmerProps> = ({ band, themeClasses }) => {
+import { Button } from '../../../ui/basic/Button';
+export const AdaptationLoadingShimmer: React.FC<AdaptationLoadingShimmerProps> = ({ band, themeClasses, onCancel }) => {
   const [msgIdx, setMsgIdx] = useState(0);
 
   useEffect(() => {
@@ -47,7 +49,13 @@ export const AdaptationLoadingShimmer: React.FC<AdaptationLoadingShimmerProps> =
           <div className="h-2 w-5/6 bg-stone-300 dark:bg-stone-600 rounded animate-pulse" style={{ animationDelay: '150ms' }} />
           <div className="h-2 w-4/6 bg-stone-300 dark:bg-stone-600 rounded animate-pulse" style={{ animationDelay: '300ms' }} />
         </div>
+        {onCancel && (
+          <div className="mt-6 w-full">
+            <Button variant="secondary" className="w-full" onClick={onCancel}>Batalkan</Button>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+

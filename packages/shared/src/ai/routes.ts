@@ -3,7 +3,7 @@
 export const AI_ROUTES = {
   triage: {
     provider: 'gemini',
-    model: 'gemini-3.1-flash-lite',
+    model: 'gemini-1.5-flash-lite',
   },
   verify: {
     provider: 'gemini',
@@ -19,7 +19,7 @@ export const AI_ROUTES = {
   },
   image: {
     provider: 'gemini',
-    model: 'gemini-3.1-flash-image',
+    model: 'gemini-1.5-flash-image',
   }
 };
 

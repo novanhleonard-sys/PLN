@@ -33,7 +33,7 @@ Aturan penting:
   // Generate Image
   const result = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-lite-image",
+    model: "gemini-1.5-flash-lite-image",
     prompt: prompt,
     ref: job.id,
     stage: "canonical-ref"

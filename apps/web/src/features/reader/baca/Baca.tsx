@@ -165,7 +165,12 @@ export const Baca: React.FC = () => {
     return (
       <div className={cn("relative w-full h-[100dvh]", themeClasses.bg)}>
         {pendingAdaptId && pendingBand && (
-          <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} />
+          <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} onCancel={() => {
+              supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
+                setPendingAdaptId(null);
+                setPendingBand(null);
+              });
+            }} />
         )}
         <div className={cn("w-full h-full transition-opacity duration-300", pendingAdaptId ? "opacity-20" : "opacity-100")}>
           <DongengMode 
@@ -235,7 +240,12 @@ export const Baca: React.FC = () => {
         <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300 relative", themeClasses.surface)}>
           
           {pendingAdaptId && pendingBand && (
-            <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} />
+            <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} onCancel={() => {
+              supabase.rpc('cancel_adaptation', { p_adaptation_id: pendingAdaptId }).then(() => {
+                setPendingAdaptId(null);
+                setPendingBand(null);
+              });
+            }} />
           )}
 
           <div className={cn("flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative transition-opacity duration-300", pendingAdaptId ? "opacity-20" : "opacity-100")}>

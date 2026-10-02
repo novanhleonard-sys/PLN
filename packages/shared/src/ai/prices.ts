@@ -6,11 +6,11 @@ export const AI_PRICES = {
     'gemini-pro-latest': { input_per_1m: 1.25, output_per_1m: 2.50 },
     'gemini-2.0-flash': { input_per_1m: 0.10, output_per_1m: 0.40 },
     'gemini-2.5-flash-preview-tts': { input_per_1m: 0.10, output_per_1m: 0.40 },
-    'gemini-3.1-flash-lite': { input_per_1m: 0.035, output_per_1m: 0.15 },
+    'gemini-1.5-flash-lite': { input_per_1m: 0.035, output_per_1m: 0.15 },
     'gemini-3.6-flash': { input_per_1m: 0.075, output_per_1m: 0.30 },
     'gemini-3.8-flash': { input_per_1m: 0.10, output_per_1m: 0.40 },
-    'gemini-3.1-flash-image': { per_image: 0.067 },
-    'gemini-3.1-flash-lite-image': { per_image: 0.015 }
+    'gemini-1.5-flash-image': { per_image: 0.067 },
+    'gemini-1.5-flash-lite-image': { per_image: 0.015 }
   },
   zai: {
     'glm-5.3-flash': { input_per_1m: 0.01, output_per_1m: 0.01 }

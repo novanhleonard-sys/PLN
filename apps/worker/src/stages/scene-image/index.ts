@@ -93,7 +93,7 @@ Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter
 
   const resultBase64 = await registry.generateImage({
     provider: "gemini",
-    model: "gemini-3.1-flash-lite-image",
+    model: "gemini-1.5-flash-lite-image",
     prompt,
     referenceImages: referenceBase64s,
     ref: job.id,

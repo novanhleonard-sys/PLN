@@ -60,7 +60,7 @@ async function run() {
   const imgStart = Date.now();
   try {
     const imgResp = await ai.models.generateContent({
-      model: 'gemini-3.1-flash-image',
+      model: 'gemini-1.5-flash-image',
       contents: 'A cute Indonesian mouse deer (Kancil) in a mystical forest, digital art style, square, high quality',
       config: {
         responseModalities: ["IMAGE"],

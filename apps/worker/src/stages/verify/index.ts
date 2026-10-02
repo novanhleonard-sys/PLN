@@ -22,7 +22,7 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
   console.log("Calling Gemini for verify...", submission.title);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
-    model: "gemini-3.1-flash-lite",
+    model: "gemini-1.5-flash-lite",
     prompt,
     systemInstruction: "Anda adalah verifikator ahli folklor Nusantara. Lakukan pencarian web untuk memvalidasi folklor, lalu kembalikan JSON hasil verifikasi dengan lokasi akurat (lat, lng).",
     ref: job.id,
