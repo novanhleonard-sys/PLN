@@ -17,11 +17,11 @@ interface DongengModeProps {
   versionId: string;
   storyId: string;
   onAdaptationReady: (id: string) => void;
-  
+  onAdaptationPending?: (id: string, band: string) => void;
 }
 
 export const DongengMode: React.FC<DongengModeProps> = ({ 
-  pages, initialPage, versionTitle, onBack, totalAdaptPages, onHitPaywall, versionId, storyId, onAdaptationReady, 
+  pages, initialPage, versionTitle, onBack, totalAdaptPages, onHitPaywall, versionId, storyId, onAdaptationReady, onAdaptationPending
 }) => {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -189,6 +189,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
           versionId={versionId}
           storyId={storyId}
           onAdaptationReady={onAdaptationReady}
+          onAdaptationPending={onAdaptationPending}
         />
       </div>
       

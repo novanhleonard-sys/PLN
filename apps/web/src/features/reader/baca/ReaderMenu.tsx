@@ -18,12 +18,13 @@ interface ReaderMenuProps {
   
   storyId: string;
   onAdaptationReady: (adaptationId: string) => void;
+  onAdaptationPending?: (adaptationId: string, band: string) => void;
 }
 
 type MenuView = 'main' | 'suasana' | 'usia' | 'laporan' | 'tentang';
 
 export const ReaderMenu: React.FC<ReaderMenuProps> = ({ 
-  isOpen, onClose, mode, versionId, storyId, onAdaptationReady
+  isOpen, onClose, mode, versionId, storyId, onAdaptationReady, onAdaptationPending
 }) => {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -76,16 +77,34 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   };
 
   const submitAdapt = async () => {
-    setAdaptLoading(true);
-    const { data } = await supabase.from('jobs').insert({
-       type: 'adaptation',
-       payload: { version_id: versionId, target_age: age },
-       status: 'pending'
-    }).select().single();
+    if (!user) {
+      alert('Masuk untuk menyesuaikan usia');
+      return;
+    }
     
-    if (data) onAdaptationReady(data.id);
-    setAdaptLoading(false);
-    onClose();
+    setAdaptLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('request_adaptation', {
+        body: { version_id: versionId, age }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.success) {
+        if (data.status === 'ready') {
+           onAdaptationReady(data.adaptation_id);
+        } else if (data.status === 'pending') {
+           if (onAdaptationPending) onAdaptationPending(data.adaptation_id, data.band);
+        }
+      } else {
+        alert(data?.error || 'Terjadi kesalahan');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Terjadi kesalahan');
+    } finally {
+      setAdaptLoading(false);
+      onClose();
+    }
   };
 
   const renderMainView = () => (

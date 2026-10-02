@@ -12,11 +12,12 @@ interface ReaderHeaderProps {
   themeClasses: { navBg: string; border: string; textMain: string };
   versionId: string;
   storyId: string;
-    onAdaptationReady: (id: string) => void;
+  onAdaptationReady: (id: string) => void;
+  onAdaptationPending?: (id: string, band: string) => void;
 }
 
 export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
-  title, mode, onModeChange, themeClasses, versionId, storyId, onAdaptationReady
+  title, mode, onModeChange, themeClasses, versionId, storyId, onAdaptationReady, onAdaptationPending
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -74,6 +75,7 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
             
             storyId={storyId}
             onAdaptationReady={onAdaptationReady}
+            onAdaptationPending={onAdaptationPending}
           />
         </div>
       </div>

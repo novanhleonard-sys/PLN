@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useStoryVersions, usePages, useReadHistory } from '../api/queries';
 import { useAuth } from '../../auth/AuthStore';
@@ -14,6 +14,9 @@ import { useAmbientSound } from './useAmbientSound';
 import { ReaderHeader } from './ReaderHeader';
 import { cn } from '../../../utils/cn';
 
+import { useAdaptationSubscription } from '../adapt/useAdaptationSubscription';
+import { AdaptationLoadingShimmer } from '../adapt/AdaptationLoadingShimmer';
+
 export const Baca: React.FC = () => {
   const { versionId } = useParams<{ versionId: string }>();
   const { data: versionData, isLoading: isLoadingVersion } = useStoryVersions(versionId || '');
@@ -24,10 +27,21 @@ export const Baca: React.FC = () => {
   const [mode, setMode] = useState<'Baca' | 'Dongeng'>('Baca');
   const [gateOpen, setGateOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  
-    const [showVersions, setShowVersions] = useState(false);
+  const [showVersions, setShowVersions] = useState(false);
+  const [pendingAdaptId, setPendingAdaptId] = useState<string | null>(null);
+  const [pendingBand, setPendingBand] = useState<string | null>(null);
 
   const { setActiveStoryId } = useReaderStore();
+
+  useAdaptationSubscription(pendingAdaptId, (id) => {
+    setSelectedAdaptation(id);
+    setPendingAdaptId(null);
+    setPendingBand(null);
+  }, (msg) => {
+    alert(msg);
+    setPendingAdaptId(null);
+    setPendingBand(null);
+  });
 
   useEffect(() => {
     setActiveStoryId(versionData?.version?.story_id || null);
@@ -147,19 +161,27 @@ export const Baca: React.FC = () => {
     setMode(newMode);
   };
 
-  if (mode === 'Dongeng') {
+    if (mode === 'Dongeng') {
     return (
-      <DongengMode 
-        pages={pages} 
-        initialPage={currentPage} 
-        versionTitle={versionData.version.story.title} 
-        onBack={() => setMode('Baca')} 
-                totalAdaptPages={totalAdaptPages} 
-        onHitPaywall={() => setGateOpen(true)} 
-        versionId={versionId!}
-        storyId={versionData.version.story_id}
-        onAdaptationReady={setSelectedAdaptation}
-      />
+      <div className={cn("relative w-full h-[100dvh]", themeClasses.bg)}>
+        {pendingAdaptId && pendingBand && (
+          <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} />
+        )}
+        <div className={cn("w-full h-full transition-opacity duration-300", pendingAdaptId ? "opacity-20" : "opacity-100")}>
+          <DongengMode 
+            pages={pages} 
+            initialPage={currentPage} 
+            versionTitle={versionData.version.story.title} 
+            onBack={() => setMode('Baca')} 
+            totalAdaptPages={totalAdaptPages} 
+            onHitPaywall={() => setGateOpen(true)} 
+            versionId={versionId!}
+            storyId={versionData.version.story_id}
+            onAdaptationReady={setSelectedAdaptation}
+            onAdaptationPending={(id, band) => { setPendingAdaptId(id); setPendingBand(band); }}
+          />
+        </div>
+      </div>
     );
   }
   
@@ -175,8 +197,9 @@ export const Baca: React.FC = () => {
         onModeChange={handleModeChange}
         themeClasses={themeClasses}
         versionId={versionId!}
-                storyId={versionData.version.story_id}
-        onAdaptationReady={(id) => { setSelectedAdaptation(id); setCurrentPage(0); }}
+        storyId={versionData.version.story_id}
+        onAdaptationReady={setSelectedAdaptation}
+        onAdaptationPending={(id, band) => { setPendingAdaptId(id); setPendingBand(band); }}
       />
       
       {currentAdapt?.age_band && currentAdapt.age_band !== 'asli' && (
@@ -209,8 +232,13 @@ export const Baca: React.FC = () => {
           </div>
         </div>
         
-        <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300", themeClasses.surface)}>
-          <div className="flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative">
+        <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300 relative", themeClasses.surface)}>
+          
+          {pendingAdaptId && pendingBand && (
+            <AdaptationLoadingShimmer band={pendingBand} themeClasses={themeClasses} />
+          )}
+
+          <div className={cn("flex-1 overflow-y-auto p-6 md:p-10 flex items-center relative transition-opacity duration-300", pendingAdaptId ? "opacity-20" : "opacity-100")}>
             <p className={cn("font-nunito max-w-2xl mx-auto w-full transition-all duration-300", fontClass, themeClasses.textMain)}>
               {page.text}
             </p>
@@ -234,3 +262,5 @@ export const Baca: React.FC = () => {
     </div>
   );
 };
+
+
