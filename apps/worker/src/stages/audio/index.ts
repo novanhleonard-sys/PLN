@@ -74,7 +74,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
   try {
     // Convert to Opus using ffmpeg
     // Gemini returns audio/L16;codec=pcm;rate=24000 (16-bit PCM, 24kHz, mono)
-    await execAsync(`ffmpeg -y -f s16le -ar 24000 -ac 1 -i ${tempWav} -c:a libopus -b:a 32k ${tempOgg}`);
+    await execAsync(`ffmpeg -y -i ${tempWav} -c:a libopus -b:a 32k ${tempOgg}`);
 
     // Upload to Supabase Storage
     const oggBuffer = fs.readFileSync(tempOgg);
