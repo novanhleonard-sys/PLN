@@ -78,16 +78,15 @@ export const processSceneImageStage = async (ctx: { supabase: SupabaseClient }, 
     .filter((p: any) => (plan.props || []).includes(p.name))
     .map((p: any) => p.name + ": " + p.description).join("\n");
 
-  // Admin can override prompt via job.custom_prompt
-  const prompt = job.custom_prompt || `
+  const prompt = `
 Overall Direction: ${overallDir}
 Rendering Style: ${renderingStyle}
 Scene Visual Plan: ${scenePlanJson}
 Deskripsi Lokasi: ${locDesc}
 Deskripsi Properti: ${propDesc}
 Deskripsi Scene Aktual: ${scene.description}
-
-Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter/lokasi/prop gambar yang diberikan (bila ada) sebagai panduan utama. Deskripsi teks di atas digunakan untuk hal-hal yang tidak memiliki referensi gambar spesifik agar tetap konsisten.`;
+${job.custom_prompt ? `\nInstruksi Revisi Tambahan dari Admin: ${job.custom_prompt}\n` : ''}
+Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter/lokasi/prop gambar yang diberikan (bila ada) sebagai panduan utama. Deskripsi teks di atas digunakan untuk hal-hal yang tidak memiliki referensi gambar spesifik agar tetap konsisten. Pastikan tidak ada TEKS, TULISAN, ATAU LABEL apapun yang tergambar di dalam ilustrasi (termasuk pada background).`;
 
   console.log("Generating scene-image for", (scene.version?.story as any)?.title, "idx", scene.idx, job.custom_prompt ? "[CUSTOM PROMPT]" : "");
 
