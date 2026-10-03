@@ -442,38 +442,14 @@ export function TabAntrean() {
 
             {/* STICKY FOOTER */}
             <div className="flex-none p-5 border-t border-stone-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-              <div className="flex flex-col lg:flex-row gap-6 justify-between">
+              <div className="flex flex-col gap-4">
                 
-                {/* REJECT CONTROLS */}
-                <div className="flex flex-1 gap-3 items-center">
-                  <div className="relative flex-1 max-w-sm">
-                    <input 
-                      type="text" 
-                      placeholder="Ketik alasan penolakan..."
-                      value={rejectReason}
-                      onChange={e => setRejectReason(e.target.value)}
-                      className="w-full border-2 border-stone-200 rounded-xl pl-10 pr-4 py-2.5 focus:border-red-500 outline-none text-sm transition"
-                    />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
-                       <Icon name="CircleAlert" size={18} />
-                    </div>
-                  </div>
-                  <Button 
-                    variant="secondary" 
-                    className="!text-red-600 !border-red-200 hover:!bg-red-50 whitespace-nowrap"
-                    disabled={!rejectReason.trim() || rejectMutation.isPending}
-                    onClick={() => rejectMutation.mutate(selectedSub.id)}
-                  >
-                    {rejectMutation.isPending ? 'Menolak...' : 'Tolak & Beri Notif'}
-                  </Button>
-                </div>
-
                 {/* APPROVE CONTROLS */}
-                <div className="flex gap-3 items-center border-t lg:border-t-0 lg:border-l border-stone-200 pt-4 lg:pt-0 lg:pl-6">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-stone-500 uppercase tracking-wider hidden sm:block">Mode:</span>
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                  <div className="hidden sm:block text-sm font-bold text-teal-700">Keputusan Final</div>
+                  <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
                     <select 
-                      className="border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm font-bold text-stone-700 outline-none bg-stone-50 hover:bg-stone-100 transition focus:border-teal-500 cursor-pointer"
+                      className="w-full sm:w-auto border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm font-bold text-stone-700 outline-none bg-stone-50 hover:bg-stone-100 transition focus:border-teal-500 cursor-pointer"
                       value={selectedScope}
                       onChange={(e: any) => setSelectedScope(e.target.value)}
                     >
@@ -482,13 +458,37 @@ export function TabAntrean() {
                       <option value="image_only">🖼️ Hanya Update Gambar</option>
                       <option value="audio_only">🔊 Hanya Update Audio</option>
                     </select>
+                    <Button 
+                      className="w-full sm:w-auto whitespace-nowrap shadow-lg shadow-teal-500/20 px-6 font-bold" 
+                      onClick={() => processMutation.mutate(selectedSub.id)}
+                      disabled={processMutation.isPending}
+                    >
+                      {processMutation.isPending ? 'Memproses...' : 'Setujui & Proses AI'}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* REJECT CONTROLS */}
+                <div className="flex flex-col sm:flex-row gap-3 items-center bg-red-50/50 p-3 rounded-2xl border border-red-100">
+                  <div className="relative flex-1 w-full">
+                    <input 
+                      type="text" 
+                      placeholder="Jika menolak, ketik alasan penolakan di sini untuk kontributor..."
+                      value={rejectReason}
+                      onChange={e => setRejectReason(e.target.value)}
+                      className="w-full border-2 border-white shadow-sm focus:border-red-400 rounded-xl pl-10 pr-4 py-2.5 outline-none text-sm transition"
+                    />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-red-300">
+                       <Icon name="CircleAlert" size={18} />
+                    </div>
                   </div>
                   <Button 
-                    className="whitespace-nowrap shadow-lg shadow-teal-500/20 px-6 font-bold" 
-                    onClick={() => processMutation.mutate(selectedSub.id)}
-                    disabled={processMutation.isPending}
+                    variant="secondary" 
+                    className="!text-red-600 !border-red-200 hover:!bg-red-50 w-full sm:w-auto whitespace-nowrap bg-white shadow-sm"
+                    disabled={!rejectReason.trim() || rejectMutation.isPending}
+                    onClick={() => rejectMutation.mutate(selectedSub.id)}
                   >
-                    {processMutation.isPending ? 'Memproses...' : 'Setujui & Proses AI'}
+                    {rejectMutation.isPending ? 'Menolak...' : 'Tolak & Beri Notif'}
                   </Button>
                 </div>
 
