@@ -1,9 +1,10 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../../lib/supabase';
 import { Button } from '../../../ui/basic/Button';
 import { Modal } from '../../../ui/layers/Modal';
 import { Toast } from '../../../ui/basic/Toast';
+import { cn } from '../../../utils/cn';
 
 export function TabAntrean() {
   const queryClient = useQueryClient();
@@ -38,102 +39,162 @@ export function TabAntrean() {
   const { data: styleConfigs } = useQuery({
     queryKey: ['style_configs'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('style_configs').select('id, descriptor');
-      if (error) throw error;
-      return data;
+      const { data } = await supabase.from('style_configs').select('*');
+      return data || [];
     }
   });
 
   const { data: voicePersonas } = useQuery({
     queryKey: ['voice_personas'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('voice_personas').select('id, name');
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const processMutation = useMutation({
-    mutationFn: async (subId: string) => {
-      const { data: versionId, error: approveErr } = await supabase.rpc('approve_submission_to_version', {
-        p_submission_id: subId
-      });
-      if (approveErr) throw approveErr;
-
-      const { error: processErr } = await supabase.rpc('start_ai_process_run', {
-        p_version_id: versionId,
-        p_scope: selectedScope,
-        p_config_snapshot: {
-          imagePersona,
-          voicePersona,
-          imageInstruction,
-          voiceInstruction
-        }
-      });
-      if (processErr) throw processErr;
-    },
-    onSuccess: () => {
-      setToast('Proses AI berhasil dimulai.');
-      setSelectedSub(null);
-      queryClient.invalidateQueries({ queryKey: ['admin_submissions'] });
-    },
-    onError: (error: any) => {
-      setToast(`Gagal: ${error.message}`);
+      const { data } = await supabase.from('voice_personas').select('*');
+      return data || [];
     }
   });
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('submissions').update({ 
-        status: 'rejected',
-        reject_reason: rejectReason
-      }).eq('id', id);
+      const { error } = await supabase.from('submissions').update({ status: 'rejected', reject_reason: rejectReason }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      setToast('Kiriman ditolak.');
+      setToast('Cerita berhasil ditolak');
       setSelectedSub(null);
       setRejectReason('');
       queryClient.invalidateQueries({ queryKey: ['admin_submissions'] });
-    },
-    onError: (error: any) => {
-      setToast(`Gagal menolak: ${error.message}`);
     }
   });
 
-  if (isLoading) return <div className="p-8 font-nunito animate-pulse">Memuat antrean...</div>;
+  const processMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const sub = selectedSub;
+      const slug = sub.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      
+      // Get AI location
+      let lat = sub.lat;
+      let lng = sub.lng;
+      
+      if (!lat || !lng) {
+        const verifyRun = sub.verification_runs?.find((r: any) => r.stage === 'verify');
+        if (verifyRun?.output?.location) {
+          lat = verifyRun.output.location.lat;
+          lng = verifyRun.output.location.lng;
+        }
+      }
+
+      const { data: story, error: storyErr } = await supabase.from("stories").upsert({
+        title: sub.title,
+        slug: slug,
+        type: sub.type,
+        synopsis: sub.synopsis,
+        lat: lat,
+        lng: lng,
+        hero_image_path: sub.hero_image_path,
+        pin_image_path: sub.pin_image_path,
+        status: 'published'
+      }, { onConflict: 'slug' }).select().single();
+      
+      if (storyErr) throw storyErr;
+
+      const { data: version, error: versionErr } = await supabase.from("story_versions").insert({
+        story_id: story.id,
+        label: sub.version_label,
+        sources: sub.sources || [],
+        body: sub.body,
+        status: "processing"
+      }).select().single();
+
+      if (versionErr) throw versionErr;
+
+      const { error: runErr } = await supabase.rpc('start_ai_process_run', {
+         p_version_id: version.id,
+         p_scope: selectedScope,
+         p_config_snapshot: { 
+           source: 'admin-approve',
+           imagePersona,
+           voicePersona,
+           imageInstruction,
+           voiceInstruction
+         }
+      });
+      if (runErr) throw runErr;
+
+      const { error: updErr } = await supabase.from('submissions').update({ status: 'approved' }).eq('id', id);
+      if (updErr) throw updErr;
+    },
+    onSuccess: () => {
+      setToast('Cerita disetujui & mulai diproses AI');
+      setSelectedSub(null);
+      queryClient.invalidateQueries({ queryKey: ['admin_submissions'] });
+    },
+    onError: (e: any) => {
+      setToast('Gagal memproses: ' + e.message);
+    }
+  });
+
+  const getTrafficLight = (runs: any[]) => {
+    if (!runs || runs.length === 0) return { color: 'gray', label: 'Diproses AI', reason: 'Menunggu hasil verifikasi...', bg: 'bg-stone-100', text: 'text-stone-600', border: 'border-stone-200' };
+    
+    const sorted = [...runs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const latest = sorted[0];
+
+    const reason = latest.output?.reason || 'Tidak ada alasan spesifik.';
+
+    if (latest.stage === 'triage') {
+      if (latest.verdict === 'fail') return { color: 'red', label: 'Gagal Triage', reason, bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
+      return { color: 'gray', label: 'Lolos Triage', reason: 'Menunggu verifikasi lanjutan...', bg: 'bg-stone-100', text: 'text-stone-600', border: 'border-stone-200' };
+    }
+
+    if (latest.stage === 'verify') {
+      if (latest.verdict === 'fail') return { color: 'red', label: 'Indikasi Palsu', reason, bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' };
+      if (latest.confidence < 0.8) return { color: 'yellow', label: 'Butuh Cek Manual', reason, bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-300' };
+      return { color: 'green', label: 'Aman', reason, bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' };
+    }
+
+    return { color: 'gray', label: 'Tidak Diketahui', reason, bg: 'bg-stone-100', text: 'text-stone-600', border: 'border-stone-200' };
+  };
 
   return (
-    <div className="flex flex-col gap-6 font-nunito pb-12 max-w-5xl">
-      <div>
-        <h2 className="text-2xl font-fredoka font-bold text-stone-800">Antrean Moderasi</h2>
-        <p className="text-stone-500 text-sm mt-1">
-          Daftar cerita yang memerlukan tinjauan manual (plagiarisme, konten sensitif, atau nilai kepastian AI rendah).
-        </p>
-      </div>
-
-      {submissions?.length === 0 ? (
-        <div className="p-12 text-center bg-stone-50 rounded-2xl border border-stone-200 text-stone-500">
+    <div className="space-y-6">
+      {isLoading ? (
+        <div className="p-8 font-nunito animate-pulse">Memuat antrean...</div>
+      ) : !submissions?.length ? (
+        <div className="p-12 text-center text-stone-500 bg-stone-50 border border-stone-200 rounded-2xl">
           Tidak ada cerita dalam antrean saat ini.
         </div>
       ) : (
         <div className="grid gap-4">
-          {submissions?.map((sub: any) => (
-            <div key={sub.id} className="p-5 bg-white border border-stone-200 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
-              <div>
-                <h3 className="font-bold font-fredoka text-lg text-stone-800">{sub.title}</h3>
-                <p className="text-sm text-stone-500 mt-1">Oleh: {sub.profiles?.display_name}   Label: {sub.version_label}</p>
+          {submissions?.map((sub: any) => {
+            const tl = getTrafficLight(sub.verification_runs);
+            return (
+              <div key={sub.id} className="p-5 bg-white border border-stone-200 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between md:items-start gap-4 transition hover:shadow-md">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="font-bold font-fredoka text-lg text-stone-800">{sub.title}</h3>
+                    <span className={cn("text-xs px-2.5 py-1 rounded-full font-bold border uppercase tracking-wide", tl.bg, tl.text, tl.border)}>
+                      {tl.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-stone-500 mb-3">Oleh: <span className="font-bold text-stone-700">{sub.profiles?.display_name}</span> &bull; Label: {sub.version_label}</p>
+                  
+                  <div className={cn("text-sm p-3 rounded-xl border", tl.bg, tl.text, tl.border)}>
+                    <strong className="block mb-1 opacity-80 uppercase text-[10px] tracking-wider">Kesimpulan AI</strong>
+                    {tl.reason}
+                  </div>
+                </div>
+                <div className="flex-none pt-1">
+                  <Button onClick={() => {
+                    setSelectedSub(sub);
+                    setImagePersona('');
+                    setVoicePersona('');
+                    setImageInstruction('');
+                    setVoiceInstruction('');
+                    setSelectedScope('all');
+                  }}>Lihat &amp; Atur</Button>
+                </div>
               </div>
-              <Button onClick={() => {
-                setSelectedSub(sub);
-                setImagePersona('');
-                setVoicePersona('');
-                setImageInstruction('');
-                setVoiceInstruction('');
-                setSelectedScope('all');
-              }}>Lihat Detail</Button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -151,20 +212,36 @@ export function TabAntrean() {
             </div>
 
             <div className="mb-6">
-              <h4 className="font-bold text-stone-700 mb-2">Hasil Verifikasi AI</h4>
+              <h4 className="font-bold text-stone-700 mb-2">Log Deteksi AI</h4>
               {selectedSub.verification_runs?.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {selectedSub.verification_runs.map((run: any) => (
-                    <div key={run.id} className="p-3 border border-stone-200 rounded-xl text-sm">
-                      <div className="flex justify-between font-bold mb-1">
-                        <span className="uppercase text-stone-500">{run.stage}</span>
-                        <span className={run.verdict === 'pass' ? 'text-teal-600' : 'text-red-500'}>
+                    <div key={run.id} className="p-4 border border-stone-200 rounded-xl text-sm bg-white shadow-sm">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="uppercase font-black tracking-wider text-stone-400 text-xs">{run.stage}</span>
+                        <span className={cn("px-2 py-0.5 rounded text-xs font-bold", run.verdict === 'pass' ? 'bg-teal-100 text-teal-700' : 'bg-red-100 text-red-700')}>
                           {run.verdict.toUpperCase()} ({(run.confidence * 100).toFixed(1)}%)
                         </span>
                       </div>
-                      <pre className="text-xs bg-stone-100 p-2 rounded text-stone-600 overflow-x-auto">
-                        {JSON.stringify(run.output, null, 2)}
-                      </pre>
+                      
+                      <div className="space-y-2 text-stone-600">
+                        {run.output?.location && (
+                          <div className="bg-stone-50 p-2 rounded-lg border border-stone-100">
+                            <strong>Lokasi Ditemukan:</strong> {run.output.location.name} (Lat: {run.output.location.lat}, Lng: {run.output.location.lng})
+                          </div>
+                        )}
+                        <div>
+                          <strong>Alasan:</strong> {run.output?.reason || '-'}
+                        </div>
+                        {run.output?.originalStory && (
+                          <details className="mt-2 text-xs">
+                            <summary className="cursor-pointer text-teal-600 font-bold hover:underline">Lihat Teks Perbaikan Grammar AI</summary>
+                            <div className="mt-2 p-3 bg-stone-50 rounded border whitespace-pre-wrap">
+                              {run.output.originalStory}
+                            </div>
+                          </details>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -184,7 +261,7 @@ export function TabAntrean() {
                     value={imagePersona}
                     onChange={e => setImagePersona(e.target.value)}
                   >
-                    <option value="">-- Pilih Style --</option>
+                    <option value="">-- Bawaan (Auto) --</option>
                     {styleConfigs?.map((s: any) => (
                       <option key={s.id} value={s.id}>{s.descriptor}</option>
                     ))}
@@ -197,7 +274,7 @@ export function TabAntrean() {
                     value={voicePersona}
                     onChange={e => setVoicePersona(e.target.value)}
                   >
-                    <option value="">-- Pilih Voice --</option>
+                    <option value="">-- Bawaan (Auto) --</option>
                     {voicePersonas?.map((v: any) => (
                       <option key={v.id} value={v.id}>{v.name}</option>
                     ))}
@@ -209,21 +286,21 @@ export function TabAntrean() {
                 <div>
                   <label className="block text-sm font-bold text-stone-600 mb-1">Instruksi Khusus Gambar</label>
                   <textarea 
-                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm outline-none"
+                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500"
                     rows={3}
                     value={imageInstruction}
                     onChange={e => setImageInstruction(e.target.value)}
-                    placeholder="Instruksi tambahan untuk generasi gambar..."
+                    placeholder="Contoh: Buat suasananya malam hari..."
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-stone-600 mb-1">Instruksi Khusus Suara</label>
                   <textarea 
-                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm outline-none"
+                    className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500"
                     rows={3}
                     value={voiceInstruction}
                     onChange={e => setVoiceInstruction(e.target.value)}
-                    placeholder="Instruksi tambahan untuk generasi suara..."
+                    placeholder="Contoh: Gunakan nada sedih..."
                   />
                 </div>
               </div>
@@ -233,7 +310,7 @@ export function TabAntrean() {
               <div className="flex-1 flex flex-col gap-2">
                 <input 
                   type="text" 
-                  placeholder="Alasan penolakan (Wajib jika menolak)"
+                  placeholder="Ketik alasan penolakan..."
                   value={rejectReason}
                   onChange={e => setRejectReason(e.target.value)}
                   className="w-full border border-stone-300 rounded-xl px-4 py-2 focus:border-red-500 outline-none text-sm"
@@ -250,7 +327,7 @@ export function TabAntrean() {
               <div className="flex-1 flex flex-col gap-2 justify-end">
                 <div className="flex gap-2 w-full">
                   <select 
-                    className="border border-stone-300 rounded-xl px-3 py-2 text-sm outline-none bg-stone-50 flex-1 min-w-[140px]"
+                    className="border border-stone-300 rounded-xl px-3 py-2 text-sm outline-none bg-stone-50 flex-1 min-w-[120px]"
                     value={selectedScope}
                     onChange={(e: any) => setSelectedScope(e.target.value)}
                   >
@@ -260,7 +337,7 @@ export function TabAntrean() {
                     <option value="audio_only">Audio Saja</option>
                   </select>
                   <Button 
-                    className="flex-none whitespace-nowrap" 
+                    className="flex-none whitespace-nowrap bg-teal-600 hover:bg-teal-700" 
                     onClick={() => processMutation.mutate(selectedSub.id)}
                     disabled={processMutation.isPending}
                   >

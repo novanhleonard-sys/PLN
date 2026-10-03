@@ -13,10 +13,10 @@ export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry
 
   const prompt = "Triage cerita ini:\nJudul: " + submission.title + "\nTipe: " + submission.type + "\nCerita: " + submission.body + "\nTentukan apakah ini cerita rakyat Indonesia yang valid.";
 
-  console.log("Calling Zai for triage...", submission.title);
+  console.log("Calling Gemini for triage...", submission.title);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
-    model: "glm-5.3-flash",
+    model: "gemini-3.1-flash-lite",
     prompt,
     systemInstruction: "Anda adalah asisten kurator Peta Legenda Nusantara. Tolak cerita modern atau non-Indonesia. Return JSON matching the schema EXACTLY with properties `status` and `reason`.",
     ref: job.id,
@@ -28,6 +28,18 @@ export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry
   const reasonText = result.alasan || result.reason || "";
   console.log("Triage Result:", result.status, reasonText);
   
+  // Record triage verdict
+  await ctx.supabase.from("verification_runs").insert({
+    submission_id: submission.id,
+    stage: "triage",
+    provider: "gemini",
+    model: "gemini-3.1-flash-lite",
+    verdict: isAccepted ? "pass" : "fail",
+    output: { reason: reasonText },
+    confidence: isAccepted ? 1 : 0,
+    created_at: new Date().toISOString()
+  });
+
   if (isAccepted) {
     await ctx.supabase.from("jobs").insert({
       kind: "verify",
@@ -39,9 +51,19 @@ export const triageStage = async (ctx: any, job: any, registry: ProviderRegistry
       run_after: new Date().toISOString(),
       idempotency_key: "verify_" + submission.id
     });
+  } else {
+    // Rejected by Triage
+    const { data: appSettings } = await ctx.supabase.from("app_settings").select("value").eq("key", "moderation").maybeSingle();
+    const autoPublishEnabled = appSettings?.value?.autoPublish ?? false;
+    
+    if (autoPublishEnabled) {
+      await ctx.supabase.from("submissions").update({ status: "rejected", reject_reason: reasonText }).eq("id", submission.id);
+    } else {
+      await ctx.supabase.from("submissions").update({ status: "needs_review" }).eq("id", submission.id);
+    }
   }
 
-  await ctx.supabase.from("jobs").update({ status: "succeeded", error: reasonText }).eq("id", job.id);
+  await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
 };
 
 

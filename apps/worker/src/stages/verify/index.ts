@@ -35,7 +35,12 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
   // Apply verdict
   await ctx.supabase.from("verification_runs").insert({
     submission_id: submission.id,
-    verdict: result,
+    stage: "verify",
+    provider: "gemini",
+    model: "gemini-3.1-flash-lite",
+    verdict: result.isValid ? "pass" : "fail",
+    confidence: result.confidence,
+    output: result,
     created_at: new Date().toISOString()
   });
 
@@ -53,17 +58,26 @@ export const verifyStage = async (ctx: any, job: any, registry: ProviderRegistry
   console.log(`Auto Publish Settings: Enabled=${autoPublishEnabled}, MinConf=${minConfDecimal}`);
 
   let finalStatus: string;
+  let rejectReason = null;
   
-  if (result.isValid && result.confidence >= minConfDecimal && autoPublishEnabled) {
-    finalStatus = 'approved';
-  } else if (!result.isValid && result.confidence >= minConfDecimal) {
-    finalStatus = 'rejected';
+  if (autoPublishEnabled) {
+    if (result.isValid && result.confidence >= minConfDecimal) {
+      finalStatus = 'approved';
+    } else if (!result.isValid) {
+      finalStatus = 'rejected';
+      rejectReason = result.reason;
+    } else {
+      finalStatus = 'needs_review';
+    }
   } else {
     finalStatus = 'needs_review';
   }
 
   // Update submission status based on rules
-  await ctx.supabase.from("submissions").update({ status: finalStatus }).eq("id", submission.id);
+  const updatePayload: any = { status: finalStatus };
+  if (rejectReason) updatePayload.reject_reason = rejectReason;
+  
+  await ctx.supabase.from("submissions").update(updatePayload).eq("id", submission.id);
 
   if (finalStatus === 'approved') {
     const slug = submission.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
