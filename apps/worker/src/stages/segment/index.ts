@@ -22,14 +22,14 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
     }))
   });
 
-  const prompt = "Bagi cerita berikut menjadi 6-14 bagian (scene/halaman). Sertakan sinopsis, tema, sensitivitas, daftar tokoh, dan deskripsi visual yang rinci untuk setiap bagian.\nCerita:\n" + version.body;
+  const prompt = "Bagi cerita di bawah ini menjadi 6-14 bagian (halaman) secara VERBATIM (persis sesuai teks asli). PENTING: DILARANG KERAS mengubah, menyadur, menyederhanakan, atau menambahkan kata-kata ke dalam teks cerita. Anda hanya bertugas memotong teks asli. Sertakan sinopsis, tema, sensitivitas, daftar tokoh, dan deskripsi visual yang rinci untuk setiap bagian agar bisa digambar oleh AI.\n\nTeks Cerita Asli:\n" + version.body;
 
   console.log("Calling Gemini for segment...", version.story.title);
   const result = await registry.generateJSON(schema, {
     provider: "gemini",
     model: "gemini-3.1-flash-lite",
     prompt,
-    systemInstruction: "Anda adalah pembuat naskah buku anak. Bagi cerita ke bagian-bagian dengan panjang merata. Hasilkan deskripsi visual yang detail untuk tiap bagian agar bisa digambar oleh AI.",
+    systemInstruction: "Anda adalah pemotong teks otomatis (text parser). Tugas Anda adalah memotong teks cerita menjadi beberapa bagian tanpa mengubah atau menghilangkan satu kata pun dari teks asli. Teks hasil potongan (field 'text') jika digabungkan harus 100% sama dengan teks asli. Hasilkan deskripsi visual yang detail untuk tiap bagian.",
     ref: job.id,
     stage: "segment"
   });
