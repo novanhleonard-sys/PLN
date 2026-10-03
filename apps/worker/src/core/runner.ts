@@ -109,7 +109,7 @@ export class JobRunner {
     await this.supabase.from('jobs').update({
       status: 'queued',
       error: errorMsg,
-      attempts: job.attempts, // Reset attempt count so it doesn't fail
+      attempts: Math.max(0, job.attempts - 1), // Revert the +1 added by claim_job
       run_after: nextRunAfter.toISOString()
     }).eq('id', job.id);
   }
