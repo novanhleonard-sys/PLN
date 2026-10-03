@@ -25,7 +25,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
   if (regions) regionGroupId = regions.region_group_id;
 
   // Get persona
-  const { data: persona, error: personaErr } = await ctx.supabase
+  let { data: persona, error: personaErr } = await ctx.supabase
     .from("voice_personas")
     .select("*")
     .eq("story_type", page.adaptation.version.story.type)
