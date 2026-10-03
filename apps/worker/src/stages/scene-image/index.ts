@@ -33,7 +33,7 @@ export const processSceneImageStage = async (ctx: { supabase: SupabaseClient }, 
     .select("*")
     .eq("bible_id", bible.id);
 
-  if (cRefs && cRefs.some((r: any) => r.is_canonical && r.status !== "ready")) {
+  if (cRefs && cRefs.some((r: any) => r.is_canonical && r.master_sheet_id && r.status !== "ready")) {
     throw new Error("WAITING_FOR_CANONICAL_REFS");
   }
 
