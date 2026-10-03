@@ -14,6 +14,7 @@ export function TabAntrean() {
   // Modal states
   const [selectedSub, setSelectedSub] = useState<any>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   
   // Edit states
   const [isEditingBody, setIsEditingBody] = useState(false);
@@ -171,6 +172,7 @@ export function TabAntrean() {
     setVoiceInstruction('');
     setSelectedScope('all');
     setRejectReason('');
+    setIsRejectModalOpen(false);
   };
 
   const getPublicUrl = (path: string) => {
@@ -442,60 +444,72 @@ export function TabAntrean() {
 
             {/* STICKY FOOTER */}
             <div className="flex-none p-5 border-t border-stone-200 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-20">
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 
-                {/* APPROVE CONTROLS */}
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                  <div className="hidden sm:block text-sm font-bold text-teal-700">Keputusan Final</div>
-                  <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
-                    <select 
-                      className="w-full sm:w-auto border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm font-bold text-stone-700 outline-none bg-stone-50 hover:bg-stone-100 transition focus:border-teal-500 cursor-pointer"
-                      value={selectedScope}
-                      onChange={(e: any) => setSelectedScope(e.target.value)}
-                    >
-                      <option value="all">🚀 FULL (Semua Aset)</option>
-                      <option value="text_only">📝 Hanya Teks & Info</option>
-                      <option value="image_only">🖼️ Hanya Update Gambar</option>
-                      <option value="audio_only">🔊 Hanya Update Audio</option>
-                    </select>
-                    <Button 
-                      className="w-full sm:w-auto whitespace-nowrap shadow-lg shadow-teal-500/20 px-6 font-bold" 
-                      onClick={() => processMutation.mutate(selectedSub.id)}
-                      disabled={processMutation.isPending}
-                    >
-                      {processMutation.isPending ? 'Memproses...' : 'Setujui & Proses AI'}
-                    </Button>
-                  </div>
-                </div>
+                {/* REJECT BUTTON */}
+                <Button 
+                  variant="secondary" 
+                  className="!text-red-600 !border-red-200 hover:!bg-red-50 w-full sm:w-auto"
+                  onClick={() => setIsRejectModalOpen(true)}
+                >
+                  Tolak Cerita
+                </Button>
 
-                {/* REJECT CONTROLS */}
-                <div className="flex flex-col sm:flex-row gap-3 items-center bg-red-50/50 p-3 rounded-2xl border border-red-100">
-                  <div className="relative flex-1 w-full">
-                    <input 
-                      type="text" 
-                      placeholder="Jika menolak, ketik alasan penolakan di sini untuk kontributor..."
-                      value={rejectReason}
-                      onChange={e => setRejectReason(e.target.value)}
-                      className="w-full border-2 border-white shadow-sm focus:border-red-400 rounded-xl pl-10 pr-4 py-2.5 outline-none text-sm transition"
-                    />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-red-300">
-                       <Icon name="CircleAlert" size={18} />
-                    </div>
-                  </div>
-                  <Button 
-                    variant="secondary" 
-                    className="!text-red-600 !border-red-200 hover:!bg-red-50 w-full sm:w-auto whitespace-nowrap bg-white shadow-sm"
-                    disabled={!rejectReason.trim() || rejectMutation.isPending}
-                    onClick={() => rejectMutation.mutate(selectedSub.id)}
+                {/* APPROVE CONTROLS */}
+                <div className="flex flex-col sm:flex-row gap-3 items-center w-full sm:w-auto">
+                  <select 
+                    className="w-full sm:w-auto border-2 border-stone-200 rounded-xl px-3 py-2.5 text-sm font-bold text-stone-700 outline-none bg-stone-50 hover:bg-stone-100 transition focus:border-teal-500 cursor-pointer"
+                    value={selectedScope}
+                    onChange={(e: any) => setSelectedScope(e.target.value)}
                   >
-                    {rejectMutation.isPending ? 'Menolak...' : 'Tolak & Beri Notif'}
+                    <option value="all">FULL (Semua Aset)</option>
+                    <option value="text_only">Hanya Teks & Info</option>
+                    <option value="image_only">Hanya Update Gambar</option>
+                    <option value="audio_only">Hanya Update Audio</option>
+                  </select>
+                  <Button 
+                    className="w-full sm:w-auto whitespace-nowrap shadow-lg shadow-teal-500/20 px-6 font-bold" 
+                    onClick={() => processMutation.mutate(selectedSub.id)}
+                    disabled={processMutation.isPending}
+                  >
+                    {processMutation.isPending ? 'Memproses...' : 'Setujui & Proses AI'}
                   </Button>
                 </div>
-
               </div>
             </div>
 
           </div>
+        </Modal>
+      )}
+
+      {/* REJECT CONFIRMATION MODAL */}
+      {isRejectModalOpen && selectedSub && (
+        <Modal isOpen={true} onClose={() => setIsRejectModalOpen(false)} className="max-w-md p-6">
+           <div className="flex flex-col gap-4 text-stone-800 font-nunito">
+             <h3 className="text-xl font-fredoka font-bold text-red-600">Tolak Cerita</h3>
+             <p className="text-sm text-stone-500">Berikan alasan penolakan yang akan dikirimkan kepada kontributor:</p>
+             
+             <textarea 
+               className="w-full border-2 border-stone-200 rounded-xl p-3 outline-none focus:border-red-500 min-h-[100px] text-sm"
+               placeholder="Ketik alasan di sini..."
+               value={rejectReason}
+               onChange={e => setRejectReason(e.target.value)}
+             />
+             
+             <div className="flex gap-3 justify-end mt-4">
+               <Button variant="secondary" onClick={() => setIsRejectModalOpen(false)}>Batal</Button>
+               <Button 
+                 className="bg-red-600 hover:bg-red-700" 
+                 disabled={!rejectReason.trim() || rejectMutation.isPending}
+                 onClick={() => {
+                   rejectMutation.mutate(selectedSub.id);
+                   setIsRejectModalOpen(false);
+                 }}
+               >
+                 {rejectMutation.isPending ? 'Menolak...' : 'Yakin, Tolak'}
+               </Button>
+             </div>
+           </div>
         </Modal>
       )}
 
