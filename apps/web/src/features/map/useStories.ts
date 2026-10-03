@@ -37,11 +37,14 @@ export function useStories() {
       
       const pins: StoryPin[] = [];
       for (const story of data) {
-        // Find published version
         if (story.status !== 'published') continue;
-        const publishedVersion = story.story_versions?.find((v: any) => v.status === 'published');
-        if (!publishedVersion) continue;
         
+        const publishedVersions = story.story_versions?.filter((v: any) => v.status === 'published') || [];
+        if (publishedVersions.length === 0) continue;
+        
+        // Prioritize the version that actually has assets ready, otherwise fallback to the first one
+        const publishedVersion = publishedVersions.find((v: any) => v.asset_status === 'ready') || publishedVersions[0];
+
         // Asumsi kecepatan baca rata-rata 200 kata per menit
         const wordCount = publishedVersion.body?.split(/\s+/).length || 0;
         const duration = Math.max(1, Math.ceil(wordCount / 200));
