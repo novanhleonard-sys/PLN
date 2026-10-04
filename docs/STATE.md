@@ -17,6 +17,7 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B11 Kelompok Daerah | **selesai** | b11-done | Dynamic region groups untuk gaya AI dan filter (Migrasi dari ENUM). |
 | B12 Audit Review | **selesai** | b12-done | Audit penuh & perbaikan guardrail, auth bypass, dan migrasi Gemini. |
 | B14 AI Worker Overhaul | **selesai** | b14-done | Audit ulang Worker, perbaikan bug kritis, tracking cost, safety guardrail. |
+| B15 Hierarki Daerah | **selesai** | b15-done | Restrukturisasi Kelompok Daerah menjadi 2 tingkat (Besar & Subkelompok), perbaikan UI filter dropdown bertingkat. |
 
 ## Kontrak beku
 
