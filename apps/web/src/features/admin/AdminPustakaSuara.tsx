@@ -8,7 +8,7 @@ import { Toast } from '../../ui/basic/Toast';
 
 export function AdminPustakaSuara() {
   const [sounds, setSounds] = useState<any[]>([]);
-  const { regionGroups } = useRegionGroups();
+  const { regionGroups, parentGroups, subGroups } = useRegionGroups();
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
   
@@ -133,7 +133,13 @@ export function AdminPustakaSuara() {
               onChange={e => setForm({...form, region_group_id: e.target.value})}
             >
               <option value="">Daerah: Global</option>
-              {regionGroups.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
+              {parentGroups.map(p => (
+                <optgroup key={p.id} label={p.name}>
+                  {subGroups.filter(s => s.parent_id === p.id).map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
           

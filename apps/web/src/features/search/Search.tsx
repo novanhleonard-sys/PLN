@@ -66,11 +66,20 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
     return ms;
   }, [stories]);
 
-  const uniqueRegions = useMemo(() => {
-    const regions = new Set<string>();
-    stories.forEach(s => { if (s.region) regions.add(s.region); });
-    return Array.from(regions).sort();
+  const regionTree = useMemo(() => {
+    const tree: Record<string, Set<string>> = {};
+    stories.forEach(s => {
+      if (s.region) {
+        const besar = (s as any).region_besar || 'Lainnya';
+        if (!tree[besar]) tree[besar] = new Set();
+        tree[besar].add(s.region);
+      }
+    });
+    return Object.entries(tree).map(([besar, subs]) => ({ besar, subs: Array.from(subs).sort() })).sort((a,b) => a.besar.localeCompare(b.besar));
   }, [stories]);
+
+  const [isRegionDropdownOpen, setIsRegionDropdownOpen] = useState(false);
+  const [hoveredBesar, setHoveredBesar] = useState<string | null>(null);
 
   const results = useMemo(() => {
     let base: any[] = [];
@@ -161,10 +170,52 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-bold text-stone-500 uppercase">Daerah</label>
-              <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)} className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
-                <option value="">Semua Daerah</option>
-                {uniqueRegions.map(r => (<option key={r} value={r}>{r}</option>))}
-              </select>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
+                  className="w-full flex items-center justify-between bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal"
+                >
+                  <span className="truncate">{filterRegion || 'Semua Daerah'}</span>
+                  <Icon name="ChevronDown" size={16} />
+                </button>
+
+                {isRegionDropdownOpen && (
+                  <div className="absolute top-full mt-1 w-full bg-white border border-stone-200 shadow-xl rounded-xl z-50 py-1">
+                    <div 
+                      className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer"
+                      onClick={() => { setFilterRegion(''); setIsRegionDropdownOpen(false); }}
+                    >
+                      Semua Daerah
+                    </div>
+                    {regionTree.map(rt => (
+                      <div 
+                        key={rt.besar}
+                        className="relative group"
+                        onMouseEnter={() => setHoveredBesar(rt.besar)}
+                        onMouseLeave={() => setHoveredBesar(null)}
+                      >
+                        <div className="px-3 py-2 text-sm hover:bg-stone-50 flex justify-between items-center cursor-default">
+                          <span className="truncate pr-2">{rt.besar}</span>
+                          <Icon name="ChevronRight" size={14} className="text-stone-400 shrink-0" />
+                        </div>
+                        {hoveredBesar === rt.besar && (
+                          <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-stone-200 shadow-xl rounded-xl py-1 max-h-64 overflow-y-auto z-[60]">
+                            {rt.subs.map(sub => (
+                              <div 
+                                key={sub}
+                                className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer"
+                                onClick={() => { setFilterRegion(sub); setIsRegionDropdownOpen(false); }}
+                              >
+                                {sub}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 pt-1">
               <input type="checkbox" id="filter-audio" checked={filterAudio} onChange={(e) => setFilterAudio(e.target.checked)} className="w-4 h-4 text-teal rounded focus:ring-teal cursor-pointer" />

@@ -17,6 +17,7 @@ export interface StoryPin {
   score: number;
   cover?: string;
   region?: string;
+  region_besar?: string;
   versionId?: string;
   versionCount: number;
   dongengReady: boolean;
@@ -31,7 +32,7 @@ export function useStories() {
         .from('stories')
         .select(`
           id, slug, title, type, lat, lng, synopsis, hero_image_path, pin_image_path,
-          tier, status, regions(name, region_group_id, region_groups(name, slug)), story_versions(id, status, asset_status, body, sources, adaptations(status, audio_status))
+          tier, status, regions(name, region_group_id, region_groups(name, slug, parent:parent_id(name))), story_versions(id, status, asset_status, body, sources, adaptations(status, audio_status))
         `);
       if (error) throw error;
       
@@ -63,6 +64,7 @@ export function useStories() {
           pinImage: story.pin_image_path ? supabase.storage.from('story-media').getPublicUrl(story.pin_image_path).data.publicUrl : undefined,
           sources: publishedVersion.sources || [],
           region: Array.isArray(story.regions) ? ((story.regions[0]?.region_groups as any)?.name || story.regions[0]?.name) : ((story.regions as any)?.region_groups?.name || (story.regions as any)?.name),
+          region_besar: Array.isArray(story.regions) ? ((story.regions[0]?.region_groups as any)?.parent?.name) : ((story.regions as any)?.region_groups?.parent?.name),
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
           dongengReady: publishedVersion.adaptations?.some((a: any) => a.audio_status === 'ready') || false,
