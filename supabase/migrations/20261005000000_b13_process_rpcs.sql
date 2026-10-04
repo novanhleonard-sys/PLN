@@ -1,4 +1,4 @@
-﻿-- B13: RPCs for starting AI Process Runs
+-- B13: RPCs for starting AI Process Runs
 
 CREATE OR REPLACE FUNCTION approve_submission_to_version(p_submission_id UUID)
 RETURNS UUID AS $$
@@ -26,7 +26,7 @@ BEGIN
 
     -- Insert version
     INSERT INTO story_versions (story_id, label, sources, contributor_id, body, status)
-    VALUES (v_story_id, v_sub.version_label, v_sub.sources, v_sub.contributor_id, v_sub.body, 'processing')
+    VALUES (v_story_id, v_sub.version_label, v_sub.sources, v_sub.user_id, v_sub.body, 'processing')
     RETURNING id INTO v_version_id;
 
     RETURN v_version_id;

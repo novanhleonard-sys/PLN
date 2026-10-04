@@ -16,6 +16,7 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B6 Pengerasan dan evaluasi | **selesai** | b6-done | QA, Evaluasi (Golden set), PWA, Perbaikan Performa |
 | B11 Kelompok Daerah | **selesai** | b11-done | Dynamic region groups untuk gaya AI dan filter (Migrasi dari ENUM). |
 | B12 Audit Review | **selesai** | b12-done | Audit penuh & perbaikan guardrail, auth bypass, dan migrasi Gemini. |
+| B14 AI Worker Overhaul | **selesai** | b14-done | Audit ulang Worker, perbaikan bug kritis, tracking cost, safety guardrail. |
 
 ## Kontrak beku
 
@@ -43,6 +44,7 @@ Versi: **contract-v1**.
 Selesai secara keseluruhan. B6 Pengerasan dan Evaluasi telah rampung. Semua fitur PRD telah selesai diimplementasikan.
 
 **B2_EXT (2026-09-25):** Implementasi AI nyata untuk segment, gambar, dan audio berhasil. Worker menghasilkan scenes+pages via `gemini-3.6-flash` (generateJSON), gambar per scene via `gemini-3.1-flash-image` (interactions.create ? WebP di story-media), audio via `gemini-2.5-flash-preview-tts`. 22/22 gambar ready, 22/22 audio ready untuk 3 cerita seed (Kancil, Si Pitung, Rawa Pening).
+
 
 
 

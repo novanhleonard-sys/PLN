@@ -7,8 +7,8 @@ export class BudgetGuard {
   private storyBudget: number;
 
   constructor(private supabase: SupabaseClient) {
-    this.dailyBudget = parseFloat(process.env.AI_DAILY_BUDGET_USD || '10.0');
-    this.storyBudget = parseFloat(process.env.AI_STORY_BUDGET_USD || '3.0');
+    this.dailyBudget = parseFloat(process.env.AI_DAILY_BUDGET_USD || '5.0');
+    this.storyBudget = parseFloat(process.env.AI_STORY_BUDGET_USD || '1.0');
   }
 
   async checkBudget(storyId?: string): Promise<{ allowed: boolean; reason?: string }> {
