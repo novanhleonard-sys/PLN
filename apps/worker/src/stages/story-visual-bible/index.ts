@@ -69,21 +69,28 @@ Teks Cerita:
 ${version.body}
 `;
 
-  console.log("Generating Story Visual Bible for version", versionId);
-  const bibleData = await registry.generateJSON(bibleSchema, {
-    provider: "gemini",
-    model: "gemini-3.1-flash-lite",
-    prompt: sysPrompt,
-    ref: job.id,
-    stage: "story-visual-bible"
-  });
+  // Checkpoint 1: Visual Bible & Plans
+  let bibleRecord: any;
+  const { data: existingBible } = await ctx.supabase.from("story_visual_bibles").select("*").eq("version_id", versionId).maybeSingle();
 
-  // Generate scene plans separately, explicitly listing each scene idx from DB
-  console.log("Generating scene plans for", scenes.length, "scenes");
-  const planData = await registry.generateJSON(scenePlanSchema, {
-    provider: "gemini",
-    model: "gemini-3.1-flash-lite",
-    prompt: `Anda adalah Art Director. Untuk setiap scene berikut, tentukan characters, locations, props yang muncul, dan narrative_focus visual.
+  if (existingBible) {
+    console.log("Visual Bible already exists, skipping generation 1 & 2");
+    bibleRecord = existingBible;
+  } else {
+    console.log("Generating Story Visual Bible for version", versionId);
+    const bibleData = await registry.generateJSON(bibleSchema, {
+      provider: "gemini",
+      model: "gemini-3.1-flash-lite",
+      prompt: sysPrompt,
+      ref: job.id,
+      stage: "story-visual-bible"
+    });
+
+    console.log("Generating scene plans for", scenes.length, "scenes");
+    const planData = await registry.generateJSON(scenePlanSchema, {
+      provider: "gemini",
+      model: "gemini-3.1-flash-lite",
+      prompt: `Anda adalah Art Director. Untuk setiap scene berikut, tentukan characters, locations, props yang muncul, dan narrative_focus visual.
 PENTING: Kembalikan tepat ${scenes.length} plans, satu untuk setiap scene_idx di bawah. Jangan tambah atau kurangi.
 
 Karakter yang tersedia: ${bibleData.characters.map((c: any) => c.name).join(", ")}
@@ -92,66 +99,65 @@ Props yang tersedia: ${bibleData.props.map((p: any) => p.name).join(", ")}
 
 Daftar Scene:
 ${sceneListForPrompt}`,
-    ref: job.id,
-    stage: "story-visual-bible"
-  });
+      ref: job.id,
+      stage: "story-visual-bible"
+    });
 
-  // Validate plans cover all scene indices
-  const sceneIdxSet = new Set(scenes.map((s: any) => s.idx));
-  const planIdxSet = new Set(planData.plans.map((p: any) => p.scene_idx));
-  for (const idx of sceneIdxSet) {
-    if (!planIdxSet.has(idx)) {
-      // Fill missing plan with minimal fallback
-      planData.plans.push({
-        scene_idx: idx,
-        narrative_focus: scenes.find((s: any) => s.idx === idx)?.description || "",
-        characters: [],
-        locations: [],
-        props: [],
-        density: "moderate"
-      });
-    }
-  }
-
-  // Idempotency: Delete existing visual bible for this version
-  const { error: delErr } = await ctx.supabase.from("story_visual_bibles").delete().eq("version_id", versionId);
-  if (delErr) throw new Error("Failed to clean up old bible: " + delErr.message);
-
-  const { data: bibleRecord, error: bibleErr } = await ctx.supabase.from("story_visual_bibles").insert({
-    version_id: versionId,
-    overall_direction: bibleData.overall_direction,
-    rendering_style: bibleData.rendering_style,
-    color_palette: bibleData.color_palette,
-    characters: bibleData.characters,
-    locations: bibleData.locations,
-    props: bibleData.props,
-    scene_plans: planData.plans
-  }).select("id").single();
-
-  if (bibleErr) throw new Error("Failed to insert bible: " + bibleErr.message);
-
-  const allEntities: any[] = [];
-  const insertRefs = async (items: any[], type: string) => {
-    for (const item of items) {
-      const { data: refRecord } = await ctx.supabase.from("canonical_references").insert({
-        bible_id: bibleRecord.id,
-        type: type,
-        name: item.name,
-        description: item.description || item.role || "",
-        is_canonical: item.is_canonical || false
-      }).select("id, is_canonical, name").single();
-
-      if (refRecord && refRecord.is_canonical) {
-        allEntities.push(refRecord);
+    const sceneIdxSet = new Set(scenes.map((s: any) => s.idx));
+    const planIdxSet = new Set(planData.plans.map((p: any) => p.scene_idx));
+    for (const idx of sceneIdxSet) {
+      if (!planIdxSet.has(idx)) {
+        planData.plans.push({
+          scene_idx: idx,
+          narrative_focus: scenes.find((s: any) => s.idx === idx)?.description || "",
+          characters: [],
+          locations: [],
+          props: [],
+          density: "moderate"
+        });
       }
     }
-  };
 
-  await insertRefs(bibleData.characters || [], "character");
-  await insertRefs(bibleData.locations || [], "location");
-  await insertRefs(bibleData.props || [], "prop");
+    const { data: insertedBible, error: bibleErr } = await ctx.supabase.from("story_visual_bibles").insert({
+      version_id: versionId,
+      overall_direction: bibleData.overall_direction,
+      rendering_style: bibleData.rendering_style,
+      color_palette: bibleData.color_palette,
+      characters: bibleData.characters,
+      locations: bibleData.locations,
+      props: bibleData.props,
+      scene_plans: planData.plans
+    }).select("id").single();
 
-  if (allEntities.length > 0) {
+    if (bibleErr) throw new Error("Failed to insert bible: " + bibleErr.message);
+    bibleRecord = insertedBible;
+
+    const insertRefs = async (items: any[], type: string) => {
+      for (const item of items) {
+        await ctx.supabase.from("canonical_references").insert({
+          bible_id: bibleRecord.id,
+          type: type,
+          name: item.name,
+          description: item.description || item.role || "",
+          is_canonical: item.is_canonical || false
+        });
+      }
+    };
+    await insertRefs(bibleData.characters || [], "character");
+    await insertRefs(bibleData.locations || [], "location");
+    await insertRefs(bibleData.props || [], "prop");
+  }
+
+  // Fetch canonical refs to plan sheets
+  const { data: allEntities } = await ctx.supabase
+    .from("canonical_references")
+    .select("id, name, is_canonical, master_sheet_id")
+    .eq("bible_id", bibleRecord.id)
+    .eq("is_canonical", true);
+
+  const unassignedEntities = (allEntities || []).filter(e => !e.master_sheet_id);
+
+  if (unassignedEntities.length > 0) {
     const plannerSchema = z.object({
       master_sheets: z.array(z.object({
         rows: z.number().max(3),
@@ -164,7 +170,7 @@ ${sceneListForPrompt}`,
       }))
     });
 
-    const entitiesListStr = allEntities.map(e => `- ${e.name} (id: ${e.id})`).join("\n");
+    const entitiesListStr = unassignedEntities.map(e => `- ${e.name} (id: ${e.id})`).join("\n");
     const plannerPrompt = `Plan canonical master sheets for these entities:\n${entitiesListStr}\n\nRules:\n- preferredMaxEntitiesPerSheet = 6, absoluteMaxEntitiesPerSheet = 9\n- Return array of master_sheets with rows and columns (e.g., 2x3, 1x3, 2x2).\n- Assign each entity to a specific row and column in one of the sheets (0-indexed).\n- Group semantically (e.g. main characters together).`;
 
     const sheetPlanData = await registry.generateJSON(plannerSchema, {

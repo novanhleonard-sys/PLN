@@ -86,7 +86,8 @@ Deskripsi Lokasi: ${locDesc}
 Deskripsi Properti: ${propDesc}
 Deskripsi Scene Aktual: ${scene.description}
 ${job.custom_prompt ? `\nInstruksi Revisi Tambahan dari Admin: ${job.custom_prompt}\n` : ''}
-Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter/lokasi/prop gambar yang diberikan (bila ada) sebagai panduan utama. Deskripsi teks di atas digunakan untuk hal-hal yang tidak memiliki referensi gambar spesifik agar tetap konsisten. Pastikan tidak ada TEKS, TULISAN, ATAU LABEL apapun yang tergambar di dalam ilustrasi (termasuk pada background).`;
+Aturan: Patuhi Rendering Style dan Overall Direction. Gunakan referensi karakter/lokasi/prop gambar yang diberikan (bila ada) sebagai panduan utama. Deskripsi teks di atas digunakan untuk hal-hal yang tidak memiliki referensi gambar spesifik agar tetap konsisten. 
+PENTING: Jangan tambahkan TEKS AI, LABEL, ATAU CAPTION apapun ke dalam ilustrasi. Teks (seperti tulisan pada papan nama atau surat) HANYA diizinkan jika memang diminta secara spesifik di dalam Deskripsi Scene Aktual atau Custom Prompt.`;
 
   console.log("Generating scene-image for", (scene.version?.story as any)?.title, "idx", scene.idx, job.custom_prompt ? "[CUSTOM PROMPT]" : "");
 

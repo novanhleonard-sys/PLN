@@ -1,4 +1,4 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { ProviderRegistry } from "../../providers/registry";
 
 export const adaptStage = async (ctx: any, job: any, registry: ProviderRegistry) => {
@@ -149,6 +149,7 @@ ${originalPagesJSON}
       ref_type: "adaptation",
       ref_id: adaptation.id,
       process_run_id: job.process_run_id,
+      status: "queued",
       idempotency_key: `adapt_check_${job.process_run_id || ""}_${adaptation.id}`
   });
 

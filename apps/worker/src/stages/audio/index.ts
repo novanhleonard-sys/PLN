@@ -25,13 +25,16 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
   if (regions) regionGroupId = regions.region_group_id;
 
   // Get persona
-  let { data: persona, error: personaErr } = await ctx.supabase
+  // Get persona
+  const { data: personaData, error: personaErr } = await ctx.supabase
     .from("voice_personas")
     .select("*")
     .eq("story_type", page.adaptation.version.story.type)
     .eq("region_group_id", regionGroupId)
     .limit(1)
     .maybeSingle();
+    
+  let persona = personaData;
     
   if (!persona) {
     const { data: fb } = await ctx.supabase.from("voice_personas").select("*").limit(1).single();
@@ -74,7 +77,7 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
   try {
     // Convert to Opus using ffmpeg
     // Gemini returns audio/L16;codec=pcm;rate=24000 (16-bit PCM, 24kHz, mono)
-    await execAsync(`ffmpeg -y -i ${tempWav} -c:a libopus -b:a 32k ${tempOgg}`);
+    await execAsync(`ffmpeg -y -i "${tempWav}" -c:a libopus -b:a 32k "${tempOgg}"`, { timeout: 30000 });
 
     // Upload to Supabase Storage
     const oggBuffer = fs.readFileSync(tempOgg);

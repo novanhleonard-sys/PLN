@@ -17,10 +17,7 @@ describe('BudgetGuard', () => {
     } as any;
     
     const guard = new BudgetGuard(supabase);
-    const result = await guard.checkBudget();
-    
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('Daily AI budget exceeded');
+    await expect(guard.checkBudget()).rejects.toThrow('Daily AI budget exceeded');
   });
 
   it('should allow if budget under limit', async () => {

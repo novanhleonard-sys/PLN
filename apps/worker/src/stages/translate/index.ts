@@ -1,4 +1,4 @@
-﻿import { StageContract } from '../../core/runner';
+import { StageContract } from '../../core/runner';
 import { ProviderRegistry } from '../../providers/registry';
 import { z } from 'zod';
 
@@ -83,7 +83,7 @@ Pertahankan jumlah halaman dan idx yang sama persis dengan input.`;
   
   // 5. Call AI
   const result = await registry.generateJSON(TranslateSchema, {
-      ref: job,
+      ref: job.id,
       model: 'gemini-3.1-flash-lite',
       provider: 'gemini',
       stage: 'translate', 

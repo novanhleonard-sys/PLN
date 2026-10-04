@@ -14,7 +14,7 @@ describe('JobRunner Retry Logic', () => {
     
     // Simulate claim_job returning a job that just failed its 1st attempt (so attempts=1 coming from DB)
     supabase.rpc.mockResolvedValue({
-      data: [{ id: '1', kind: 'test_job', attempts: 1 } as Job],
+      data: [{ id: '1', kind: 'test_job', attempts: 0 } as Job],
       error: null
     });
     

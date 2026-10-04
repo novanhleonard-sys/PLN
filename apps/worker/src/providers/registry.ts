@@ -1,4 +1,4 @@
-﻿import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { calculateCost } from '../../../../packages/shared/src/ai/prices';
 import { BudgetGuard } from '../core/budget';
@@ -33,10 +33,7 @@ export class ProviderRegistry {
   }
 
   async generateJSON<T>(schema: z.Schema<T>, opts: GenerateOptions): Promise<T> {
-    const budgetCheck = await this.budgetGuard.checkBudget(opts.ref);
-    if (!budgetCheck.allowed) {
-      throw new Error('BUDGET_EXCEEDED: ' + budgetCheck.reason);
-    }
+    await this.budgetGuard.checkBudget(opts.ref);
 
     const provider = this.providers.get(opts.provider);
     if (!provider) throw new Error('Provider not found: ' + opts.provider);
@@ -57,10 +54,7 @@ export class ProviderRegistry {
   }
 
   async generateText(opts: GenerateOptions): Promise<string> {
-    const budgetCheck = await this.budgetGuard.checkBudget(opts.ref);
-    if (!budgetCheck.allowed) {
-      throw new Error('BUDGET_EXCEEDED: ' + budgetCheck.reason);
-    }
+    await this.budgetGuard.checkBudget(opts.ref);
 
     const provider = this.providers.get(opts.provider);
     if (!provider) throw new Error('Provider not found: ' + opts.provider);
@@ -81,10 +75,7 @@ export class ProviderRegistry {
   }
 
   async generateAudio(opts: GenerateOptions & { voiceName: string }): Promise<string> {
-    const budgetCheck = await this.budgetGuard.checkBudget(opts.ref);
-    if (!budgetCheck.allowed) {
-      throw new Error('BUDGET_EXCEEDED: ' + budgetCheck.reason);
-    }
+    await this.budgetGuard.checkBudget(opts.ref);
 
     const provider = this.providers.get(opts.provider);
     if (!provider) throw new Error('Provider not found: ' + opts.provider);
@@ -106,10 +97,7 @@ export class ProviderRegistry {
   }
 
   async generateImage(opts: GenerateOptions): Promise<string> {
-    const budgetCheck = await this.budgetGuard.checkBudget(opts.ref);
-    if (!budgetCheck.allowed) {
-      throw new Error('BUDGET_EXCEEDED: ' + budgetCheck.reason);
-    }
+    await this.budgetGuard.checkBudget(opts.ref);
 
     const provider = this.providers.get(opts.provider);
     if (!provider) throw new Error('Provider not found: ' + opts.provider);
