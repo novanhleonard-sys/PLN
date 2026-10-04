@@ -5,10 +5,11 @@ import { Button } from '../../ui/basic/Button';
 import { Icon } from '../../ui/basic/Icon';
 import { FileUploader } from '../../ui/basic/FileUploader';
 import { Toast } from '../../ui/basic/Toast';
+import { MultiRegionSelect } from './MultiRegionSelect';
 
 export function AdminPustakaSuara() {
   const [sounds, setSounds] = useState<any[]>([]);
-  const { regionGroups, parentGroups, subGroups } = useRegionGroups();
+  const { parentGroups, subGroups } = useRegionGroups();
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
   
@@ -25,7 +26,7 @@ export function AdminPustakaSuara() {
     region: '',
     mood: '',
     story_type: '',
-    region_group_id: ''
+    region_group_ids: [] as string[]
   };
 
   const [form, setForm] = useState(defaultForm);
@@ -60,7 +61,7 @@ export function AdminPustakaSuara() {
         region: form.region || null,
         mood: form.mood || null,
         story_type: form.story_type || null,
-        region_group_id: form.region_group_id || null,
+        region_group_ids: form.region_group_ids,
       };
 
       if (form.id) {
@@ -84,6 +85,7 @@ export function AdminPustakaSuara() {
       ...sound,
       region: sound.region || '',
       mood: sound.mood || '',
+      region_group_ids: sound.region_group_ids || [],
     });
     formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -127,20 +129,10 @@ export function AdminPustakaSuara() {
               <option value="fabel">Fabel</option>
               <option value="dongeng">Dongeng</option>
             </select>
-            <select 
-              className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" 
-              value={form.region_group_id || ''} 
-              onChange={e => setForm({...form, region_group_id: e.target.value})}
-            >
-              <option value="">Daerah: Global</option>
-              {parentGroups.map(p => (
-                <optgroup key={p.id} label={p.name}>
-                  {subGroups.filter(s => s.parent_id === p.id).map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <MultiRegionSelect 
+              value={form.region_group_ids} 
+              onChange={(val) => setForm({ ...form, region_group_ids: val })} 
+            />
           </div>
           
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -244,7 +236,11 @@ export function AdminPustakaSuara() {
               </div>
               <div className="flex flex-wrap gap-1 mb-2">
                 {item.story_type && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded uppercase">{item.story_type}</span>}
-                {item.region_group_id && <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">{regionGroups.find((g: any) => g.id === item.region_group_id)?.name || 'DAERAH'}</span>}
+                {(item.region_group_ids || []).map((id: string) => (
+                  <span key={id} className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">
+                    {subGroups.find(g => g.id === id)?.name || parentGroups.find(g => g.id === id)?.name || 'DAERAH'}
+                  </span>
+                ))}
                 {item.region && <span className="text-[10px] bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded uppercase">{item.region}</span>}
                 {item.mood && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded uppercase">{item.mood}</span>}
               </div>

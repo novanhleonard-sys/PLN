@@ -26,13 +26,18 @@ export const audioStage = async (ctx: any, job: any, registry?: any) => {
 
   // Get persona
   // Get persona
-  const { data: personaData, error: personaErr } = await ctx.supabase
+  let personaQuery = ctx.supabase
     .from("voice_personas")
     .select("*")
-    .eq("story_type", page.adaptation.version.story.type)
-    .eq("region_group_id", regionGroupId)
-    .limit(1)
-    .maybeSingle();
+    .eq("story_type", page.adaptation.version.story.type);
+    
+  if (regionGroupId) {
+    personaQuery = personaQuery.contains("region_group_ids", [regionGroupId]);
+  } else {
+    personaQuery = personaQuery.eq("region_group_ids", "{}");
+  }
+
+  const { data: personaData, error: personaErr } = await personaQuery.limit(1).maybeSingle();
     
   let persona = personaData;
     

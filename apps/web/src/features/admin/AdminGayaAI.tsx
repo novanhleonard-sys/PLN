@@ -7,9 +7,10 @@ import { Toast } from '../../ui/basic/Toast';
 import { FileUploader } from '../../ui/basic/FileUploader';
 import { Icon } from '../../ui/basic/Icon';
 import { Modal } from '../../ui/layers/Modal';
+import { MultiRegionSelect } from './MultiRegionSelect';
 
-type StyleConfig = { id?: string; name: string; story_type: string; region_group_id: string | null; descriptor: string; reference_paths: string[]; };
-type VoicePersona = { id?: string; name: string; story_type: string; region_group_id: string | null; voice_name: string; style_prompt: string; sample_path: string; };
+type StyleConfig = { id?: string; name: string; story_type: string; region_group_ids: string[]; descriptor: string; reference_paths: string[]; };
+type VoicePersona = { id?: string; name: string; story_type: string; region_group_ids: string[]; voice_name: string; style_prompt: string; sample_path: string; };
 type UmumConfig = { prompt: string; references: string[] };
 
 const SCENE_TEMPLATES = [
@@ -23,14 +24,14 @@ const SCENE_TEMPLATES = [
 
 export function AdminGayaAI() {
   const queryClient = useQueryClient();
-  const { regionGroups, parentGroups, subGroups } = useRegionGroups();
+  const { parentGroups, subGroups } = useRegionGroups();
   const [toast, setToast] = useState('');
   const [tab, setTab] = useState<'umum' | 'styles' | 'voices'>('umum');
   const formRef = useRef<HTMLDivElement>(null);
 
   // States
-  const [styleForm, setStyleForm] = useState<StyleConfig>({ name: '', story_type: 'legenda', region_group_id: '', descriptor: '', reference_paths: [] });
-  const [voiceForm, setVoiceForm] = useState<VoicePersona>({ name: '', story_type: 'legenda', region_group_id: '', voice_name: '', style_prompt: '', sample_path: '' });
+  const [styleForm, setStyleForm] = useState<StyleConfig>({ name: '', story_type: 'legenda', region_group_ids: [], descriptor: '', reference_paths: [] });
+  const [voiceForm, setVoiceForm] = useState<VoicePersona>({ name: '', story_type: 'legenda', region_group_ids: [], voice_name: '', style_prompt: '', sample_path: '' });
   
   // Umum States
   const [umumGambarForm, setUmumGambarForm] = useState<UmumConfig>({ prompt: '', references: [] });
@@ -66,7 +67,7 @@ export function AdminGayaAI() {
   // Mutations (Styles)
   const saveStyle = useMutation({
     mutationFn: async (p: StyleConfig) => {
-      const payload = { name: p.name, story_type: p.story_type, region_group_id: p.region_group_id || null, descriptor: p.descriptor, reference_paths: p.reference_paths, palette: {} };
+      const payload = { name: p.name, story_type: p.story_type, region_group_ids: p.region_group_ids, descriptor: p.descriptor, reference_paths: p.reference_paths, palette: {} };
       if (p.id) await supabase.from('style_configs').update(payload).eq('id', p.id).throwOnError();
       else await supabase.from('style_configs').insert(payload).throwOnError();
     },
@@ -77,7 +78,7 @@ export function AdminGayaAI() {
   // Mutations (Voices)
   const saveVoice = useMutation({
     mutationFn: async (p: VoicePersona) => {
-      const payload = { name: p.name, story_type: p.story_type, region_group_id: p.region_group_id || null, voice_name: p.voice_name, style_prompt: p.style_prompt, sample_path: p.sample_path }; 
+      const payload = { name: p.name, story_type: p.story_type, region_group_ids: p.region_group_ids, voice_name: p.voice_name, style_prompt: p.style_prompt, sample_path: p.sample_path }; 
       if (p.id) await supabase.from('voice_personas').update(payload).eq('id', p.id).throwOnError();
       else await supabase.from('voice_personas').insert(payload).throwOnError();
     },
@@ -110,8 +111,8 @@ export function AdminGayaAI() {
     onSuccess: () => { setToast('Tes diprioritaskan! Pantau di tab Konten.'); setTestModal(null); }
   });
 
-  const resetStyle = () => setStyleForm({ name: '', story_type: 'legenda', region_group_id: '', descriptor: '', reference_paths: [] });
-  const resetVoice = () => setVoiceForm({ name: '', story_type: 'legenda', region_group_id: '', voice_name: '', style_prompt: '', sample_path: '' });
+  const resetStyle = () => setStyleForm({ name: '', story_type: 'legenda', region_group_ids: [], descriptor: '', reference_paths: [] });
+  const resetVoice = () => setVoiceForm({ name: '', story_type: 'legenda', region_group_ids: [], voice_name: '', style_prompt: '', sample_path: '' });
   const getUrl = (path: string) => `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/admin-assets/${path}`;
 
   return (
@@ -207,7 +208,7 @@ export function AdminGayaAI() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-2 md:col-span-2">{styleForm.id ? 'Edit Aturan Spesifik Gambar' : 'Buat Aturan Spesifik Gambar'}</h3>
               <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Aturan (Kartun Cerah)" value={styleForm.name} onChange={e => setStyleForm({...styleForm, name: e.target.value})} />
-              <div className="grid grid-cols-2 gap-2"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.story_type} onChange={e => setStyleForm({...styleForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.region_group_id || ''} onChange={e => setStyleForm({...styleForm, region_group_id: e.target.value})}><option value="">Daerah: Global</option>{parentGroups.map(p => ( <optgroup key={p.id} label={p.name}> {subGroups.filter(s => s.parent_id === p.id).map(s => ( <option key={s.id} value={s.id}>{s.name}</option> ))} </optgroup> ))}</select></div><textarea className="md:col-span-2 px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik (Aturan tambahan khusus genre/daerah ini...)" value={styleForm.descriptor} onChange={e => setStyleForm({...styleForm, descriptor: e.target.value})} />
+              <div className="grid grid-cols-2 gap-2"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={styleForm.story_type} onChange={e => setStyleForm({...styleForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><MultiRegionSelect value={styleForm.region_group_ids} onChange={val => setStyleForm({...styleForm, region_group_ids: val})} /></div><textarea className="md:col-span-2 px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik (Aturan tambahan khusus genre/daerah ini...)" value={styleForm.descriptor} onChange={e => setStyleForm({...styleForm, descriptor: e.target.value})} />
               
               <div className="md:col-span-2 flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
                 <div className="flex justify-between items-center"><span className="text-sm font-bold text-stone-700">Gambar Referensi Tambahan</span><div className="w-32"><FileUploader bucket="admin-assets" folder="styles" accept="image/*" multiple label="Unggah" onUploadSuccess={p => setStyleForm(s => ({...s, reference_paths: [...s.reference_paths, ...p]}))} /></div></div>
@@ -237,7 +238,7 @@ export function AdminGayaAI() {
                 <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (Bapak Tua)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
                 <div className="relative"><input className="w-full px-4 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-sm outline-none text-stone-500 font-mono" placeholder="Voice ID (Otomatis)" value={voiceForm.voice_name} readOnly /><span className="absolute right-3 top-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-bold">AUTO</span></div>
               </div>
-              <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.region_group_id || ''} onChange={e => setVoiceForm({...voiceForm, region_group_id: e.target.value})}><option value="">Daerah: Global</option>{parentGroups.map(p => ( <optgroup key={p.id} label={p.name}> {subGroups.filter(s => s.parent_id === p.id).map(s => ( <option key={s.id} value={s.id}>{s.name}</option> ))} </optgroup> ))}</select></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik suara (Gaya bicara, aksen, dsb...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
+              <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><MultiRegionSelect value={voiceForm.region_group_ids} onChange={val => setVoiceForm({...voiceForm, region_group_ids: val})} /></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik suara (Gaya bicara, aksen, dsb...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
               
               <div className="flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
                 <div className="flex justify-between items-center"><span className="text-sm font-bold text-stone-700">Sampel Audio (MP3) Tambahan</span><div className="w-32"><FileUploader bucket="admin-assets" folder="voices" accept="audio/*" label="Unggah" isAudio onUploadSuccess={p => setVoiceForm(s => ({...s, sample_path: p[0]}))} /></div></div>
@@ -264,7 +265,11 @@ export function AdminGayaAI() {
                 <div className="flex justify-between mb-1">
                   <h4 className="font-bold text-stone-800">{item.name}</h4>
                   <span className="text-xs bg-stone-100 px-2 py-0.5 rounded text-stone-600 uppercase">{tab === 'styles' ? item.story_type : item.story_type}</span>
-                  {item.region_group_id && <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded uppercase">{regionGroups.find((g: any) => g.id === item.region_group_id)?.name || 'DAERAH'}</span>}
+                  {(item.region_group_ids || []).map((id: string) => (
+                    <span key={id} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded uppercase">
+                      {subGroups.find(g => g.id === id)?.name || parentGroups.find(g => g.id === id)?.name || 'DAERAH'}
+                    </span>
+                  ))}
                 </div>
                 <p className="text-xs text-stone-500 line-clamp-2">{tab === 'styles' ? item.descriptor : item.style_prompt}</p>
               </div>

@@ -19,16 +19,16 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
   const [isExpanded, setIsExpanded] = useState(false);
   
   const [filterType, setFilterType] = useState<string>('');
-  const [filterRegion, setFilterRegion] = useState<string>('');
+  const [filterRegions, setFilterRegions] = useState<string[]>([]);
   const [filterAudio, setFilterAudio] = useState<boolean>(false);
 
   const activeStories = useMemo(() => {
     let base = stories;
     if (filterType) base = base.filter(s => s.type?.toLowerCase() === filterType.toLowerCase());
-    if (filterRegion) base = base.filter(s => s.region === filterRegion);
+    if (filterRegions.length > 0) base = base.filter(s => s.region && filterRegions.includes(s.region));
     if (filterAudio) base = base.filter(s => s.dongengReady === true);
     return base;
-  }, [stories, filterType, filterRegion, filterAudio]);
+  }, [stories, filterType, filterRegions, filterAudio]);
 
   useEffect(() => {
     if (onFilterChange) onFilterChange(activeStories);
@@ -85,18 +85,18 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
     let base: any[] = [];
     if (query.trim()) {
       base = miniSearch.search(query);
-    } else if (filterType || filterRegion || filterAudio) {
+    } else if (filterType || filterRegions.length > 0 || filterAudio) {
       base = stories.map(s => ({ id: s.id, title: s.title, region: s.region, type: s.type, dongengReady: s.dongengReady }));
     } else {
       return [];
     }
     if (filterType) base = base.filter(r => r.type?.toLowerCase() === filterType.toLowerCase());
-    if (filterRegion) base = base.filter(r => r.region === filterRegion);
+    if (filterRegions.length > 0) base = base.filter(r => r.region && filterRegions.includes(r.region));
     if (filterAudio) base = base.filter(r => r.dongengReady === true);
     return base;
-  }, [query, miniSearch, filterType, filterRegion, filterAudio, stories]);
+  }, [query, miniSearch, filterType, filterRegions, filterAudio, stories]);
 
-  const isFilterActive = !!filterType || !!filterRegion || filterAudio;
+  const isFilterActive = !!filterType || filterRegions.length > 0 || filterAudio;
   const showResults = (query.trim().length > 0 || isFilterActive) && !showFilters;
 
   return (
@@ -175,16 +175,21 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
                   onClick={() => setIsRegionDropdownOpen(!isRegionDropdownOpen)}
                   className="w-full flex items-center justify-between bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal"
                 >
-                  <span className="truncate">{filterRegion || 'Semua Daerah'}</span>
+                  <span className="truncate">
+                    {filterRegions.length === 0 ? 'Semua Daerah' : `${filterRegions.length} Daerah Terpilih`}
+                  </span>
                   <Icon name="ChevronDown" size={16} />
                 </button>
 
                 {isRegionDropdownOpen && (
                   <div className="absolute top-full mt-1 w-full bg-white border border-stone-200 shadow-xl rounded-xl z-50 py-1">
                     <div 
-                      className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer"
-                      onClick={() => { setFilterRegion(''); setIsRegionDropdownOpen(false); }}
+                      className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer flex items-center gap-2"
+                      onClick={() => { setFilterRegions([]); setIsRegionDropdownOpen(false); }}
                     >
+                      <div className={`w-4 h-4 rounded border flex justify-center items-center ${filterRegions.length === 0 ? 'bg-teal border-teal text-white' : 'border-stone-300'}`}>
+                        {filterRegions.length === 0 && <Icon name="Check" size={12} />}
+                      </div>
                       Semua Daerah
                     </div>
                     {regionTree.map(rt => (
@@ -200,15 +205,28 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
                         </div>
                         {hoveredBesar === rt.besar && (
                           <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-stone-200 shadow-xl rounded-xl py-1 max-h-64 overflow-y-auto z-[60]">
-                            {rt.subs.map(sub => (
-                              <div 
-                                key={sub}
-                                className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer"
-                                onClick={() => { setFilterRegion(sub); setIsRegionDropdownOpen(false); }}
-                              >
-                                {sub}
-                              </div>
-                            ))}
+                            {rt.subs.map(sub => {
+                              const isChecked = filterRegions.includes(sub);
+                              return (
+                                <div 
+                                  key={sub}
+                                  className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer flex items-center gap-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isChecked) {
+                                      setFilterRegions(filterRegions.filter(r => r !== sub));
+                                    } else {
+                                      setFilterRegions([...filterRegions, sub]);
+                                    }
+                                  }}
+                                >
+                                  <div className={`w-4 h-4 rounded border flex justify-center items-center ${isChecked ? 'bg-teal border-teal text-white' : 'border-stone-300'}`}>
+                                    {isChecked && <Icon name="Check" size={12} />}
+                                  </div>
+                                  {sub}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
@@ -242,7 +260,7 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
                   onClick={() => {
                     const story = stories.find(s => s.id === res.id);
                     if (story) { onSelectStory(story); if (onSelectLocation) onSelectLocation([story.lng, story.lat]); }
-                    setQuery(''); setFilterType(''); setFilterRegion(''); setFilterAudio(false); setIsExpanded(false);
+                    setQuery(''); setFilterType(''); setFilterRegions([]); setFilterAudio(false); setIsExpanded(false);
                   }}
                 >
                   <div className="bg-teal/20 p-2 rounded-full text-teal shrink-0"><MapPin size={16} /></div>
