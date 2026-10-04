@@ -192,45 +192,67 @@ export function Search({ stories, onSelectStory, onSelectLocation, onFilterChang
                       </div>
                       Semua Daerah
                     </div>
-                    {regionTree.map(rt => (
-                      <div 
-                        key={rt.besar}
-                        className="relative group"
-                        onMouseEnter={() => setHoveredBesar(rt.besar)}
-                        onMouseLeave={() => setHoveredBesar(null)}
-                      >
-                        <div className="px-3 py-2 text-sm hover:bg-stone-50 flex justify-between items-center cursor-default">
-                          <span className="truncate pr-2">{rt.besar}</span>
-                          <Icon name="ChevronRight" size={14} className="text-stone-400 shrink-0" />
-                        </div>
-                        {hoveredBesar === rt.besar && (
-                          <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-stone-200 shadow-xl rounded-xl py-1 max-h-64 overflow-y-auto z-[60]">
-                            {rt.subs.map(sub => {
-                              const isChecked = filterRegions.includes(sub);
-                              return (
-                                <div 
-                                  key={sub}
-                                  className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer flex items-center gap-2"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isChecked) {
-                                      setFilterRegions(filterRegions.filter(r => r !== sub));
-                                    } else {
-                                      setFilterRegions([...filterRegions, sub]);
-                                    }
-                                  }}
-                                >
-                                  <div className={`w-4 h-4 rounded border flex justify-center items-center ${isChecked ? 'bg-teal border-teal text-white' : 'border-stone-300'}`}>
-                                    {isChecked && <Icon name="Check" size={12} />}
-                                  </div>
-                                  {sub}
-                                </div>
-                              );
-                            })}
+                    {regionTree.map(rt => {
+                      const allSelected = rt.subs.length > 0 && rt.subs.every(s => filterRegions.includes(s));
+                      const someSelected = rt.subs.some(s => filterRegions.includes(s));
+                      
+                      return (
+                        <div 
+                          key={rt.besar}
+                          className="relative group"
+                          onMouseEnter={() => setHoveredBesar(rt.besar)}
+                          onMouseLeave={() => setHoveredBesar(null)}
+                        >
+                          <div 
+                            className="px-3 py-2 text-sm hover:bg-stone-50 flex justify-between items-center cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (allSelected) {
+                                setFilterRegions(filterRegions.filter(r => !rt.subs.includes(r)));
+                              } else {
+                                const newValues = new Set([...filterRegions, ...rt.subs]);
+                                setFilterRegions(Array.from(newValues));
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-2 truncate pr-2">
+                              <div className={`w-4 h-4 rounded border flex justify-center items-center shrink-0 ${allSelected ? 'bg-teal border-teal text-white' : someSelected ? 'bg-teal/20 border-teal text-teal' : 'border-stone-300'}`}>
+                                {allSelected && <Icon name="Check" size={12} />}
+                                {!allSelected && someSelected && <div className="w-2 h-0.5 bg-teal rounded-full" />}
+                              </div>
+                              <span className="truncate">{rt.besar}</span>
+                            </div>
+                            <Icon name="ChevronRight" size={14} className="text-stone-400 shrink-0" />
                           </div>
-                        )}
-                      </div>
-                    ))}
+                          {hoveredBesar === rt.besar && (
+                            <div className="absolute left-full top-0 ml-1 w-48 bg-white border border-stone-200 shadow-xl rounded-xl py-1 max-h-64 overflow-y-auto z-[60]">
+                              {rt.subs.map(sub => {
+                                const isChecked = filterRegions.includes(sub);
+                                return (
+                                  <div 
+                                    key={sub}
+                                    className="px-3 py-2 text-sm hover:bg-teal-50 cursor-pointer flex items-center gap-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (isChecked) {
+                                        setFilterRegions(filterRegions.filter(r => r !== sub));
+                                      } else {
+                                        setFilterRegions([...filterRegions, sub]);
+                                      }
+                                    }}
+                                  >
+                                    <div className={`w-4 h-4 rounded border flex justify-center items-center ${isChecked ? 'bg-teal border-teal text-white' : 'border-stone-300'}`}>
+                                      {isChecked && <Icon name="Check" size={12} />}
+                                    </div>
+                                    {sub}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

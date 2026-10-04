@@ -68,33 +68,55 @@ export function MultiRegionSelect({ value = [], onChange, placeholder = 'Daerah:
             Semua Daerah (Global)
           </div>
 
-          {parentGroups.map(p => (
-            <div key={p.id} className="mt-2">
-              <div className="px-4 py-1 text-xs font-bold text-stone-400 uppercase tracking-wider bg-stone-50">
-                {p.name}
+          {parentGroups.map(p => {
+            const children = subGroups.filter(s => s.parent_id === p.id);
+            const allSelected = children.length > 0 && children.every(s => value.includes(s.id));
+            const someSelected = children.some(s => value.includes(s.id));
+
+            return (
+              <div key={p.id} className="mt-2">
+                <div 
+                  className="px-4 py-2 text-xs font-bold text-stone-600 uppercase tracking-wider bg-stone-50 hover:bg-stone-100 cursor-pointer flex items-center gap-2 border-y border-stone-100"
+                  onClick={() => {
+                    if (allSelected) {
+                      // Deselect all
+                      onChange(value.filter(v => !children.some(c => c.id === v)));
+                    } else {
+                      // Select all
+                      const newValues = new Set([...value, ...children.map(c => c.id)]);
+                      onChange(Array.from(newValues));
+                    }
+                  }}
+                >
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center ${allSelected ? 'bg-teal border-teal text-white' : someSelected ? 'bg-teal/20 border-teal text-teal' : 'border-stone-300 bg-white'}`}>
+                    {allSelected && <Icon name="Check" size={12} />}
+                    {!allSelected && someSelected && <div className="w-2 h-0.5 bg-teal rounded-full" />}
+                  </div>
+                  {p.name}
+                </div>
+                {children.map(s => {
+                  const isSelected = value.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className="px-4 py-2 text-sm cursor-pointer hover:bg-teal-50 flex items-center gap-2 text-stone-700"
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={isSelected}
+                        onChange={() => toggleRegion(s.id)}
+                      />
+                      <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? 'bg-teal border-teal text-white' : 'border-stone-300'}`}>
+                        {isSelected && <Icon name="Check" size={12} />}
+                      </div>
+                      {s.name}
+                    </label>
+                  );
+                })}
               </div>
-              {subGroups.filter(s => s.parent_id === p.id).map(s => {
-                const isSelected = value.includes(s.id);
-                return (
-                  <label
-                    key={s.id}
-                    className="px-4 py-2 text-sm cursor-pointer hover:bg-teal-50 flex items-center gap-2 text-stone-700"
-                  >
-                    <input
-                      type="checkbox"
-                      className="hidden"
-                      checked={isSelected}
-                      onChange={() => toggleRegion(s.id)}
-                    />
-                    <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? 'bg-teal border-teal text-white' : 'border-stone-300'}`}>
-                      {isSelected && <Icon name="Check" size={12} />}
-                    </div>
-                    {s.name}
-                  </label>
-                );
-              })}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
