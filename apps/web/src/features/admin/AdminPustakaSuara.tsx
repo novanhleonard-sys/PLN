@@ -25,7 +25,7 @@ export function AdminPustakaSuara() {
     region: '',
     mood: '',
     story_type: '',
-    region_group: ''
+    region_group_id: ''
   };
 
   const [form, setForm] = useState(defaultForm);
@@ -60,7 +60,7 @@ export function AdminPustakaSuara() {
         region: form.region || null,
         mood: form.mood || null,
         story_type: form.story_type || null,
-        region_group: form.region_group || null,
+        region_group_id: form.region_group_id || null,
       };
 
       if (form.id) {
@@ -129,11 +129,11 @@ export function AdminPustakaSuara() {
             </select>
             <select 
               className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" 
-              value={form.region_group || ''} 
-              onChange={e => setForm({...form, region_group: e.target.value})}
+              value={form.region_group_id || ''} 
+              onChange={e => setForm({...form, region_group_id: e.target.value})}
             >
               <option value="">Daerah: Global</option>
-              {regionGroups.map(g => (<option key={g.id} value={g.slug}>{g.name}</option>))}
+              {regionGroups.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
             </select>
           </div>
           
@@ -238,7 +238,7 @@ export function AdminPustakaSuara() {
               </div>
               <div className="flex flex-wrap gap-1 mb-2">
                 {item.story_type && <span className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded uppercase">{item.story_type}</span>}
-                {item.region_group && <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">{item.region_group}</span>}
+                {item.region_group_id && <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded uppercase">{regionGroups.find((g: any) => g.id === item.region_group_id)?.name || 'DAERAH'}</span>}
                 {item.region && <span className="text-[10px] bg-orange-50 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded uppercase">{item.region}</span>}
                 {item.mood && <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.5 rounded uppercase">{item.mood}</span>}
               </div>
