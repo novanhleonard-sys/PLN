@@ -245,23 +245,46 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                   <MapLocationPicker 
                     lat={formData.lat}
                     lng={formData.lng}
-                    onChange={(lat, lng, placeName) => {
+                    onChange={(lat, lng, placeName, address) => {
                       handleChange('lat', lat);
                       handleChange('lng', lng);
                       if (placeName) {
                         setDetectedRegion(placeName);
                         if (regions.length > 0) {
-                          const p = placeName.toLowerCase();
-                          // Cari kabupaten/kota lebih dulu agar lebih spesifik
-                          const specific = regions.find(r => {
-                            if (r.level !== 'kota' && r.level !== 'kabupaten') return false;
-                            const cleanName = r.name.toLowerCase().replace(/^(kabupaten|kota)\s+/i, '');
-                            return p.includes(cleanName);
-                          });
+                          let specific: any = null;
+                          
+                          if (address) {
+                            // Coba cocokkan berdasarkan type dari nominatim (city vs county)
+                            specific = regions.find(r => r.name === address.county || r.name === address.city);
+                            
+                            if (!specific) {
+                              specific = regions.find(r => {
+                                if (r.level !== 'kota' && r.level !== 'kabupaten') return false;
+                                const cleanName = r.name.toLowerCase().replace(/^(kabupaten|kota)\s+/i, '');
+                                
+                                if (r.level === 'kota' && address.city && address.city.toLowerCase().includes(cleanName)) return true;
+                                if (r.level === 'kabupaten' && address.county && address.county.toLowerCase().includes(cleanName)) return true;
+                                
+                                return false;
+                              });
+                            }
+                          }
+                          
+                          // Fallback ke string matching lama jika address gagal
+                          if (!specific) {
+                            const p = placeName.toLowerCase();
+                            specific = regions.find(r => {
+                              if (r.level !== 'kota' && r.level !== 'kabupaten') return false;
+                              const cleanName = r.name.toLowerCase().replace(/^(kabupaten|kota)\s+/i, '');
+                              return p.includes(cleanName);
+                            });
+                          }
+
                           if (specific) {
                             handleChange('region_id', specific.id);
                           } else {
                             // Fallback ke provinsi
+                            const p = placeName.toLowerCase();
                             const prov = regions.find(r => {
                               if (r.level !== 'provinsi') return false;
                               const cleanProv = r.name.toLowerCase().replace(/^(provinsi)\s+/i, '');

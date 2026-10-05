@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Map, setWorkerUrl, Marker } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 
@@ -7,7 +7,7 @@ setWorkerUrl(workerUrl);
 interface MapLocationPickerProps {
   lat: number | null;
   lng: number | null;
-  onChange: (lat: number, lng: number, placeName?: string) => void;
+  onChange: (lat: number, lng: number, placeName?: string, address?: any) => void;
 }
 
 export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps) {
@@ -19,10 +19,12 @@ export function MapLocationPicker({ lat, lng, onChange }: MapLocationPickerProps
 
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`, {
+        headers: { 'User-Agent': 'Antigravity/1.0' }
+      });
       const data = await res.json();
       if (data && data.display_name) {
-        onChange(lat, lng, data.display_name);
+        onChange(lat, lng, data.display_name, data.address);
       } else {
         onChange(lat, lng);
       }
