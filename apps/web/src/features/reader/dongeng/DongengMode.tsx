@@ -180,7 +180,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
         <ProgressBar progress={((currentPage + 1) / totalAdaptPages) * 100} />
       </div>
       
-      <div className={cn("absolute top-0 w-full z-50 transition-opacity duration-500", controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none")}>
+      <div className={cn("absolute top-0 w-full z-[60] transition-opacity duration-500", controlsVisible ? "opacity-100" : "opacity-0 pointer-events-none")}>
         <ReaderHeader 
           title={versionTitle}
           mode="Dongeng"
