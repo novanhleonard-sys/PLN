@@ -229,8 +229,17 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-stone-700">Lokasi Cerita (Opsional)</label>
                   {detectedRegion && (
-                    <div className="mb-2 text-sm text-teal font-bold flex items-center gap-2 bg-teal/10 px-3 py-2 rounded-lg w-fit">
-                      <Icon name="MapPin" size={16} /> Daerah terdeteksi: {detectedRegion}
+                    <div className="mb-2 text-sm text-teal flex flex-col gap-1 bg-teal/10 px-3 py-2 rounded-lg w-fit">
+                      <div className="flex items-center gap-2 font-bold">
+                        <Icon name="MapPin" size={16} /> Daerah terdeteksi: {detectedRegion}
+                      </div>
+                      <div className="text-xs opacity-80 flex items-center gap-2 pl-6">
+                        {formData.region_id ? (
+                          <>Terpetakan ke DB: <strong>{regions.find(r => r.id === formData.region_id)?.name || '...'}</strong></>
+                        ) : (
+                          <span className="text-coral">Gagal memetakan ke database daerah PETA LN. Coba geser pin sedikit.</span>
+                        )}
+                      </div>
                     </div>
                   )}
                   <MapLocationPicker 
@@ -244,12 +253,20 @@ export const ContributeForm = ({ initialData, onSubmitOverride, isEditMode, onCa
                         if (regions.length > 0) {
                           const p = placeName.toLowerCase();
                           // Cari kabupaten/kota lebih dulu agar lebih spesifik
-                          const specific = regions.find(r => (r.level === 'kota' || r.level === 'kabupaten') && p.includes(r.name.toLowerCase()));
+                          const specific = regions.find(r => {
+                            if (r.level !== 'kota' && r.level !== 'kabupaten') return false;
+                            const cleanName = r.name.toLowerCase().replace(/^(kabupaten|kota)\s+/i, '');
+                            return p.includes(cleanName);
+                          });
                           if (specific) {
                             handleChange('region_id', specific.id);
                           } else {
                             // Fallback ke provinsi
-                            const prov = regions.find(r => r.level === 'provinsi' && p.includes(r.name.toLowerCase()));
+                            const prov = regions.find(r => {
+                              if (r.level !== 'provinsi') return false;
+                              const cleanProv = r.name.toLowerCase().replace(/^(provinsi)\s+/i, '');
+                              return p.includes(cleanProv);
+                            });
                             if (prov) handleChange('region_id', prov.id);
                           }
                         }
