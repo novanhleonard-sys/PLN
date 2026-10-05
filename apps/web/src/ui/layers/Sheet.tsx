@@ -11,9 +11,11 @@ export interface SheetProps {
   snapPoints?: string[]; // e.g. ['30vh', '55vh', '92vh']
   noPadding?: boolean;
   hideCloseButton?: boolean;
+  className?: string;
+  dragClassName?: string;
 }
 
-export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }: SheetProps) {
+export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton, className, dragClassName }: SheetProps) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -48,10 +50,10 @@ export function Sheet({ isOpen, onClose, children, noPadding, hideCloseButton }:
             animate={{ y: '0%' }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 18, stiffness: 140 }}
-            className="fixed bottom-0 left-0 right-0 h-[55vh] max-h-[92vh] bg-white rounded-t-3xl shadow-warm-lg z-50 flex flex-col"
+            className={`fixed bottom-0 left-0 right-0 h-[55vh] max-h-[92vh] rounded-t-3xl shadow-warm-lg z-50 flex flex-col ${className || 'bg-white'}`}
           >
             <div className="w-full flex justify-center py-3 cursor-grab active:cursor-grabbing group">
-              <div className="w-12 h-1.5 bg-stone-300 group-active:bg-stone-500 group-hover:bg-stone-400 rounded-full transition-colors" />
+              <div className={`w-12 h-1.5 rounded-full transition-colors ${dragClassName || 'bg-stone-300 group-active:bg-stone-500 group-hover:bg-stone-400'}`} />
             </div>
             
             {!hideCloseButton && (

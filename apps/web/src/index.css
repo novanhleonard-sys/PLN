@@ -26,3 +26,18 @@
 
 .maplibregl-canvas-container, .maplibregl-canvas { width: 100% !important; height: 100% !important; position: absolute !important; top: 0; left: 0; }
 
+/* Custom Scrollbar for ReaderMenu */
+.reader-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.reader-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.reader-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 120, 120, 0.4);
+  border-radius: 10px;
+}
+.reader-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(120, 120, 120, 0.6);
+}

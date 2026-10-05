@@ -109,7 +109,7 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   };
 
   const renderMainView = () => (
-    <div className={cn("flex flex-col gap-6 font-nunito h-full w-full md:w-[320px]", themeClasses.textMain)}>
+    <div className={cn("flex flex-col gap-6 font-nunito h-full w-full w-full", themeClasses.textMain)}>
       <h3 className="font-fredoka font-bold text-lg">Sesuaikan Bacaan</h3>
       
       {/* Tampilan */}
@@ -258,7 +258,7 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   );
 
   const wrapView = (title: string, content: React.ReactNode) => (
-    <div className={cn("flex flex-col font-nunito h-full w-full md:w-[320px]", themeClasses.textMain)}>
+    <div className={cn("flex flex-col font-nunito h-full w-full w-full", themeClasses.textMain)}>
       <div className="flex items-center gap-3 mb-4">
         <button onClick={() => setView('main')} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-stone-500/10 transition-colors">
           <Icon name="ArrowLeft" size={16} />
@@ -356,9 +356,12 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
 
   if (!isOpen) return null;
 
+  const isDark = prefs.theme === 'gelap';
+  const sheetDragClass = isDark ? "bg-white/30 group-active:bg-white/50 group-hover:bg-white/40" : "bg-stone-300 group-active:bg-stone-500 group-hover:bg-stone-400";
+
   if (isDesktop) {
     return (
-      <div ref={menuRef} className={cn("absolute top-full right-0 mt-2 rounded-2xl shadow-xl border z-50 p-6 min-w-[320px]", themeClasses.surface, themeClasses.border)}>
+      <div ref={menuRef} className={cn("absolute top-full right-0 mt-2 rounded-2xl shadow-xl border z-50 p-6 w-[340px] max-h-[80vh] overflow-y-auto reader-scrollbar", themeClasses.surface, themeClasses.border)}>
         {view === 'main' && renderMainView()}
         {view === 'suasana' && renderSuasanaView()}
         {view === 'tentang' && wrapView('Tentang Cerita', renderTentangContent())}
@@ -369,8 +372,8 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   }
 
   return (
-    <Sheet isOpen={isOpen} onClose={onClose} hideCloseButton>
-      <div className={cn("rounded-t-3xl p-6 pt-8 min-h-[50vh]", themeClasses.surface)}>
+    <Sheet isOpen={isOpen} onClose={onClose} hideCloseButton className={themeClasses.surface} dragClassName={sheetDragClass}>
+      <div className={cn("px-6 pb-6 pt-2 h-full flex flex-col", themeClasses.surface)}>
         {view === 'main' && renderMainView()}
         {view === 'suasana' && renderSuasanaView()}
         {view === 'tentang' && wrapView('Tentang Cerita', renderTentangContent())}
