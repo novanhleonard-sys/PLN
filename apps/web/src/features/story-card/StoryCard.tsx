@@ -158,8 +158,15 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
         <div className="bg-white rounded-t-3xl -mt-6 p-6 relative z-10 flex-1 flex flex-col shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
           {/* Header: Chip & Menu */}
           <div className="flex items-center justify-between mb-4">
-            <div className="bg-[#dfa024] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
-              {story.type}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="bg-[#dfa024] text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                {story.type}
+              </div>
+              {story.region && (
+                <div className="bg-stone-100 text-stone-600 border border-stone-200 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                  {story.region}
+                </div>
+              )}
             </div>
             <div className="relative" ref={menuRef}>
               <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="w-8 h-8 rounded-full bg-[#fdfaf3] text-stone-500 flex items-center justify-center hover:bg-stone-200 transition-colors">
