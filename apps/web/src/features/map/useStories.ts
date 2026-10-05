@@ -63,7 +63,7 @@ export function useStories() {
           synopsis: story.synopsis || '',
           pinImage: story.pin_image_path ? supabase.storage.from('story-media').getPublicUrl(story.pin_image_path).data.publicUrl : undefined,
           sources: publishedVersion.sources || [],
-          region: (Array.isArray(story.regions) ? story.regions[0]?.name : (story.regions as any)?.name)?.replace(/^(Kabupaten|Kota)\s+/i, ''),
+          region: Array.isArray(story.regions) ? ((story.regions[0]?.region_groups as any)?.name || story.regions[0]?.name) : ((story.regions as any)?.region_groups?.name || (story.regions as any)?.name),
           region_besar: Array.isArray(story.regions) ? ((story.regions[0]?.region_groups as any)?.parent?.name) : ((story.regions as any)?.region_groups?.parent?.name),
           versionId: publishedVersion.id,
           versionCount: story.story_versions?.filter((v: any) => v.status === 'published').length || 1,
