@@ -44,6 +44,8 @@ Versi: **contract-v1**.
 
 Selesai secara keseluruhan. B6 Pengerasan dan Evaluasi telah rampung. Semua fitur PRD telah selesai diimplementasikan.
 
+**Perbaikan Tambahan:** Memperbaiki bug pada *form* Admin UI Kelompok Daerah di mana kelompok besar secara tidak sengaja ditimpa menjadi subkelompok dari dirinya sendiri karena kesalahan UI. Data yang terkorupsi (Sumatera) telah dipulihkan.
+
 **B2_EXT (2026-09-25):** Implementasi AI nyata untuk segment, gambar, dan audio berhasil. Worker menghasilkan scenes+pages via `gemini-3.6-flash` (generateJSON), gambar per scene via `gemini-3.1-flash-image` (interactions.create ? WebP di story-media), audio via `gemini-2.5-flash-preview-tts`. 22/22 gambar ready, 22/22 audio ready untuk 3 cerita seed (Kancil, Si Pitung, Rawa Pening).
 
 
