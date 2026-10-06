@@ -321,10 +321,15 @@ export function AdminKelompokDaerah() {
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-5 mb-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-fredoka font-bold text-stone-800">{form.id ? "Edit Kelompok" : "Tambah Kelompok"}</h3>
-              {!form.id && selectedGroup && (
-                <button onClick={startNew} className="text-xs text-teal-600 hover:underline">+ Buat Baru</button>
+              {form.id && (
+                <button onClick={startNew} className="text-xs text-teal-600 hover:underline font-bold">+ Buat Kelompok Baru</button>
               )}
             </div>
+            {form.id && (
+              <div className="text-xs bg-amber-50 text-amber-700 p-2 rounded-lg border border-amber-200 mb-3">
+                <span className="font-bold">Mode Edit:</span> Anda sedang mengubah kelompok yang sudah ada. Menyimpan form ini akan menimpa data kelompok ini.
+              </div>
+            )}
             <div className="flex flex-col gap-3">
               <select 
                 className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal font-bold"
@@ -335,7 +340,9 @@ export function AdminKelompokDaerah() {
                 }}
               >
                 <option value="">[ Kelompok Besar Utama ]</option>
-                {parents.map(p => (
+                {parents
+                  .filter(p => p.id !== form.id)
+                  .map(p => (
                   <option key={p.id} value={p.id}>Subkelompok dari {p.name}</option>
                 ))}
               </select>
