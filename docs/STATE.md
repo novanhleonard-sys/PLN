@@ -44,8 +44,11 @@ Versi: **contract-v1**.
 
 Selesai secara keseluruhan. B6 Pengerasan dan Evaluasi telah rampung. Semua fitur PRD telah selesai diimplementasikan.
 
-**Perbaikan Tambahan:** Memperbaiki bug pada *form* Admin UI Kelompok Daerah di mana kelompok besar secara tidak sengaja ditimpa menjadi subkelompok dari dirinya sendiri karena kesalahan UI. Data yang terkorupsi (Sumatera) telah dipulihkan.
-
+**Perbaikan Tambahan (2026-10-07):**
+- Memperbaiki bug pada *form* Admin UI Kelompok Daerah di mana kelompok besar secara tidak sengaja ditimpa menjadi subkelompok dari dirinya sendiri karena kesalahan UI. Data yang terkorupsi (Sumatera) telah dipulihkan.
+- Memperbaiki pemetaan daerah (Kabupaten -> Subkelompok) di seluruh Indonesia agar 100% sejajar dengan Master Excel, serta menambahkan subkelompok Sumba Timur yang hilang.
+- Memperbaiki bug senyap (*silent fail*) pada UI Admin Pustaka Suara yang menyebabkan penyimpanan data gagal tanpa peringatan karena mengirimkan kolom yang sudah dihapus.
+- Membuka isian *Voice ID* pada UI Admin Gaya AI (Persona Suara) agar pengguna dapat menyimpan Persona baru (sebelumnya terkunci dan membuat tombol simpan nonaktif).
 **B2_EXT (2026-09-25):** Implementasi AI nyata untuk segment, gambar, dan audio berhasil. Worker menghasilkan scenes+pages via `gemini-3.6-flash` (generateJSON), gambar per scene via `gemini-3.1-flash-image` (interactions.create ? WebP di story-media), audio via `gemini-2.5-flash-preview-tts`. 22/22 gambar ready, 22/22 audio ready untuk 3 cerita seed (Kancil, Si Pitung, Rawa Pening).
 
 

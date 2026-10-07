@@ -58,23 +58,24 @@ export function AdminPustakaSuara() {
         is_active: form.is_active,
         source: form.source,
         license: form.license,
-        region: form.region || null,
-        mood: form.mood || null,
         story_type: form.story_type || null,
         region_group_ids: form.region_group_ids,
       };
 
       if (form.id) {
-        await supabase.from('ambient_sounds').update(payload).eq('id', form.id);
+        const { error } = await supabase.from('ambient_sounds').update(payload).eq('id', form.id);
+        if (error) throw error;
         setToast('Berhasil memperbarui suara.');
       } else {
-        await supabase.from('ambient_sounds').insert([payload]);
+        const { error } = await supabase.from('ambient_sounds').insert([payload]);
+        if (error) throw error;
         setToast('Berhasil menambahkan suara.');
       }
       setForm(defaultForm);
       await fetchSounds();
-    } catch (e) {
-      setToast('Terjadi kesalahan saat menyimpan.');
+    } catch (e: any) {
+      setToast('Terjadi kesalahan saat menyimpan: ' + (e.message || 'Unknown error'));
+      console.error("Save error:", e);
     } finally {
       setLoading(false);
     }

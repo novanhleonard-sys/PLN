@@ -236,7 +236,7 @@ export function AdminGayaAI() {
               <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-2">{voiceForm.id ? 'Edit Aturan Spesifik Suara' : 'Buat Aturan Spesifik Suara'}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (Bapak Tua)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
-                <div className="relative"><input className="w-full px-4 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-sm outline-none text-stone-500 font-mono" placeholder="Voice ID (Otomatis)" value={voiceForm.voice_name} readOnly /><span className="absolute right-3 top-3 text-[10px] bg-stone-200 text-stone-600 px-1.5 py-0.5 rounded font-bold">AUTO</span></div>
+                <div className="relative"><input className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm outline-none text-stone-700 font-mono" placeholder="Voice ID (Opsional/ElevenLabs)" value={voiceForm.voice_name} onChange={e => setVoiceForm({...voiceForm, voice_name: e.target.value})} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><MultiRegionSelect value={voiceForm.region_group_ids} onChange={val => setVoiceForm({...voiceForm, region_group_ids: val})} /></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik suara (Gaya bicara, aksen, dsb...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
               
@@ -247,10 +247,10 @@ export function AdminGayaAI() {
 
               <div className="flex gap-2 justify-end pt-2">
                 {voiceForm.id && <Button variant="secondary" onClick={resetVoice}>Batal</Button>}
-                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!voiceForm.name || !voiceForm.voice_name} onClick={() => setTestModal({ open: true, kind: 'audio', name: voiceForm.name, snapshot: voiceForm, refId: voiceForm.id })}>
+                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!voiceForm.name} onClick={() => setTestModal({ open: true, kind: 'audio', name: voiceForm.name, snapshot: voiceForm, refId: voiceForm.id })}>
                   <Icon name="Play" size={14} className="mr-1 inline-block" /> Tes
                 </Button>
-                <Button disabled={!voiceForm.name || !voiceForm.voice_name || saveVoice.isPending} onClick={() => saveVoice.mutate(voiceForm)}>{voiceForm.id ? 'Simpan' : 'Buat'}</Button>
+                <Button disabled={!voiceForm.name || saveVoice.isPending} onClick={() => saveVoice.mutate(voiceForm)}>{voiceForm.id ? 'Simpan' : 'Buat'}</Button>
               </div>
             </div>
           )}
