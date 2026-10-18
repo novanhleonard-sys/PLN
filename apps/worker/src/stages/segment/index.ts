@@ -109,7 +109,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
       description: scene.scene_description,
       image_prompt: scene.scene_description,
       character_ids: charIds,
-      image_status: "generating"
+      image_status: scope === 'text_only' ? 'none' : 'generating'
     }).select().single();
 
     if (sceneError) throw new Error("Failed to insert scene idx=" + scene.idx + ": " + sceneError.message);
@@ -123,7 +123,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
     if (pageError) throw new Error("Failed to insert page idx=" + scene.idx + ": " + pageError.message);
 
-        if (scope === 'all' || scope === 'audio_only') {
+    if (scope === 'all' || scope === 'audio_only') {
       const { error: jobErr } = await ctx.supabase.from("jobs").insert([{
         kind: "audio",
         ref_type: "page",
@@ -141,7 +141,7 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
     console.log("Scene + page + jobs queued for idx=" + scene.idx);
   }
 
-  if (scope === 'all' || scope === 'image_only') {
+  if (scope === 'all' || scope === 'image_only' || scope === 'text_only') {
     const { error: bibleJobErr } = await ctx.supabase.from("jobs").insert({
       kind: "story-visual-bible",
       ref_type: "version",
@@ -158,9 +158,18 @@ export const segmentStage = async (ctx: any, job: any, registry: ProviderRegistr
 
   // Update story version status
   await ctx.supabase.from("story_versions").update({
-    asset_status: "generating",
+    asset_status: scope === 'text_only' ? 'none' : 'generating',
     status: "published"
   }).eq("id", version.id);
+
+  // Update story info if provided
+  if (result.synopsis || result.theme || result.sensitivity) {
+    const storyUpdate: any = {};
+    if (result.synopsis) storyUpdate.synopsis = result.synopsis;
+    if (result.theme) storyUpdate.theme = result.theme;
+    if (result.sensitivity) storyUpdate.sensitivity = result.sensitivity;
+    await ctx.supabase.from("stories").update(storyUpdate).eq("id", version.story_id);
+  }
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
   console.log("Segment complete for", version.story.title);

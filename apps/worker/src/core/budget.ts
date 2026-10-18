@@ -7,11 +7,25 @@ export class BudgetGuard {
   private storyBudget: number;
 
   constructor(private supabase: SupabaseClient) {
-    this.dailyBudget = parseFloat(process.env.AI_DAILY_BUDGET_USD || '5.0');
-    this.storyBudget = parseFloat(process.env.AI_STORY_BUDGET_USD || '1.0');
+    this.dailyBudget = parseFloat(process.env.AI_DAILY_BUDGET_USD || '50.0');
+    this.storyBudget = parseFloat(process.env.AI_STORY_BUDGET_USD || '10.0');
   }
 
   async checkBudget(storyId?: string): Promise<{ allowed: boolean; reason?: string }> {
+    let limit = this.dailyBudget;
+    try {
+      const { data: setting } = await this.supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'ai_daily_budget_usd')
+        .maybeSingle();
+
+      if (setting?.value !== undefined && setting?.value !== null) {
+        const parsed = typeof setting.value === 'number' ? setting.value : parseFloat(setting.value?.amount || setting.value);
+        if (!isNaN(parsed) && parsed > 0) limit = parsed;
+      }
+    } catch {}
+
     // 1. Check daily budget
     const today = new Date();
     today.setUTCHours(0,0,0,0);
@@ -24,9 +38,9 @@ export class BudgetGuard {
     if (dailyError) throw new Error('Failed to fetch daily usage: ' + dailyError.message);
     
     const dailySpent = dailyData.reduce((acc, row) => acc + (row.cost_usd || 0), 0);
-    if (dailySpent >= this.dailyBudget) {
+    if (dailySpent >= limit) {
       const { BudgetError } = await import('./errors');
-      throw new BudgetError('Daily AI budget exceeded.');
+      throw new BudgetError(`Daily AI budget exceeded ($${dailySpent.toFixed(2)} / $${limit.toFixed(2)}).`);
     }
 
     // 2. Check story budget if applicable

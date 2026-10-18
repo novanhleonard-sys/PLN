@@ -216,28 +216,42 @@ ${sceneListForPrompt}`,
       }
     }
 
-    if (masterJobs.length > 0) {
+    let scope = 'all';
+    if (job.process_run_id) {
+      const { data: runData } = await ctx.supabase.from("ai_process_runs").select("scope").eq("id", job.process_run_id).single();
+      if (runData) scope = runData.scope;
+    }
+
+    if (scope !== 'text_only' && masterJobs.length > 0) {
       await ctx.supabase.from("jobs").insert(masterJobs);
     }
   }
 
-  const sceneJobs = scenes.map((s: any) => ({
-    process_run_id: job.process_run_id,
-    kind: "scene-image",
-    ref_type: "scene",
-    ref_id: s.id,
-    status: "queued",
-    attempts: 0,
-    cost_usd: 0,
-    run_after: new Date().toISOString(),
-    idempotency_key: `scene_image_stage2_${job.process_run_id}_${s.id}`
-  }));
+  let scope = 'all';
+  if (job.process_run_id) {
+    const { data: runData } = await ctx.supabase.from("ai_process_runs").select("scope").eq("id", job.process_run_id).single();
+    if (runData) scope = runData.scope;
+  }
 
-  if (sceneJobs.length > 0) {
-    const { error: err } = await ctx.supabase.from("jobs").insert(sceneJobs);
-    if (err) throw err;
+  if (scope !== 'text_only') {
+    const sceneJobs = scenes.map((s: any) => ({
+      process_run_id: job.process_run_id,
+      kind: "scene-image",
+      ref_type: "scene",
+      ref_id: s.id,
+      status: "queued",
+      attempts: 0,
+      cost_usd: 0,
+      run_after: new Date().toISOString(),
+      idempotency_key: `scene_image_stage2_${job.process_run_id}_${s.id}`
+    }));
+
+    if (sceneJobs.length > 0) {
+      const { error: err } = await ctx.supabase.from("jobs").insert(sceneJobs);
+      if (err) throw err;
+    }
   }
 
   await ctx.supabase.from("jobs").update({ status: "succeeded", error: null }).eq("id", job.id);
-  console.log("Story Visual Bible generated & jobs queued for", scenes.length, "scenes.");
+  console.log("Story Visual Bible generated for", scenes.length, "scenes." + (scope === 'text_only' ? " (text_only: images skipped)" : " (image jobs queued)"));
 };
