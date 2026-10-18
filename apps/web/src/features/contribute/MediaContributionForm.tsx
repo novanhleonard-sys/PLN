@@ -35,6 +35,17 @@ export function MediaContributionForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isFullTextOpen, setIsFullTextOpen] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoomImage(null);
+    };
+    if (zoomImage) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [zoomImage]);
 
   // Form State
   const [credits, setCredits] = useState('');
@@ -72,14 +83,19 @@ export function MediaContributionForm() {
         .select('id, age_band, language')
         .eq('version_id', versionId);
 
-      const baseAdaptation = adaptations?.find((a: any) => a.age_band === 'asli') || adaptations?.[0];
+      // Prioritize Indonesian original adaptation
+      const baseAdaptation = 
+        adaptations?.find((a: any) => a.age_band === 'asli' && a.language === 'id') ||
+        adaptations?.find((a: any) => a.language === 'id') ||
+        adaptations?.find((a: any) => a.age_band === 'asli') ||
+        adaptations?.[0];
 
       const pagesMap: Record<string, string> = {};
       let pagesList: any[] = [];
       if (baseAdaptation) {
         const { data: pages } = await supabase
           .from('pages')
-          .select('id, idx, text, scene_id, page_audio(*)')
+          .select('id, idx, text, scene_id, page_audio(*), scene:scenes(description)')
           .eq('adaptation_id', baseAdaptation.id)
           .order('idx', { ascending: true });
 
@@ -426,18 +442,27 @@ export function MediaContributionForm() {
                       {isImage ? (
                         <div className="flex items-center gap-3">
                           {slot.currentAiPath ? (
-                            <img 
-                              src={getPublicUrl(slot.currentAiPath)} 
-                              alt="Referensi AI" 
-                              className="w-16 h-16 rounded-lg object-cover border border-stone-200 bg-stone-100" 
-                            />
+                            <div 
+                              className="relative group cursor-zoom-in shrink-0"
+                              onClick={() => setZoomImage(getPublicUrl(slot.currentAiPath))}
+                              title="Klik untuk memperbesar"
+                            >
+                              <img 
+                                src={getPublicUrl(slot.currentAiPath)} 
+                                alt="Referensi AI" 
+                                className="w-16 h-16 rounded-lg object-cover border border-stone-200 bg-stone-100 group-hover:ring-2 group-hover:ring-teal/60 transition" 
+                              />
+                              <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 rounded-lg flex items-center justify-center text-white transition backdrop-blur-[0.5px]">
+                                <Icon name="Maximize2" size={16} />
+                              </div>
+                            </div>
                           ) : (
-                            <div className="w-16 h-16 rounded-lg border border-dashed border-stone-200 flex items-center justify-center text-stone-400 text-[10px] text-center p-1">
+                            <div className="w-16 h-16 rounded-lg border border-dashed border-stone-200 flex items-center justify-center text-stone-400 text-[10px] text-center p-1 shrink-0">
                               Belum ada AI
                             </div>
                           )}
                           <span className="text-xs text-stone-400">
-                            Karya baru Anda akan menggantikan gambar AI ini saat disetujui.
+                            Karya baru Anda akan menggantikan gambar AI ini saat disetujui. Klik gambar untuk memperbesar.
                           </span>
                         </div>
                       ) : (
@@ -460,7 +485,7 @@ export function MediaContributionForm() {
                   {/* Right: Artist Upload Area */}
                   <div className="md:col-span-6 bg-stone-50/70 p-4 rounded-xl border border-stone-200/80 flex flex-col justify-center">
                     <span className="text-xs font-bold text-stone-700 mb-2 flex items-center gap-1.5">
-                      <Icon name={isImage ? "Image" : "Mic"} size={14} className="text-teal" />
+                      <Icon name="Image" size={14} className="text-teal" />
                       {isImage ? `Unggah Ilustrasi Adegan ${index + 1}` : `Unggah Rekaman Suara Adegan ${index + 1}`}
                     </span>
 
@@ -468,6 +493,7 @@ export function MediaContributionForm() {
                       <SlotImageUploader 
                         currentPath={userUploadedPath}
                         onUpload={(path) => handleSlotImageUpload(slot.id, path)}
+                        onZoom={(url) => setZoomImage(url)}
                       />
                     ) : (
                       <AudioUploader
@@ -531,21 +557,6 @@ export function MediaContributionForm() {
               {' '}dengan atribusi nama saya di Peta Legenda Nusantara.
             </span>
           </label>
-
-          <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-600 flex items-start gap-2.5">
-            <Icon name="Info" size={16} className="text-teal shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              <strong>Mengenai Lisensi CC BY-SA 4.0:</strong> Lisensi Creative Commons Atribusi-BerbagiSerupa 4.0 Internasional menjamin publik dapat menikmati karya Anda untuk tujuan edukasi dan pelestarian budaya Nusantara dengan kewajiban selalu mencantumkan nama Anda. Rincian ketentuan resmi lisensi dapat dibaca langsung di{' '}
-              <a 
-                href="https://creativecommons.org/licenses/by-sa/4.0/deed.id" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-teal font-bold underline hover:text-teal-dark"
-              >
-                Creative Commons Indonesia &rarr;
-              </a>
-            </p>
-          </div>
         </section>
       </main>
 
@@ -657,6 +668,26 @@ export function MediaContributionForm() {
         </Modal>
       )}
 
+      {/* Lightbox Image Zoom Modal */}
+      {zoomImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-pointer select-none animate-in fade-in duration-200"
+          onClick={() => setZoomImage(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] flex flex-col items-center">
+            <img 
+              src={zoomImage} 
+              alt="Perbesar Gambar" 
+              className="max-w-[92vw] max-h-[82vh] object-contain rounded-2xl shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200" 
+            />
+            <div className="mt-3 inline-flex items-center gap-1.5 bg-black/60 text-white/80 text-xs px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
+              <Icon name="X" size={14} />
+              <span>Klik di mana saja untuk kembali</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <GateModal 
         isOpen={gateOpen} 
         onClose={() => { setGateOpen(false); navigate(-1); }} 
@@ -668,7 +699,15 @@ export function MediaContributionForm() {
 }
 
 // Inline Slot Image Uploader helper
-function SlotImageUploader({ currentPath, onUpload }: { currentPath?: string; onUpload: (path: string) => void }) {
+function SlotImageUploader({ 
+  currentPath, 
+  onUpload, 
+  onZoom 
+}: { 
+  currentPath?: string; 
+  onUpload: (path: string) => void;
+  onZoom?: (url: string) => void;
+}) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -715,13 +754,32 @@ function SlotImageUploader({ currentPath, onUpload }: { currentPath?: string; on
     <div className="flex flex-col gap-2">
       {preview ? (
         <div className="relative group rounded-xl overflow-hidden border border-teal/30 bg-black/5 aspect-video flex items-center justify-center">
-          <img src={preview} alt="Karya Artis" className="w-full h-full object-cover" />
-          <div 
-            onClick={() => inputRef.current?.click()}
-            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-xs font-bold transition cursor-pointer"
-          >
-            <Icon name="Upload" size={16} />
-            {uploading ? 'Mengunggah...' : 'Ganti Gambar'}
+          <img 
+            src={preview} 
+            alt="Karya Artis" 
+            className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition duration-300"
+            onClick={() => onZoom?.(preview)}
+            title="Klik untuk memperbesar"
+          />
+          <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition z-10">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onZoom?.(preview); }}
+              className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-lg text-xs backdrop-blur-sm transition"
+              title="Perbesar Gambar"
+            >
+              <Icon name="Maximize2" size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
+              disabled={uploading}
+              className="px-2.5 py-1.5 bg-black/60 hover:bg-black/80 text-white rounded-lg text-xs font-bold backdrop-blur-sm transition flex items-center gap-1.5"
+              title="Ganti Gambar"
+            >
+              <Icon name="Upload" size={13} />
+              <span>{uploading ? 'Mengunggah...' : 'Ganti'}</span>
+            </button>
           </div>
         </div>
       ) : (

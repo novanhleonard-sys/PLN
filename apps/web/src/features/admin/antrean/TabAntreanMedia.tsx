@@ -16,6 +16,7 @@ export function TabAntreanMedia() {
   const [rejectReason, setRejectReason] = useState('');
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isTextModalOpen, setIsTextModalOpen] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
 
   // Fetch pending media submissions
   const { data: mediaSubmissions, isLoading } = useQuery({
@@ -237,8 +238,15 @@ export function TabAntreanMedia() {
                         </span>
 
                         {isImage ? (
-                          <div className="aspect-video bg-black/5 rounded-lg overflow-hidden border border-teal/30">
-                            <img src={artistUrl} alt={`Adegan ${idx + 1}`} className="w-full h-full object-cover" />
+                          <div 
+                            className="aspect-video bg-black/5 rounded-lg overflow-hidden border border-teal/30 relative group cursor-zoom-in"
+                            onClick={() => setZoomImage(artistUrl)}
+                            title="Klik untuk memperbesar"
+                          >
+                            <img src={artistUrl} alt={`Adegan ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                            <div className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-lg opacity-80 group-hover:opacity-100 transition backdrop-blur-sm">
+                              <Icon name="Maximize2" size={14} />
+                            </div>
                           </div>
                         ) : (
                           <div className="pt-2">
@@ -359,6 +367,26 @@ export function TabAntreanMedia() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Lightbox Image Zoom Modal */}
+      {zoomImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-pointer select-none animate-in fade-in duration-200"
+          onClick={() => setZoomImage(null)}
+        >
+          <div className="relative max-w-5xl max-h-[90vh] flex flex-col items-center">
+            <img 
+              src={zoomImage} 
+              alt="Perbesar Gambar" 
+              className="max-w-[92vw] max-h-[82vh] object-contain rounded-2xl shadow-2xl border border-white/20 animate-in zoom-in-95 duration-200" 
+            />
+            <div className="mt-3 inline-flex items-center gap-1.5 bg-black/60 text-white/80 text-xs px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
+              <Icon name="X" size={14} />
+              <span>Klik di mana saja untuk kembali</span>
+            </div>
+          </div>
+        </div>
       )}
 
       <Toast visible={!!toast} message={toast} onClose={() => setToast('')} />
