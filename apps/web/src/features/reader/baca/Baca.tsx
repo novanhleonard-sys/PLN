@@ -159,11 +159,58 @@ export const Baca: React.FC = () => {
   
   
 
+  const handleModeChange = (newMode: 'Baca' | 'Dongeng') => {
+    if (newMode === 'Dongeng' && !user) {
+      setGateOpen(true);
+      return;
+    }
+    setMode(newMode);
+  };
+
   if (!pages || pages.length === 0) {
+    const bodyParagraphs = versionData.version.body
+      ? versionData.version.body.split(/\n\n+/).filter(Boolean)
+      : [];
+
     return (
-      <div className={cn("flex flex-col items-center justify-center h-screen font-nunito", themeClasses.bg)}>
-        <h2 className={cn("text-xl", themeClasses.textMuted)}>Halaman belum tersedia.</h2>
-        <Link to="/" className="mt-4 px-4 py-2 bg-stone-800 text-stone-100 rounded-full">Kembali</Link>
+      <div className={cn("flex flex-col h-[100dvh] overflow-hidden relative transition-colors duration-300", themeClasses.bg)}>
+        <ReaderHeader 
+          title={versionData.version.story.title}
+          mode={mode}
+          onModeChange={handleModeChange}
+          themeClasses={themeClasses}
+          versionId={versionId!}
+          storyId={versionData.version.story_id}
+          onAdaptationReady={setSelectedAdaptation}
+          onAdaptationPending={(id, band) => { setPendingAdaptId(id); setPendingBand(band); }}
+          disabled={true}
+        />
+        
+        <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+          <div className="flex-1 relative flex items-center justify-center bg-black/5 min-h-[30vh]">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10">
+              <img src={`/assets/fallback_bg_${(versionData.version.story.id.charCodeAt(0) % 5) + 1}.svg`} alt="Sedang disiapkan" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-multiply" />
+              <span className="text-sm font-nunito text-stone-500 mb-2 relative z-10 bg-white/80 px-3 py-1 rounded-full">Ilustrasi sedang disiapkan</span>
+            </div>
+          </div>
+          
+          <div className={cn("flex-1 flex flex-col min-h-[30vh] transition-colors duration-300 relative", themeClasses.surface)}>
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 flex flex-col relative reader-scrollbar space-y-4">
+              {bodyParagraphs.length > 0 ? (
+                bodyParagraphs.map((para: string, idx: number) => (
+                  <p key={idx} className={cn("font-nunito max-w-2xl mx-auto w-full transition-all duration-300 leading-relaxed", fontClass, themeClasses.textMain)}>
+                    {para}
+                  </p>
+                ))
+              ) : (
+                <div className="m-auto text-center">
+                  <h2 className={cn("text-xl mb-3", themeClasses.textMuted)}>Halaman belum tersedia.</h2>
+                  <Link to="/" className="px-4 py-2 bg-stone-800 text-stone-100 rounded-full font-nunito text-sm">Kembali ke Peta</Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -171,22 +218,12 @@ export const Baca: React.FC = () => {
   const page = pages[currentPage];
   if (!page) return null;
   
-  
-  
   const handleNext = () => {
     if (currentPage + 1 >= pages.length && pages.length < totalAdaptPages) {
       setGateOpen(true);
       return;
     }
     setCurrentPage((p: number) => Math.min(pages.length - 1, p + 1));
-  };
-
-  const handleModeChange = (newMode: 'Baca' | 'Dongeng') => {
-    if (newMode === 'Dongeng' && !user) {
-      setGateOpen(true);
-      return;
-    }
-    setMode(newMode);
   };
 
     if (mode === 'Dongeng') {
