@@ -285,7 +285,7 @@ export const Baca: React.FC = () => {
       
       <main className="flex-1 flex flex-col sm:max-[768px]:flex-col md:max-h-[calc(100vh-4rem)] min-[768px]:portrait:flex-col min-[768px]:landscape:flex-row overflow-hidden relative">
         <div className="flex-1 relative flex items-center justify-center bg-black/5 min-h-[30vh]">
-          {page.scene?.image_status === 'ready' && page.scene.image_path ? (
+          {page.scene?.image_path ? (
             <img 
               src={page.scene.image_path} 
               alt={page.scene.description || 'Ilustrasi cerita'} 

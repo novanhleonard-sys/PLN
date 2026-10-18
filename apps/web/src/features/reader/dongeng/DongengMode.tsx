@@ -194,7 +194,7 @@ export const DongengMode: React.FC<DongengModeProps> = ({
       </div>
       
       <main className="flex-1 flex flex-col relative overflow-hidden" onClick={showControls}>
-        {prefs.dongengImageMode === 'dengan' && page.scene?.image_status === 'ready' && page.scene.image_path ? (
+        {prefs.dongengImageMode === 'dengan' && page.scene?.image_path ? (
           <img 
             src={page.scene.image_path}
             alt="Ilustrasi"
