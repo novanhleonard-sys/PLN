@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useStoryVersions, usePages, useReadHistory } from '../api/queries';
 import { useAuth } from '../../auth/AuthStore';
@@ -261,8 +261,12 @@ export const Baca: React.FC = () => {
                 <span className="text-sm font-nunito text-stone-500 mb-2 relative z-10 bg-white/80 px-3 py-1 rounded-full">Ilustrasi sedang disiapkan</span>
               </div>
           )}
-          <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/40 backdrop-blur text-white/90 text-xs rounded-md font-nunito font-semibold">
-            Dibuat AI
+          <div className="absolute bottom-2 left-2 px-2.5 py-1 bg-black/50 backdrop-blur text-white/90 text-xs rounded-md font-nunito font-semibold flex items-center gap-1.5 shadow-sm">
+            {page.scene?.artist_credits ? (
+              <span>Karya: {page.scene.artist_credits}</span>
+            ) : (
+              <span>Dibuat AI</span>
+            )}
           </div>
         </div>
         

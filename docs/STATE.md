@@ -18,6 +18,7 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B12 Audit Review | **selesai** | b12-done | Audit penuh & perbaikan guardrail, auth bypass, dan migrasi Gemini. |
 | B14 AI Worker Overhaul | **selesai** | b14-done | Audit ulang Worker, perbaikan bug kritis, tracking cost, safety guardrail. |
 | B15 Hierarki Daerah | **selesai** | b15-done | Restrukturisasi Kelompok Daerah menjadi 2 tingkat (Besar & Subkelompok), perbaikan UI filter dropdown bertingkat. |
+| B16 Kontribusi Media Artis | **selesai** | b16-done | Pembukaan kontribusi gambar (ilustrasi) dan suara (narasi) oleh artis/pengisi suara untuk semua cerita. Full story upload, antrean admin moderasi, dan pengalihan badge AI ke nama artis. |
 
 ## Kontrak beku
 
@@ -33,6 +34,7 @@ Versi: **contract-v1**.
 - Menggunakan komponen design system internal murni dari B0.5 (Tailwind), menggantikan layout sementara.
 - *Background Worker* di *deploy* ke Koyeb gagal (akuisisi Mistral), pindah ke Render Free Web Service dengan HTTP port *dummy* 8080 (di-*ping* via cron-job.org).
 - Adaptasi usia (B5a) menggunakan Worker pipeline. Modal UI tidak menyimpan usia, langsung mengarahkan ke versi adaptasi.
+- Kontribusi media artis (B16) menerapkan model full-story (seluruh adegan/halaman cerita harus dilengkapi secara lengkap oleh artis/pengisi suara). Pengajuan masuk ke antrean moderasi admin dan saat disetujui, badge AI digantikan atribusi karya seniman/narator.
 
 ## Masalah yang diketahui
 

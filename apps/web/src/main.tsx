@@ -54,6 +54,7 @@ const ContributeForm = lazyReload(() => import('./features/contribute/Contribute
 const EditContributionWrapper = lazyReload(() => import('./features/contribute/EditContributionWrapper').then(m => ({ default: m.EditContributionWrapper })))
 const MyContributions = lazyReload(() => import('./features/contribute/MyContributions').then(m => ({ default: m.MyContributions })))
 const ContributionStatusDetail = lazyReload(() => import('./features/contribute/ContributionStatusDetail').then(m => ({ default: m.ContributionStatusDetail })))
+const MediaContributionForm = lazyReload(() => import('./features/contribute/MediaContributionForm').then(m => ({ default: m.MediaContributionForm })))
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const AppContent = () => {
         <Route path="/kontribusi/saya" element={<RequireAuth><MyContributions /></RequireAuth>} />
         <Route path="/kontribusi/:id" element={<RequireAuth><ContributionStatusDetail /></RequireAuth>} />
         <Route path="/kontribusi/:id/edit" element={<RequireAuth><EditContributionWrapper /></RequireAuth>} />
+        <Route path="/kontribusi-media/:versionId/:type" element={<RequireAuth><MediaContributionForm /></RequireAuth>} />
         <Route path="/admin/*" element={<AdminCenter />} />
       </Routes>
       </Suspense>

@@ -58,7 +58,16 @@ export const usePageAudio = (pageId: string) => {
       if (error && error.code !== 'PGRST116') throw error;
       if (!data) return null;
       
-      const publicUrl = supabase.storage.from('audio').getPublicUrl(data.path).data.publicUrl;
+      let publicUrl = '';
+      if (data.path) {
+        if (data.path.startsWith('http')) {
+          publicUrl = data.path;
+        } else if (data.path.startsWith('artist-contributions/') || data.path.startsWith('submissions/')) {
+          publicUrl = supabase.storage.from('story-media').getPublicUrl(data.path).data.publicUrl;
+        } else {
+          publicUrl = supabase.storage.from('audio').getPublicUrl(data.path).data.publicUrl;
+        }
+      }
       return { ...data, audio_url: publicUrl };
     },
     enabled: !!pageId

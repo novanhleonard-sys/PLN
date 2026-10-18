@@ -90,15 +90,18 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     }
   };
 
+  const [editActionType, setEditActionType] = useState<'select_action' | 'edit_text' | 'contribute_image' | 'contribute_audio'>('select_action');
+
   const handleOpenEditPrompt = async () => {
     setIsMenuOpen(false);
     if (!user) return setIsGateOpen(true);
-    if (story && story.versionCount > 1) {
+    if (story) {
       const { data } = await supabase.from('story_versions').select('id, created_at, status, label').eq('story_id', story.id).order('created_at', { ascending: false });
       if (data) setStoryVersions(data);
     } else {
       setStoryVersions([]);
     }
+    setEditActionType('select_action');
     setIsEditPromptOpen(true);
   };
 
@@ -221,25 +224,173 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
           </div>
         </div>
 
-        {/* Edit Prompt Dialog */}
+        {/* Edit & Contribute Prompt Dialog */}
         {isEditPromptOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-              <h3 className="font-fredoka font-bold text-lg text-stone-800 mb-2">Edit Cerita</h3>
-              <p className="text-sm text-stone-500 mb-6">Pilih versi yang ingin diedit:</p>
-              <div className="flex flex-col gap-3">
-                {storyVersions.length > 0 ? (
-                  storyVersions.map((v) => (
-                    <Button key={v.id} onClick={() => goToEdit(v.id)} variant="primary" className="w-full h-auto py-2">
-                      Edit Versi {v.label || new Date(v.created_at).toLocaleDateString('id-ID')}
+            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl font-nunito border border-stone-100 animate-in fade-in zoom-in-95 duration-200">
+              {editActionType === 'select_action' ? (
+                <>
+                  <div className="mb-4">
+                    <h3 className="font-fredoka font-bold text-xl text-stone-800">
+                      Kontribusi & Edit Cerita
+                    </h3>
+                    <p className="text-xs text-stone-500 mt-1">
+                      Pilih jenis kontribusi yang ingin Anda berikan untuk kisah <span className="font-semibold text-stone-700">{story?.title}</span>:
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-2.5">
+                    {/* Option 1: Edit Teks */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (storyVersions.length > 1) {
+                          setEditActionType('edit_text');
+                        } else {
+                          goToEdit(storyVersions[0]?.id || story?.versionId || null);
+                        }
+                      }}
+                      className="p-3.5 rounded-2xl border-2 border-stone-100 hover:border-teal/40 bg-stone-50/60 hover:bg-teal/5 flex items-start gap-3.5 text-left transition group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-teal/10 text-teal flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <Icon name="Pen" size={18} />
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm text-stone-800 block group-hover:text-teal transition-colors">
+                          Edit Teks Cerita
+                        </span>
+                        <span className="text-xs text-stone-500 leading-snug block mt-0.5">
+                          Sunting isi cerita tertulis atau buat versi cerita baru dari daerah Anda.
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Option 2: Kontribusi Gambar */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (storyVersions.length > 1) {
+                          setEditActionType('contribute_image');
+                        } else {
+                          setIsEditPromptOpen(false);
+                          navigate(`/kontribusi-media/${storyVersions[0]?.id || story?.versionId}/gambar`);
+                        }
+                      }}
+                      className="p-3.5 rounded-2xl border-2 border-stone-100 hover:border-amber-400/50 bg-stone-50/60 hover:bg-amber-50/40 flex items-start gap-3.5 text-left transition group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <Icon name="Palette" size={18} />
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm text-stone-800 block group-hover:text-amber-700 transition-colors">
+                          Kontribusi Gambar (Artis)
+                        </span>
+                        <span className="text-xs text-stone-500 leading-snug block mt-0.5">
+                          Ajukan karya ilustrasi visual buatan Anda sendiri untuk setiap adegan.
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* Option 3: Kontribusi Suara */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (storyVersions.length > 1) {
+                          setEditActionType('contribute_audio');
+                        } else {
+                          setIsEditPromptOpen(false);
+                          navigate(`/kontribusi-media/${storyVersions[0]?.id || story?.versionId}/suara`);
+                        }
+                      }}
+                      className="p-3.5 rounded-2xl border-2 border-stone-100 hover:border-rose-400/50 bg-stone-50/60 hover:bg-rose-50/40 flex items-start gap-3.5 text-left transition group"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <Icon name="Mic" size={18} />
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm text-stone-800 block group-hover:text-rose-700 transition-colors">
+                          Kontribusi Suara (Pengisi Suara)
+                        </span>
+                        <span className="text-xs text-stone-500 leading-snug block mt-0.5">
+                          Rekam suara pembacaan cerita Anda untuk mode dongeng bersuara.
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-stone-100 flex justify-end">
+                    <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full text-stone-500 text-xs">
+                      Batal
                     </Button>
-                  ))
-                ) : (
-                  <Button onClick={() => goToEdit(story!.versionId ?? null)} variant="primary" className="w-full">Edit Versi Ini</Button>
-                )}
-                <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full">Buat versi lain</Button>
-                <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full mt-2">Batal</Button>
-              </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditActionType('select_action')}
+                      className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition"
+                    >
+                      <Icon name="ArrowLeft" size={14} />
+                    </button>
+                    <div>
+                      <h3 className="font-fredoka font-bold text-lg text-stone-800 leading-tight">
+                        {editActionType === 'edit_text' && 'Pilih Versi untuk Edit Teks'}
+                        {editActionType === 'contribute_image' && 'Pilih Versi untuk Kontribusi Gambar'}
+                        {editActionType === 'contribute_audio' && 'Pilih Versi untuk Kontribusi Suara'}
+                      </h3>
+                      <p className="text-xs text-stone-500">
+                        Cerita ini memiliki {storyVersions.length} versi. Pilih versi target:
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                    {storyVersions.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => {
+                          setIsEditPromptOpen(false);
+                          if (editActionType === 'edit_text') {
+                            goToEdit(v.id);
+                          } else if (editActionType === 'contribute_image') {
+                            navigate(`/kontribusi-media/${v.id}/gambar`);
+                          } else if (editActionType === 'contribute_audio') {
+                            navigate(`/kontribusi-media/${v.id}/suara`);
+                          }
+                        }}
+                        className="w-full p-3 rounded-xl border border-stone-200 hover:border-teal/50 hover:bg-teal/5 text-left transition flex items-center justify-between"
+                      >
+                        <div>
+                          <span className="font-bold text-sm text-stone-800 block">
+                            {v.label || 'Versi Utama'}
+                          </span>
+                          <span className="text-[11px] text-stone-400">
+                            Dibuat: {new Date(v.created_at).toLocaleDateString('id-ID')}
+                          </span>
+                        </div>
+                        <Icon name="ChevronRight" size={16} className="text-stone-400" />
+                      </button>
+                    ))}
+                  </div>
+
+                  {editActionType === 'edit_text' && (
+                    <div className="mt-3 pt-3 border-t border-stone-100">
+                      <Button onClick={() => goToEdit(null)} variant="secondary" className="w-full text-xs">
+                        + Buat Versi Teks Baru
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="mt-2 flex justify-end">
+                    <Button onClick={() => setIsEditPromptOpen(false)} variant="ghost" className="w-full text-stone-500 text-xs">
+                      Tutup
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
