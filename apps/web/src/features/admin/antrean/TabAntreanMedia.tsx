@@ -84,9 +84,15 @@ export function TabAntreanMedia() {
     }
   });
 
-  const getPublicUrl = (path: string | null | undefined) => {
+  const getPublicUrl = (path: string | null | undefined, isAudio = false) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
+    if (path.startsWith('artist-contributions/') || path.startsWith('submissions/')) {
+      return supabase.storage.from('story-media').getPublicUrl(path).data.publicUrl;
+    }
+    if (isAudio || path.endsWith('.ogg') || path.endsWith('.mp3') || path.startsWith('page_audio_')) {
+      return supabase.storage.from('audio').getPublicUrl(path).data.publicUrl;
+    }
     return supabase.storage.from('story-media').getPublicUrl(path).data.publicUrl;
   };
 
@@ -236,7 +242,7 @@ export function TabAntreanMedia() {
                           </div>
                         ) : (
                           <div className="pt-2">
-                            <audio src={artistUrl} controls className="w-full" />
+                            <audio src={artistUrl} controls className="w-full" preload="metadata" />
                             {item.duration_ms && (
                               <span className="text-[11px] text-stone-400 mt-1 block">
                                 Durasi: {Math.round(item.duration_ms / 1000)} detik

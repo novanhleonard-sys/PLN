@@ -83,7 +83,11 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     if (!story) return;
     const url = `${window.location.origin}/cerita/${story.slug}`;
     if (navigator.share) {
-      try { await navigator.share({ title: story.title, url }); } catch {}
+      try { 
+        await navigator.share({ title: story.title, url }); 
+      } catch (err) {
+        console.debug('Share cancelled or not supported', err);
+      }
     } else {
       await navigator.clipboard.writeText(url);
       setToastMessage('Tautan disalin ke papan klip');
@@ -96,7 +100,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
     setIsMenuOpen(false);
     if (!user) return setIsGateOpen(true);
     if (story) {
-      const { data } = await supabase.from('story_versions').select('id, created_at, status, label').eq('story_id', story.id).order('created_at', { ascending: false });
+      const { data } = await supabase.from('story_versions').select('id, created_at, status, label').eq('story_id', story.id).eq('status', 'published').order('created_at', { ascending: false });
       if (data) setStoryVersions(data);
     } else {
       setStoryVersions([]);
@@ -283,7 +287,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
                       </div>
                       <div>
                         <span className="font-bold text-sm text-stone-800 block group-hover:text-amber-700 transition-colors">
-                          Kontribusi Gambar (Artis)
+                          Kontribusi Gambar
                         </span>
                         <span className="text-xs text-stone-500 leading-snug block mt-0.5">
                           Ajukan karya ilustrasi visual buatan Anda sendiri untuk setiap adegan.
@@ -309,7 +313,7 @@ export function StoryCard({ story, onClose }: StoryCardProps) {
                       </div>
                       <div>
                         <span className="font-bold text-sm text-stone-800 block group-hover:text-rose-700 transition-colors">
-                          Kontribusi Suara (Pengisi Suara)
+                          Kontribusi Suara
                         </span>
                         <span className="text-xs text-stone-500 leading-snug block mt-0.5">
                           Rekam suara pembacaan cerita Anda untuk mode dongeng bersuara.

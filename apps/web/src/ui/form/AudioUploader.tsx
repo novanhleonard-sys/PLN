@@ -1,4 +1,4 @@
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, type ChangeEvent } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Icon } from '../basic/Icon';
 import { cn } from '../../utils/cn';
@@ -21,13 +21,25 @@ export function AudioUploader({
 }: AudioUploaderProps) {
   const { user } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(
-    currentAudioPath 
-      ? (currentAudioPath.startsWith('http') ? currentAudioPath : supabase.storage.from('story-media').getPublicUrl(currentAudioPath).data.publicUrl)
-      : null
-  );
+
+  const resolveAudioUrl = (path: string | undefined | null) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    if (path.startsWith('artist-contributions/') || path.startsWith('submissions/')) {
+      return supabase.storage.from('story-media').getPublicUrl(path).data.publicUrl;
+    }
+    return supabase.storage.from('audio').getPublicUrl(path).data.publicUrl;
+  };
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(resolveAudioUrl(currentAudioPath));
   const [fileName, setFileName] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (currentAudioPath) {
+      setPreviewUrl(resolveAudioUrl(currentAudioPath));
+    }
+  }, [currentAudioPath]);
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

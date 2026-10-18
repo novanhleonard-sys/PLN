@@ -244,9 +244,15 @@ export function MediaContributionForm() {
     }
   };
 
-  const getPublicUrl = (path: string | null | undefined) => {
+  const getPublicUrl = (path: string | null | undefined, isAudio = false) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
+    if (path.startsWith('artist-contributions/') || path.startsWith('submissions/')) {
+      return supabase.storage.from('story-media').getPublicUrl(path).data.publicUrl;
+    }
+    if (isAudio || path.endsWith('.ogg') || path.endsWith('.mp3') || path.startsWith('page_audio_')) {
+      return supabase.storage.from('audio').getPublicUrl(path).data.publicUrl;
+    }
     return supabase.storage.from('story-media').getPublicUrl(path).data.publicUrl;
   };
 
@@ -345,33 +351,7 @@ export function MediaContributionForm() {
           </div>
         )}
 
-        {/* Guidance Banner */}
-        <div className="bg-white border border-[#e8e4db] rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-teal/10 text-teal flex items-center justify-center shrink-0">
-              <Icon name={isImage ? "Palette" : "Mic"} size={20} />
-            </div>
-            <div>
-              <h2 className="font-fredoka font-bold text-stone-800 text-base">
-                {isImage ? 'Ketentuan Kontribusi Gambar' : 'Ketentuan Kontribusi Suara'}
-              </h2>
-              <p className="text-xs text-stone-500 leading-relaxed mt-0.5 max-w-xl">
-                Pengajuan karya bersifat <strong>satu cerita utuh</strong> ({totalSlots} adegan). 
-                {isImage 
-                  ? ' Seluruh adegan harus memiliki karya gambar asli Anda sebelum dapat dikirimkan ke tim moderasi.' 
-                  : ' Seluruh adegan harus memiliki rekaman suara pembacaan teks sebelum dapat dikirimkan ke tim moderasi.'}
-              </p>
-            </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={() => setIsFullTextOpen(true)}
-            className="text-xs text-teal hover:underline font-bold whitespace-nowrap self-end sm:self-center"
-          >
-            Lihat Naskah Cerita &rarr;
-          </button>
-        </div>
 
         {/* Slots List */}
         <div className="flex flex-col gap-6">
@@ -464,10 +444,10 @@ export function MediaContributionForm() {
                         <div>
                           {slot.currentAiPath ? (
                             <audio 
-                              src={getPublicUrl(slot.currentAiPath)} 
+                              src={getPublicUrl(slot.currentAiPath, true)} 
                               controls 
-                              className="w-full h-7 opacity-75" 
-                              preload="none"
+                              className="w-full h-8" 
+                              preload="metadata"
                             />
                           ) : (
                             <span className="text-xs text-stone-400 italic">Belum ada audio AI untuk adegan ini.</span>
@@ -537,9 +517,35 @@ export function MediaContributionForm() {
               className="mt-1 w-4 h-4 rounded text-teal focus:ring-teal border-stone-300 cursor-pointer"
             />
             <span className="text-xs text-stone-600 leading-relaxed font-nunito select-none">
-              Saya menyatakan bahwa seluruh materi ({isImage ? 'gambar ilustrasi' : 'rekaman suara'}) yang saya ajukan adalah karya asli saya sendiri atau memiliki izin pemanfaatan penuh, dan saya menyetujui lisensi <strong>CC BY-SA 4.0</strong> dengan atribusi nama saya di Peta Legenda Nusantara.
+              Saya menyatakan bahwa seluruh materi ({isImage ? 'gambar ilustrasi' : 'rekaman suara'}) yang saya ajukan adalah karya asli saya sendiri atau memiliki izin pemanfaatan penuh, dan saya menyetujui lisensi{' '}
+              <a 
+                href="https://creativecommons.org/licenses/by-sa/4.0/deed.id" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-teal font-bold underline hover:text-teal-dark inline-flex items-center gap-0.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                CC BY-SA 4.0
+                <Icon name="ExternalLink" size={12} />
+              </a>
+              {' '}dengan atribusi nama saya di Peta Legenda Nusantara.
             </span>
           </label>
+
+          <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-600 flex items-start gap-2.5">
+            <Icon name="Info" size={16} className="text-teal shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              <strong>Mengenai Lisensi CC BY-SA 4.0:</strong> Lisensi Creative Commons Atribusi-BerbagiSerupa 4.0 Internasional menjamin publik dapat menikmati karya Anda untuk tujuan edukasi dan pelestarian budaya Nusantara dengan kewajiban selalu mencantumkan nama Anda. Rincian ketentuan resmi lisensi dapat dibaca langsung di{' '}
+              <a 
+                href="https://creativecommons.org/licenses/by-sa/4.0/deed.id" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-teal font-bold underline hover:text-teal-dark"
+              >
+                Creative Commons Indonesia &rarr;
+              </a>
+            </p>
+          </div>
         </section>
       </main>
 
