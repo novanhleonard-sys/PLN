@@ -2,16 +2,25 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../auth/AuthStore';
 import { Button } from '../../ui/basic/Button';
+import { Toast } from '../../ui/basic/Toast';
 import { useReaderStore } from '../reader/store/useReaderStore';
 import { Modal } from '../../ui/layers/Modal';
 import { useNavigate } from 'react-router-dom';
 
+const normalizeMapStyle = (val: string | null): 'kartun' | 'lukisan' => {
+  if (val === 'B' || val === 'lukisan') return 'lukisan';
+  return 'kartun';
+};
+
 export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string }) {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [mapStyle, setMapStyle] = useState('kartun');
+  const [mapStyle, setMapStyle] = useState<'kartun' | 'lukisan'>(() => {
+    return normalizeMapStyle(localStorage.getItem('pln_map_style'));
+  });
   const { globalPrefs, updateGlobal } = useReaderStore();
   const [loadingMap, setLoadingMap] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -19,11 +28,25 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
 
   useEffect(() => {
     const loadPref = async () => {
+      const local = localStorage.getItem('pln_map_style');
+      if (local) setMapStyle(normalizeMapStyle(local));
+
       if (!user) return;
-      const { data } = await supabase.from('profiles').select('preferred_map_style').eq('id', user.id).single();
-      if (data?.preferred_map_style) {
-        setMapStyle(data.preferred_map_style);
-        localStorage.setItem('pln_map_style', data.preferred_map_style);
+      const { data } = await supabase
+        .from('profiles')
+        .select('preferred_map_style, reading_preferences')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        if (data.preferred_map_style) {
+          const norm = normalizeMapStyle(data.preferred_map_style);
+          setMapStyle(norm);
+          localStorage.setItem('pln_map_style', norm);
+        }
+        if (data.reading_preferences && Object.keys(data.reading_preferences).length > 0) {
+          useReaderStore.getState().syncPreferences(data.reading_preferences);
+        }
       }
     };
     loadPref();
@@ -37,13 +60,19 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
     }
   }, [activeTab]);
 
-  const updateMapStyle = async (style: string) => {
+  const updateMapStyle = async (style: 'kartun' | 'lukisan') => {
     setMapStyle(style);
     localStorage.setItem('pln_map_style', style);
+    setToastMessage(`Gaya peta '${style === 'kartun' ? 'Kartun' : 'Lukisan'}' tersimpan.`);
     if (!user) return;
     setLoadingMap(true);
     await supabase.from('profiles').update({ preferred_map_style: style }).eq('id', user.id);
     setLoadingMap(false);
+  };
+
+  const handleReaderPref = (pref: Partial<typeof globalPrefs>, label: string) => {
+    updateGlobal(pref);
+    setToastMessage(`Pengaturan '${label}' tersimpan.`);
   };
 
   const handleDeleteAccount = async () => {
@@ -119,7 +148,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Tema Default</div>
                 <div className="text-sm text-stone-500">Tema yang digunakan saat pertama kali membuka cerita</div>
               </div>
-              <select value={globalPrefs.theme} onChange={(e) => updateGlobal({ theme: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.theme} onChange={(e) => handleReaderPref({ theme: e.target.value as any }, 'Tema Default')} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value="terang">Terang</option>
                 <option value="hangat">Hangat</option>
                 <option value="gelap">Gelap</option>
@@ -131,7 +160,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Ukuran Teks (Baca)</div>
                 <div className="text-sm text-stone-500">Besarnya teks untuk mode Baca</div>
               </div>
-              <select value={globalPrefs.fontSizeBaca} onChange={(e) => updateGlobal({ fontSizeBaca: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.fontSizeBaca} onChange={(e) => handleReaderPref({ fontSizeBaca: e.target.value as any }, 'Ukuran Teks')} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value="kecil">Kecil</option>
                 <option value="sedang">Sedang</option>
                 <option value="besar">Besar</option>
@@ -144,7 +173,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="text-sm text-stone-500">Putar suara latar/ambiens secara otomatis di mode Baca</div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" checked={globalPrefs.bgAudioOn} onChange={(e) => updateGlobal({ bgAudioOn: e.target.checked })} />
+                <input type="checkbox" className="sr-only peer" checked={globalPrefs.bgAudioOn} onChange={(e) => handleReaderPref({ bgAudioOn: e.target.checked }, 'Suara Latar')} />
                 <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
               </label>
             </div>
@@ -156,7 +185,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Ukuran Teks Narasi</div>
                 <div className="text-sm text-stone-500">Besarnya subtitle yang muncul di mode Dongeng</div>
               </div>
-              <select value={globalPrefs.fontSizeDongeng} onChange={(e) => updateGlobal({ fontSizeDongeng: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.fontSizeDongeng} onChange={(e) => handleReaderPref({ fontSizeDongeng: e.target.value as any }, 'Ukuran Narasi')} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value="kecil">Kecil</option>
                 <option value="sedang">Sedang</option>
                 <option value="besar">Besar</option>
@@ -169,7 +198,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="text-sm text-stone-500">Tampilkan teks subtitle secara default</div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" checked={globalPrefs.dongengShowText} onChange={(e) => updateGlobal({ dongengShowText: e.target.checked })} />
+                <input type="checkbox" className="sr-only peer" checked={globalPrefs.dongengShowText} onChange={(e) => handleReaderPref({ dongengShowText: e.target.checked }, 'Subtitle Dongeng')} />
                 <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
               </label>
             </div>
@@ -179,7 +208,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Gambar Ilustrasi</div>
                 <div className="text-sm text-stone-500">Tampilkan ilustrasi di latar belakang narasi</div>
               </div>
-              <select value={globalPrefs.dongengImageMode} onChange={(e) => updateGlobal({ dongengImageMode: e.target.value as any })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.dongengImageMode} onChange={(e) => handleReaderPref({ dongengImageMode: e.target.value as any }, 'Ilustrasi Dongeng')} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value="dengan">Dengan Gambar</option>
                 <option value="tanpa">Tanpa Gambar</option>
               </select>
@@ -190,7 +219,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
                 <div className="font-bold text-stone-800">Kecepatan Narasi</div>
                 <div className="text-sm text-stone-500">Atur kecepatan pembacaan audio dongeng</div>
               </div>
-              <select value={globalPrefs.dongengSpeed} onChange={(e) => updateGlobal({ dongengSpeed: Number(e.target.value) })} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
+              <select value={globalPrefs.dongengSpeed} onChange={(e) => handleReaderPref({ dongengSpeed: Number(e.target.value) }, 'Kecepatan Narasi')} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-700 focus:outline-none focus:border-teal">
                 <option value={0.75}>0.75x</option>
                 <option value={1}>1x (Normal)</option>
                 <option value={1.25}>1.25x</option>
@@ -252,6 +281,7 @@ export function Preferensi({ activeTab = 'preferensi' }: { activeTab?: string })
         </div>
       </Modal>
 
+      <Toast visible={!!toastMessage} message={toastMessage || ""} onClose={() => setToastMessage(null)} />
     </div>
   );
 }

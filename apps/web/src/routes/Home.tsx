@@ -6,9 +6,17 @@ import { StoryCard } from '../features/story-card/StoryCard';
 import { useStories, type StoryPin } from '../features/map/useStories';
 import { MapStyleToggle } from '../ui/basic/Misc';
 import { UserMenu } from '../features/auth/UserMenu';
+import { useAuth } from '../features/auth/AuthStore';
+import { supabase } from '../lib/supabase';
+
+const parseMapStyle = (val: string | null): 'A' | 'B' => {
+  if (val === 'B' || val === 'lukisan') return 'B';
+  return 'A';
+};
 
 export default function Home() {
-    const [selectedStory, setSelectedStory] = useState<StoryPin | null>(null);
+  const { user } = useAuth();
+  const [selectedStory, setSelectedStory] = useState<StoryPin | null>(null);
   const [searchedLocation, setSearchedLocation] = useState<[number, number] | null>(null);
   const [filteredStories, setFilteredStories] = useState<StoryPin[] | null>(null);
   const { slug } = useParams();
@@ -24,14 +32,28 @@ export default function Home() {
       }
     }
   }, [slug, stories]);
+
   const [styleType, setStyleType] = useState<'A' | 'B'>(() => {
     const saved = localStorage.getItem('pln_map_style');
-    return (saved === 'A' || saved === 'B') ? saved : 'A';
+    return parseMapStyle(saved);
   });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const saved = localStorage.getItem('pln_map_style');
+      setStyleType(parseMapStyle(saved));
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const handleStyleChange = (style: 'A' | 'B') => {
     setStyleType(style);
-    localStorage.setItem('pln_map_style', style);
+    const prefName = style === 'B' ? 'lukisan' : 'kartun';
+    localStorage.setItem('pln_map_style', prefName);
+    if (user) {
+      supabase.from('profiles').update({ preferred_map_style: prefName }).eq('id', user.id).then();
+    }
   };
 
   return (

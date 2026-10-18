@@ -603,26 +603,18 @@ export function MediaContributionForm() {
 
       {/* Full Story Text Modal */}
       {isFullTextOpen && (
-        <Modal isOpen={true} onClose={() => setIsFullTextOpen(false)} className="max-w-2xl p-6">
-          <div className="flex flex-col gap-4 font-nunito max-h-[80vh]">
-            <div className="flex justify-between items-center border-b border-stone-100 pb-3">
-              <div>
-                <h3 className="text-xl font-fredoka font-bold text-stone-800">
-                  {story?.title}
-                </h3>
-                <p className="text-xs text-stone-500">
-                  Naskah lengkap versi: <span className="font-bold text-teal">{versionData?.label}</span>
-                </p>
-              </div>
-              <button 
-                onClick={() => setIsFullTextOpen(false)}
-                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center"
-              >
-                <Icon name="X" size={16} />
-              </button>
+        <Modal isOpen={true} onClose={() => setIsFullTextOpen(false)} className="max-w-2xl max-h-[85vh]">
+          <div className="flex flex-col gap-4 font-nunito pr-6">
+            <div className="border-b border-stone-100 pb-3">
+              <h3 className="text-xl font-fredoka font-bold text-stone-800">
+                {story?.title}
+              </h3>
+              <p className="text-xs text-stone-500">
+                Naskah lengkap versi: <span className="font-bold text-teal">{versionData?.label}</span>
+              </p>
             </div>
 
-            <div className="overflow-y-auto pr-2 space-y-4 text-stone-700 text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="space-y-4 text-stone-700 text-sm leading-relaxed whitespace-pre-wrap">
               {versionData?.body || 'Teks cerita tidak tersedia.'}
             </div>
 

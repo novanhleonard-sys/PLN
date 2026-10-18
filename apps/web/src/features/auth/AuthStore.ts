@@ -18,21 +18,30 @@ export const useAuth = create<AuthState>((set) => ({
   isInitialized: false,
   setUser: (user, session) => set({ user, session }),
   initialize: async () => {
+    const syncUserProfilePrefs = (userId: string) => {
+      supabase.from('profiles').select('reading_preferences, preferred_map_style').eq('id', userId).single()
+        .then(({ data }) => {
+          if (data?.reading_preferences && Object.keys(data.reading_preferences).length > 0) {
+            useReaderStore.getState().syncPreferences(data.reading_preferences);
+          }
+          if (data?.preferred_map_style) {
+            const norm = (data.preferred_map_style === 'lukisan' || data.preferred_map_style === 'B') ? 'lukisan' : 'kartun';
+            localStorage.setItem('pln_map_style', norm);
+          }
+        });
+    };
+
     const { data: { session } } = await supabase.auth.getSession();
     set({ user: session?.user || null, session, isInitialized: true });
     if (session?.user) {
-      supabase.from('profiles').select('reading_preferences').eq('id', session.user.id).single()
-        .then(({ data }) => {
-           if (data && data.reading_preferences && Object.keys(data.reading_preferences).length > 0) {
-             useReaderStore.getState().syncPreferences(data.reading_preferences);
-           }
-        });
+      syncUserProfilePrefs(session.user.id);
     }
-    if (session?.user) { supabase.from('profiles').select('preferred_map_style').eq('id', session.user.id).single().then(({ data }) => { if (data?.preferred_map_style) localStorage.setItem('pln_map_style', data.preferred_map_style); }); }
     
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ user: session?.user || null, session });
-      if (session?.user) { supabase.from('profiles').select('preferred_map_style').eq('id', session.user.id).single().then(({ data }) => { if (data?.preferred_map_style) localStorage.setItem('pln_map_style', data.preferred_map_style); }); }
+      if (session?.user) {
+        syncUserProfilePrefs(session.user.id);
+      }
     });
   },
   signOut: async () => {

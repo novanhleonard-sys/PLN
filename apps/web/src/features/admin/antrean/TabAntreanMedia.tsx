@@ -342,21 +342,15 @@ export function TabAntreanMedia() {
 
       {/* Full Text Reference Modal */}
       {isTextModalOpen && selectedContrib && (
-        <Modal isOpen={true} onClose={() => setIsTextModalOpen(false)} className="max-w-2xl p-6">
-          <div className="flex flex-col gap-4 font-nunito max-h-[80vh]">
-            <div className="flex justify-between items-center border-b border-stone-100 pb-3">
+        <Modal isOpen={true} onClose={() => setIsTextModalOpen(false)} className="max-w-2xl max-h-[85vh]">
+          <div className="flex flex-col gap-4 font-nunito pr-6">
+            <div className="border-b border-stone-100 pb-3">
               <h3 className="text-lg font-fredoka font-bold text-stone-800">
                 Naskah Cerita Lengkap
               </h3>
-              <button 
-                onClick={() => setIsTextModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 flex items-center justify-center"
-              >
-                <Icon name="X" size={14} />
-              </button>
             </div>
 
-            <div className="overflow-y-auto pr-2 text-stone-700 text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="text-stone-700 text-sm leading-relaxed whitespace-pre-wrap">
               {selectedContrib.story_versions?.body || 'Teks cerita tidak tersedia.'}
             </div>
 

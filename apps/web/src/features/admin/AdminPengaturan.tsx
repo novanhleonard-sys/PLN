@@ -4,12 +4,23 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../ui/basic/Button';
 import { Toast } from '../../ui/basic/Toast';
 
+const DEFAULT_SETTINGS: Record<string, any> = {
+  moderation: { autoPublish: false, confidenceThreshold: 80 },
+  ai_production: {
+    textModel: 'gemini-3.1-flash-lite',
+    imageModel: 'gemini-3.1-flash-image',
+    imageStyle: 'kartun ramah anak',
+    audioModel: 'gemini-2.5-flash-preview-tts'
+  },
+  cost_limits: { dailyLimitUsd: 10 }
+};
+
 export function AdminPengaturan() {
   const queryClient = useQueryClient();
   const [toast, setToast] = useState('');
   
   // Local state for forms
-  const [localSettings, setLocalSettings] = useState<Record<string, any>>({});
+  const [localSettings, setLocalSettings] = useState<Record<string, any>>(DEFAULT_SETTINGS);
   const [savingKey, setSavingKey] = useState<string | null>(null);
 
   const { data: dbSettings, isLoading } = useQuery({
@@ -25,7 +36,13 @@ export function AdminPengaturan() {
 
   useEffect(() => {
     if (dbSettings) {
-      setLocalSettings(dbSettings);
+      setLocalSettings({
+        ...DEFAULT_SETTINGS,
+        ...dbSettings,
+        moderation: { ...DEFAULT_SETTINGS.moderation, ...(dbSettings.moderation || {}) },
+        ai_production: { ...DEFAULT_SETTINGS.ai_production, ...(dbSettings.ai_production || {}) },
+        cost_limits: { ...DEFAULT_SETTINGS.cost_limits, ...(dbSettings.cost_limits || {}) }
+      });
     }
   }, [dbSettings]);
 
@@ -44,7 +61,8 @@ export function AdminPengaturan() {
   });
 
   const handleSave = (key: string) => {
-    mutation.mutate({ key, value: localSettings[key] });
+    const val = localSettings[key] || DEFAULT_SETTINGS[key];
+    mutation.mutate({ key, value: val });
   };
 
   const updateLocal = (key: string, field: string, val: any) => {
