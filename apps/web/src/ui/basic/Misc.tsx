@@ -75,9 +75,9 @@ export function MapPin({ type, title, imageUrl, onClick, className, tier = 4, al
     <button 
       onClick={onClick}
       data-tier={tier}
-      className={cn("group flex flex-col items-center cursor-pointer active:scale-95 transition-transform focus:outline-none origin-bottom relative", className)}
+      className={cn("group flex flex-col items-center justify-start cursor-pointer focus:outline-none origin-bottom relative w-[24px] h-[28px]", className)}
     >
-      <div className="relative flex flex-col items-center pb-[3px] transition-transform duration-150 group-hover:scale-110">
+      <div className="relative flex flex-col items-center pb-[3px] transition-transform duration-150 group-hover:scale-110 active:scale-95 origin-bottom">
         {/* The Teardrop Pin - 50% 50% 50% 0 rotated -45deg creates Google Maps pin shape */}
         <div 
           className={cn(

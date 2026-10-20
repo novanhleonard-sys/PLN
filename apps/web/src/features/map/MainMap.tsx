@@ -273,7 +273,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [],
       // Add new markers
       stories.forEach(story => {
         const el = document.createElement('div');
-        el.className = 'story-marker-container';
+        el.className = 'story-marker-container w-[24px] h-[28px] select-none';
         const root = createRoot(el);
         // mapping tier to type
         let pinType: 'legenda' | 'mite' | 'fabel' | 'dongeng' = 'dongeng';

@@ -44,7 +44,9 @@
 
 /* Map Markers & Tier-based Dynamic Labels */
 .story-marker-container {
-  transition: transform 0.15s ease-out;
+  width: 24px;
+  height: 28px;
+  pointer-events: auto;
 }
 .story-marker-container:hover,
 .story-marker-container:focus-within {
