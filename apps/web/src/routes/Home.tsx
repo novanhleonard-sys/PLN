@@ -56,16 +56,17 @@ export default function Home() {
     }
   };
 
+  const isFilterActive = (filteredStories !== null && filteredStories.length !== stories.length) || searchedLocation !== null;
+
   return (
     <div className="w-full h-screen flex flex-col font-nunito relative overflow-hidden bg-[#d1f4f9]">
-      
-      
       {/* Peta ada di belakang, load lebih awal */}
       <MainMap 
         styleType={styleType} 
         onPinClick={setSelectedStory} 
         searchedLocation={searchedLocation}
-          stories={filteredStories || stories}
+        stories={filteredStories || stories}
+        isFilterActive={isFilterActive}
       />
       
       <>

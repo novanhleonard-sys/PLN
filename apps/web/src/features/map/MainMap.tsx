@@ -15,16 +15,14 @@ interface MainMapProps {
   onPinClick: (story: StoryPin) => void;
   searchedLocation?: [number, number] | null;
   stories?: StoryPin[];
+  isFilterActive?: boolean;
 }
 
-
-
-export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] }: MainMapProps) {
+export function MainMap({ styleType, onPinClick, searchedLocation, stories = [], isFilterActive = false }: MainMapProps) {
   
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<Map | null>(null);
   const [loaded, setLoaded] = useState(false);
-  
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -42,14 +40,26 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
       zoom: 4,
       maxZoom: 12,
       minZoom: 3,
-      
     });
 
     map.current = m;
 
-    
-    
+    const updateZoomTier = () => {
+      if (!mapContainer.current) return;
+      const z = m.getZoom();
+      let tier = 1;
+      if (z >= 8.5) tier = 4;
+      else if (z >= 7.0) tier = 3;
+      else if (z >= 5.5) tier = 2;
+      else tier = 1;
+      mapContainer.current.setAttribute('data-visible-tier', String(tier));
+    };
+
+    m.on('zoom', updateZoomTier);
+    updateZoomTier();
+
     m.on('load', () => {
+      updateZoomTier();
       // 1. Ocean Background
       m.addLayer({
         id: 'ocean-bg',
@@ -247,6 +257,12 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
     }
   }, [searchedLocation, loaded]);
 
+  useEffect(() => {
+    if (mapContainer.current) {
+      mapContainer.current.setAttribute('data-filter-active', isFilterActive ? 'true' : 'false');
+    }
+  }, [isFilterActive]);
+
   const markersRef = useRef<Marker[]>([]);
   useEffect(() => {
     if (map.current && loaded) {
@@ -267,9 +283,17 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
            else if (t.includes('mite')) pinType = 'mite';
            else if (t.includes('fabel')) pinType = 'fabel';
         }
-        root.render(<MapPin type={pinType} title={story.title} imageUrl={story.pinImage} onClick={() => onPinClick(story)} />);
+        root.render(
+          <MapPin 
+            type={pinType} 
+            title={story.title} 
+            imageUrl={story.pinImage} 
+            tier={story.tier || 4}
+            onClick={() => onPinClick(story)} 
+          />
+        );
         
-        const marker = new Marker({ element: el })
+        const marker = new Marker({ element: el, anchor: 'bottom' })
           .setLngLat([story.lng, story.lat])
           .addTo(map.current!);
           

@@ -61,7 +61,7 @@ export function useStories() {
           type: story.type as StoryType,
           lat: story.lat,
           lng: story.lng,
-          tier: story.tier || 1,
+          tier: story.tier ?? 4,
           score: 100, // Dummy score or derived from story_stats later
           cover: story.hero_image_path ? supabase.storage.from('story-media').getPublicUrl(story.hero_image_path).data.publicUrl : undefined,
           synopsis: story.synopsis || '',
