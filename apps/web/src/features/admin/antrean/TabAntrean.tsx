@@ -95,6 +95,7 @@ export function TabAntrean() {
         slug: slug,
         type: sub.type,
         synopsis: sub.synopsis,
+        region_id: sub.region_id || null,
         lat: lat,
         lng: lng,
         hero_image_path: sub.hero_image_path,
