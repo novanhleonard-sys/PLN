@@ -53,13 +53,12 @@ export function MapStyleToggle({ isPainting, onChange, className }: { isPainting
   );
 }
 
-export function MapPin({ type, title, imageUrl, onClick, className, alwaysShowLabel = false }: { 
+export function MapPin({ type, title, imageUrl, onClick, className }: { 
   type: 'legenda' | 'mite' | 'fabel' | 'dongeng', 
   title?: string, 
   imageUrl?: string,
   onClick?: () => void,
-  className?: string,
-  alwaysShowLabel?: boolean
+  className?: string 
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -75,7 +74,7 @@ export function MapPin({ type, title, imageUrl, onClick, className, alwaysShowLa
       onClick={onClick}
       className={cn("group flex flex-col items-center cursor-pointer active:scale-95 transition-transform focus:outline-none origin-bottom relative", className)}
     >
-      <div className="relative flex flex-col items-center pb-[3px] transition-transform duration-150 group-hover:scale-110">
+      <div className="relative flex flex-col items-center pb-[3px]">
         {/* The Teardrop Pin - 50% 50% 50% 0 rotated -45deg creates Google Maps pin shape */}
         <div 
           className={cn(
@@ -110,9 +109,8 @@ export function MapPin({ type, title, imageUrl, onClick, className, alwaysShowLa
       {/* Title label */}
       {title && (
         <span className={cn(
-          "story-pin-label absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-0.5 rounded-md text-[11px] font-fredoka font-medium text-white shadow-md whitespace-nowrap max-w-[180px] truncate text-center z-10",
-          bgColors[type],
-          alwaysShowLabel && "story-pin-label-always"
+          "px-2.5 py-0.5 rounded-md text-[11px] font-fredoka font-medium text-white shadow-sm mt-0.5",
+          bgColors[type]
         )}>
           {title}
         </span>

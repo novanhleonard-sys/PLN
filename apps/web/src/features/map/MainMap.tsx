@@ -47,17 +47,9 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
 
     map.current = m;
 
-    const updateZoom = () => {
-      if (!mapContainer.current) return;
-      const isZoomed = m.getZoom() >= 7;
-      mapContainer.current.setAttribute('data-zoomed', isZoomed ? 'true' : 'false');
-    };
-
-    m.on('zoom', updateZoom);
-    updateZoom();
-
+    
+    
     m.on('load', () => {
-      updateZoom();
       // 1. Ocean Background
       m.addLayer({
         id: 'ocean-bg',
@@ -277,7 +269,7 @@ export function MainMap({ styleType, onPinClick, searchedLocation, stories = [] 
         }
         root.render(<MapPin type={pinType} title={story.title} imageUrl={story.pinImage} onClick={() => onPinClick(story)} />);
         
-        const marker = new Marker({ element: el, anchor: 'bottom' })
+        const marker = new Marker({ element: el })
           .setLngLat([story.lng, story.lat])
           .addTo(map.current!);
           

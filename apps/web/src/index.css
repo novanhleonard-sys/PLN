@@ -41,35 +41,3 @@
 .reader-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(120, 120, 120, 0.6);
 }
-
-/* Map Markers & Dynamic Labels (Solusi A & B) */
-.story-marker-container {
-  transition: transform 0.15s ease-out;
-}
-.story-marker-container:hover,
-.story-marker-container:focus-within {
-  z-index: 9999 !important;
-}
-
-.story-pin-label {
-  opacity: 0;
-  transform: translateY(-2px) scale(0.95);
-  pointer-events: none;
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
-}
-
-.story-marker-container:hover .story-pin-label,
-.story-marker-container:focus-within .story-pin-label,
-.story-pin-label-always {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-[data-zoomed="true"] .story-pin-label {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-

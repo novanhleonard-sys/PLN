@@ -62,10 +62,10 @@ export default function Styleguide() {
         <section className="space-y-4">
           <h2 className="text-xl font-fredoka">Pin Lokasi Peta</h2>
           <div className="flex flex-wrap gap-8 items-end p-6 bg-ocean/20 rounded-2xl border border-teal/20">
-            <MapPin type="legenda" title="Malin Kundang" alwaysShowLabel />
-            <MapPin type="mite" title="Nyi Roro Kidul" imageUrl="https://picsum.photos/id/1018/150/150" alwaysShowLabel />
-            <MapPin type="fabel" title="Kancil" imageUrl="https://picsum.photos/id/237/150/150" alwaysShowLabel />
-            <MapPin type="dongeng" title="Timun Mas" alwaysShowLabel />
+            <MapPin type="legenda" title="Malin Kundang" />
+            <MapPin type="mite" title="Nyi Roro Kidul" imageUrl="https://picsum.photos/id/1018/150/150" />
+            <MapPin type="fabel" title="Kancil" imageUrl="https://picsum.photos/id/237/150/150" />
+            <MapPin type="dongeng" title="Timun Mas" />
           </div>
         </section>
 
