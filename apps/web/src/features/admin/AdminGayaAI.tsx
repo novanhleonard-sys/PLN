@@ -39,6 +39,7 @@ export function AdminGayaAI() {
 
   // Test Modal State
   const [testModal, setTestModal] = useState<{ open: boolean, kind: 'image' | 'audio', refId?: string, name: string, snapshot?: any } | null>(null);
+  const [activeTestRunId, setActiveTestRunId] = useState<string | null>(null);
   const [testText, setTestText] = useState(SCENE_TEMPLATES[1].text);
   const [testTemplate, setTestTemplate] = useState(SCENE_TEMPLATES[1].id);
 
@@ -50,6 +51,51 @@ export function AdminGayaAI() {
     queryFn: async () => {
       const res = await supabase.from('app_settings').select('key, value').in('key', ['umum_gambar', 'umum_suara']);
       return res.data || [];
+    }
+  });
+
+  // Query Active Test Run (Live Polling)
+  const { data: currentTestRun } = useQuery({
+    queryKey: ['admin_active_test_run', activeTestRunId],
+    enabled: !!activeTestRunId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('test_runs')
+        .select('*')
+        .eq('id', activeTestRunId!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'queued' || status === 'running') return 1500;
+      return false;
+    }
+  });
+
+  // Query Recent Test Runs History
+  const { data: testHistory, isLoading: loadHistory } = useQuery({
+    queryKey: ['admin_test_runs_history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('test_runs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
+  // Mutations (Test Run Deletion)
+  const delTestRun = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from('test_runs').delete().eq('id', id).throwOnError();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin_test_runs_history'] });
+      setToast('Riwayat uji coba berhasil dihapus.');
     }
   });
 
@@ -108,7 +154,14 @@ export function AdminGayaAI() {
       }).throwOnError();
       return data.id;
     },
-    onSuccess: () => { setToast('Tes diprioritaskan! Pantau di tab Konten.'); setTestModal(null); }
+    onSuccess: (id) => {
+      if (id) setActiveTestRunId(id);
+      queryClient.invalidateQueries({ queryKey: ['admin_test_runs_history'] });
+      setToast('Tes dikirim ke AI Worker. Memantau progres secara langsung...');
+    },
+    onError: (err: any) => {
+      setToast('Gagal memulai tes: ' + (err.message || 'Error'));
+    }
   });
 
   const resetStyle = () => setStyleForm({ name: '', story_type: 'legenda', region_group_ids: [], descriptor: '', reference_paths: [] });
@@ -225,7 +278,7 @@ export function AdminGayaAI() {
               
               <div className="md:col-span-2 flex gap-2 justify-end pt-2">
                 {styleForm.id && <Button variant="secondary" onClick={resetStyle}>Batal</Button>}
-                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!styleForm.name || !styleForm.descriptor} onClick={() => setTestModal({ open: true, kind: 'image', name: styleForm.name, snapshot: styleForm, refId: styleForm.id })}>
+                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!styleForm.name || !styleForm.descriptor} onClick={() => { setActiveTestRunId(null); setTestModal({ open: true, kind: 'image', name: styleForm.name, snapshot: styleForm, refId: styleForm.id }); }}>
                   <Icon name="Play" size={14} className="mr-1 inline-block" /> Tes
                 </Button>
                 <Button disabled={!styleForm.name || !styleForm.descriptor || saveStyle.isPending} onClick={() => saveStyle.mutate(styleForm)}>{styleForm.id ? 'Simpan' : 'Buat'}</Button>
@@ -247,7 +300,7 @@ export function AdminGayaAI() {
 
               <div className="flex gap-2 justify-end pt-2">
                 {voiceForm.id && <Button variant="secondary" onClick={resetVoice}>Batal</Button>}
-                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!voiceForm.name} onClick={() => setTestModal({ open: true, kind: 'audio', name: voiceForm.name, snapshot: voiceForm, refId: voiceForm.id })}>
+                <Button variant="secondary" className="border-teal text-teal hover:bg-teal-50" disabled={!voiceForm.name} onClick={() => { setActiveTestRunId(null); setTestModal({ open: true, kind: 'audio', name: voiceForm.name, snapshot: voiceForm, refId: voiceForm.id }); }}>
                   <Icon name="Play" size={14} className="mr-1 inline-block" /> Tes
                 </Button>
                 <Button disabled={!voiceForm.name || saveVoice.isPending} onClick={() => saveVoice.mutate(voiceForm)}>{voiceForm.id ? 'Simpan' : 'Buat'}</Button>
@@ -274,7 +327,7 @@ export function AdminGayaAI() {
                 <p className="text-xs text-stone-500 line-clamp-2">{tab === 'styles' ? item.descriptor : item.style_prompt}</p>
               </div>
               <div className="flex gap-2 pt-2 border-t border-stone-100">
-                <Button className="flex-1 !py-1 !text-xs bg-teal text-white hover:bg-teal-dark border-none" onClick={() => setTestModal({ open: true, kind: tab === 'styles' ? 'image' : 'audio', refId: item.id, name: item.name })}>
+                <Button className="flex-1 !py-1 !text-xs bg-teal text-white hover:bg-teal-dark border-none" onClick={() => { setActiveTestRunId(null); setTestModal({ open: true, kind: tab === 'styles' ? 'image' : 'audio', refId: item.id, name: item.name }); }}>
                   <Icon name="Play" size={12} className="mr-1 inline-block" /> Tes
                 </Button>
                 <Button className="flex-1 !py-1 !text-xs" variant="secondary" onClick={() => { if(tab === 'styles') setStyleForm({...item, reference_paths: item.reference_paths||[]}); else setVoiceForm(item); formRef.current?.scrollIntoView({behavior: 'smooth'}); }}>Edit</Button>
@@ -286,29 +339,217 @@ export function AdminGayaAI() {
         </div>
       )}
 
+      {/* Section Riwayat Uji Coba */}
+      <div className="mt-8 pt-8 border-t border-stone-200 flex flex-col gap-4">
+        <div className="flex justify-between items-end">
+          <div>
+            <h3 className="text-xl font-fredoka font-bold text-stone-800">Riwayat Uji Coba AI</h3>
+            <p className="text-stone-500 text-sm mt-0.5">Daftar 10 hasil pengujian terakhir untuk gaya gambar dan persona suara.</p>
+          </div>
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['admin_test_runs_history'] })}
+            className="text-xs text-teal hover:underline flex items-center gap-1 font-bold"
+          >
+            <Icon name="RotateCw" size={12} /> Segarkan
+          </button>
+        </div>
+
+        {loadHistory ? (
+          <div className="p-8 text-center text-stone-400 animate-pulse text-sm">Memuat riwayat pengujian...</div>
+        ) : (!testHistory || testHistory.length === 0) ? (
+          <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-stone-300 text-stone-400 text-sm flex flex-col items-center gap-2">
+            <Icon name="Sparkles" size={28} className="text-stone-300" />
+            <span>Belum ada riwayat pengujian. Klik tombol "Tes" pada aturan gambar atau persona suara di atas untuk mencoba.</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {testHistory.map((run: any) => {
+              const targetName = run.config_snapshot?.name || (run.kind === 'image' ? styles?.find((s: any) => s.id === run.style_id)?.name : voices?.find((v: any) => v.id === run.voice_id)?.name) || 'Gaya / Persona';
+              return (
+                <div key={run.id} className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${run.kind === 'image' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {run.kind === 'image' ? 'Gambar' : 'Suara'}
+                      </span>
+                      <span className="font-bold text-stone-800 text-sm">{targetName}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                        run.status === 'succeeded' ? 'bg-teal-50 text-teal-dark' :
+                        run.status === 'failed' ? 'bg-red-50 text-red-600' :
+                        run.status === 'running' ? 'bg-blue-50 text-blue-600 animate-pulse' :
+                        'bg-stone-100 text-stone-500'
+                      }`}>
+                        {run.status === 'succeeded' ? 'Selesai' : run.status === 'failed' ? 'Gagal' : run.status === 'running' ? 'Memproses' : 'Mengantre'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => confirm('Hapus riwayat pengujian ini?') && delTestRun.mutate(run.id)}
+                      className="text-stone-300 hover:text-red-500 p-1 transition-colors"
+                      title="Hapus"
+                    >
+                      <Icon name="Trash" size={14} />
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-stone-500 italic line-clamp-2">"{run.text_prompt}"</p>
+
+                  {run.status === 'succeeded' && run.result_url && (
+                    <div className="mt-1">
+                      {run.kind === 'image' ? (
+                        <div className="relative group rounded-xl overflow-hidden border border-stone-200 bg-stone-100">
+                          <img src={run.result_url} alt="Hasil" className="w-full h-44 object-cover" />
+                          <a
+                            href={run.result_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity gap-1"
+                          >
+                            <Icon name="ExternalLink" size={14} /> Buka Gambar
+                          </a>
+                        </div>
+                      ) : (
+                        <audio controls className="w-full h-8" src={run.result_url} />
+                      )}
+                    </div>
+                  )}
+
+                  {run.status === 'failed' && (
+                    <p className="text-xs text-red-500 bg-red-50 p-2 rounded border border-red-100 font-mono break-all line-clamp-2">
+                      {run.error || 'Gagal diproses'}
+                    </p>
+                  )}
+
+                  {(run.status === 'queued' || run.status === 'running') && (
+                    <div className="flex items-center gap-2 text-xs text-stone-400 bg-stone-50 p-2 rounded animate-pulse">
+                      <Icon name="Loader" size={12} className="animate-spin" />
+                      <span>{run.status === 'running' ? 'Sedang diproses oleh AI Worker...' : 'Mengantre di antrean Worker...'}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-[10px] text-stone-400 pt-1 border-t border-stone-100">
+                    <span>{new Date(run.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} {new Date(run.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {testModal?.open && (
-        <Modal isOpen onClose={() => setTestModal(null)}>
-          <div className="p-6 font-nunito max-w-lg">
-            <h3 className="text-xl font-bold font-fredoka text-stone-800 mb-1">Tes {testModal.kind === 'image' ? 'Gambar' : 'Suara'}</h3>
-            <p className="text-sm text-stone-500 mb-6">Uji coba gaya <strong className="text-teal-dark">{testModal.name}</strong> dengan 1 halaman adegan (prioritas tinggi di Worker).</p>
+        <Modal isOpen onClose={() => { setTestModal(null); setActiveTestRunId(null); }}>
+          <div className="p-6 font-nunito max-w-lg w-full">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-xl font-bold font-fredoka text-stone-800">Tes {testModal.kind === 'image' ? 'Gaya Gambar' : 'Persona Suara'}</h3>
+                <p className="text-xs text-stone-500 mt-0.5">Uji coba gaya <strong className="text-teal-dark">{testModal.name}</strong> dengan 1 halaman adegan.</p>
+              </div>
+            </div>
 
-            <select className="w-full mb-3 px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm outline-none" value={testTemplate} onChange={(e) => {
-              setTestTemplate(e.target.value);
-              setTestText(SCENE_TEMPLATES.find(t => t.id === e.target.value)?.text || '');
-            }}>
-              {SCENE_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-            </select>
+            {!activeTestRunId ? (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1.5">Pilih Template Adegan Uji Coba</label>
+                  <select className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm outline-none" value={testTemplate} onChange={(e) => {
+                    setTestTemplate(e.target.value);
+                    setTestText(SCENE_TEMPLATES.find(t => t.id === e.target.value)?.text || '');
+                  }}>
+                    {SCENE_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                  </select>
+                </div>
 
-            <textarea 
-              className="w-full px-3 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none min-h-[120px] focus:border-teal-dark mb-6"
-              placeholder="Tuliskan 1 paragraf adegan..."
-              value={testText}
-              onChange={e => { setTestText(e.target.value); setTestTemplate('custom'); }}
-            />
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1.5">Teks Adegan Pengujian</label>
+                  <textarea 
+                    className="w-full px-3 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none min-h-[120px] focus:border-teal-dark"
+                    placeholder="Tuliskan 1 paragraf adegan..."
+                    value={testText}
+                    onChange={e => { setTestText(e.target.value); setTestTemplate('custom'); }}
+                  />
+                </div>
 
-            <Button className="w-full" disabled={!testText.trim() || runTest.isPending} onClick={() => runTest.mutate()}>
-              {runTest.isPending ? 'Mengantrekan...' : 'Kirim ke AI Worker'}
-            </Button>
+                <div className="flex gap-2 justify-end pt-2">
+                  <Button variant="secondary" onClick={() => { setTestModal(null); setActiveTestRunId(null); }}>Batal</Button>
+                  <Button disabled={!testText.trim() || runTest.isPending} onClick={() => runTest.mutate()}>
+                    {runTest.isPending ? 'Mengirim...' : 'Kirim ke AI Worker'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {currentTestRun?.status === 'queued' && (
+                  <div className="flex flex-col items-center justify-center p-8 text-center bg-stone-50 rounded-2xl border border-stone-200">
+                    <Icon name="Clock" size={36} className="text-amber-500 animate-pulse mb-3" />
+                    <h4 className="font-bold text-stone-800 text-base">Mengantre di Worker AI</h4>
+                    <p className="text-xs text-stone-500 max-w-xs mt-1">Pekerjaan telah diantrekan dengan prioritas tinggi. Menunggu worker memproses...</p>
+                  </div>
+                )}
+
+                {currentTestRun?.status === 'running' && (
+                  <div className="flex flex-col items-center justify-center p-8 text-center bg-teal-50/50 rounded-2xl border border-teal-200">
+                    <Icon name="Loader" size={36} className="text-teal animate-spin mb-3" />
+                    <h4 className="font-bold text-stone-800 text-base">AI Sedang Memproses</h4>
+                    <p className="text-xs text-stone-500 max-w-xs mt-1">Gemini sedang menghasilkan {testModal.kind === 'image' ? 'gambar' : 'suara'} sesuai instruksi gaya...</p>
+                  </div>
+                )}
+
+                {currentTestRun?.status === 'succeeded' && (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-teal-dark font-bold text-xs bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
+                      <Icon name="CircleCheck" size={16} />
+                      <span>Hasil Uji Coba Berhasil Dihasilkan!</span>
+                    </div>
+
+                    {testModal.kind === 'image' && currentTestRun.result_url && (
+                      <div className="flex flex-col gap-2">
+                        <div className="relative rounded-xl overflow-hidden border border-stone-200 bg-stone-100 flex items-center justify-center max-h-72">
+                          <img src={currentTestRun.result_url} alt="Hasil Tes" className="w-full h-auto max-h-72 object-contain" />
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-stone-400">Model: Gemini 3.1 Flash Image</span>
+                          <a href={currentTestRun.result_url} target="_blank" rel="noreferrer" className="text-teal hover:underline flex items-center gap-1 font-bold">
+                            <Icon name="ExternalLink" size={12} /> Buka Gambar Penuh
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {testModal.kind === 'audio' && currentTestRun.result_url && (
+                      <div className="flex flex-col gap-2 p-4 bg-stone-50 rounded-xl border border-stone-200">
+                        <div className="flex justify-between items-center text-xs text-stone-500">
+                          <span className="font-bold text-stone-700">Audio Narasi (Opus/Ogg)</span>
+                          <span>Model: Gemini 3.8 Flash TTS</span>
+                        </div>
+                        <audio controls autoPlay className="w-full h-10 mt-1" src={currentTestRun.result_url} />
+                      </div>
+                    )}
+
+                    <div className="text-xs text-stone-500 bg-stone-50 p-2.5 rounded-lg border border-stone-100 italic">
+                      "{currentTestRun.text_prompt}"
+                    </div>
+
+                    <div className="flex gap-2 justify-end pt-2 border-t border-stone-100">
+                      <Button variant="secondary" onClick={() => setActiveTestRunId(null)}>Tes Adegan Lain</Button>
+                      <Button onClick={() => { setTestModal(null); setActiveTestRunId(null); }}>Selesai</Button>
+                    </div>
+                  </div>
+                )}
+
+                {currentTestRun?.status === 'failed' && (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col items-center justify-center p-6 text-center bg-red-50 rounded-2xl border border-red-200">
+                      <Icon name="CircleAlert" size={32} className="text-red-500 mb-2" />
+                      <h4 className="font-bold text-red-800 text-sm">Gagal Menghasilkan {testModal.kind === 'image' ? 'Gambar' : 'Suara'}</h4>
+                      <p className="text-xs text-red-600 mt-1 max-w-sm font-mono break-all">{currentTestRun?.error || 'Terjadi kesalahan pada AI Worker.'}</p>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="secondary" onClick={() => setActiveTestRunId(null)}>Coba Lagi</Button>
+                      <Button onClick={() => { setTestModal(null); setActiveTestRunId(null); }}>Tutup</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </Modal>
       )}
