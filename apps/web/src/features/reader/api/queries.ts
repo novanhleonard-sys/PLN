@@ -8,7 +8,7 @@ export const useStoryVersions = (versionId: string) => {
       // get current version first
       const { data: currentVersion, error: vErr } = await supabase
         .from('story_versions')
-        .select('*, story:stories(*)')
+        .select('*, story:stories(*, region:regions(id, name, region_group_id, region_group:region_groups(id, name, parent_id)))')
         .eq('id', versionId)
         .single();
         

@@ -101,7 +101,7 @@ export const Baca: React.FC = () => {
     }
   }, [targetLanguage, currentAdapt?.age_band, currentAdapt?.language, versionData, versionId, setLanguage]);
 
-  useAmbientSound(mode, versionData?.version?.story_id);
+  useAmbientSound(mode, versionData?.version?.story);
 
     useEffect(() => {
     if (versionData?.adaptations && !selectedAdaptation) {
@@ -181,6 +181,7 @@ export const Baca: React.FC = () => {
           themeClasses={themeClasses}
           versionId={versionId!}
           storyId={versionData.version.story_id}
+          story={versionData.version.story}
           onAdaptationReady={setSelectedAdaptation}
           onAdaptationPending={(id, band) => { setPendingAdaptId(id); setPendingBand(band); }}
           disabled={true}
@@ -268,6 +269,7 @@ export const Baca: React.FC = () => {
         themeClasses={themeClasses}
         versionId={versionId!}
         storyId={versionData.version.story_id}
+        story={versionData.version.story}
         onAdaptationReady={setSelectedAdaptation}
         onAdaptationPending={(id, band) => { setPendingAdaptId(id); setPendingBand(band); }}
         disabled={!!pendingAdaptId}

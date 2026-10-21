@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SegmentedControl } from '../../../ui/basic/SegmentedControl';
 import { Icon } from '../../../ui/basic/Icon';
@@ -14,13 +14,14 @@ interface ReaderHeaderProps {
   themeClasses: { navBg: string; border: string; textMain: string };
   versionId: string;
   storyId: string;
+  story?: any;
   onAdaptationReady: (id: string) => void;
   onAdaptationPending?: (id: string, band: string) => void;
   disabled?: boolean;
 }
 
 export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
-  title, mode, onModeChange, themeClasses, versionId, storyId, onAdaptationReady, onAdaptationPending, disabled
+  title, mode, onModeChange, themeClasses, versionId, storyId, story, onAdaptationReady, onAdaptationPending, disabled
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -79,10 +80,9 @@ export const ReaderHeader: React.FC<ReaderHeaderProps> = ({
             isOpen={isMenuOpen}
             onClose={() => setIsMenuOpen(false)}
             mode={mode}
-            
             versionId={versionId}
-            
             storyId={storyId}
+            story={story}
             onAdaptationReady={onAdaptationReady}
             onAdaptationPending={onAdaptationPending}
           />

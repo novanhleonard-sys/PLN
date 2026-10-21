@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { Sheet } from '../../../ui/layers/Sheet';
 import { Icon } from '../../../ui/basic/Icon';
@@ -8,15 +8,15 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../auth/AuthStore';
 import { Button } from '../../../ui/basic/Button';
 import { Stepper } from '../../../ui/basic/Stepper';
+import { getMatchingAmbientSound } from './useAmbientSound';
 
 interface ReaderMenuProps {
   isOpen: boolean;
   onClose: () => void;
   mode: string;
-  
   versionId: string;
-  
   storyId: string;
+  story?: any;
   onAdaptationReady: (adaptationId: string) => void;
   onAdaptationPending?: (adaptationId: string, band: string) => void;
 }
@@ -24,7 +24,7 @@ interface ReaderMenuProps {
 type MenuView = 'main' | 'suasana' | 'usia' | 'laporan' | 'tentang';
 
 export const ReaderMenu: React.FC<ReaderMenuProps> = ({ 
-  isOpen, onClose, mode, versionId, storyId, onAdaptationReady, onAdaptationPending
+  isOpen, onClose, mode, versionId, storyId, story, onAdaptationReady, onAdaptationPending
 }) => {
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const menuRef = useRef<HTMLDivElement>(null);
@@ -45,19 +45,27 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [availableSounds, setAvailableSounds] = useState<any[]>([]);
 
-  const { updateOverride, resetOverride, activeStoryId, storyOverrides, setLanguage } = useReaderStore();
+  const { updateOverride, resetOverride, activeStoryId, storyOverrides, globalPrefs, setLanguage } = useReaderStore();
   const prefs = useComputedPrefs();
   const themeClasses = getThemeClasses(prefs.theme);
   
   const isOverridden = activeStoryId ? !!storyOverrides[activeStoryId] : false;
 
   useEffect(() => {
-    if (view === 'suasana' && availableSounds.length === 0) {
+    if (isOpen && availableSounds.length === 0) {
       supabase.from('ambient_sounds').select('*').eq('is_active', true).then(({ data }) => {
         if (data) setAvailableSounds(data);
       });
     }
-  }, [view]);
+  }, [isOpen, availableSounds.length]);
+
+  const matchingSound = getMatchingAmbientSound(availableSounds, story);
+  const userStoryOverride = storyId ? storyOverrides[storyId] : undefined;
+  const effectiveBgAudioOn = userStoryOverride?.bgAudioOn !== undefined
+    ? !!userStoryOverride.bgAudioOn
+    : (matchingSound !== null);
+
+  const selectedSoundId = userStoryOverride?.bgAudioSoundId ?? globalPrefs.bgAudioSoundId;
 
   const submitReport = async () => {
     setReportStatus('submitting');
@@ -149,26 +157,28 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
             <div className="flex items-center justify-between">
               <label className="font-bold">Suara latar</label>
               <div className="flex items-center gap-3">
-                <span className={cn("text-xs font-bold", prefs.bgAudioOn ? "text-teal" : "text-stone-500")}>
-                  {prefs.bgAudioOn ? 'Hidup' : 'Mati'}
+                <span className={cn("text-xs font-bold", effectiveBgAudioOn ? "text-teal" : "text-stone-500")}>
+                  {effectiveBgAudioOn ? 'Hidup' : 'Mati'}
                 </span>
                 <button 
-                  onClick={() => updateOverride(storyId, { bgAudioOn: !prefs.bgAudioOn })}
-                  className={cn("w-10 h-6 rounded-full p-1 transition-colors", prefs.bgAudioOn ? "bg-teal" : "bg-stone-300")}
+                  onClick={() => updateOverride(storyId, { bgAudioOn: !effectiveBgAudioOn })}
+                  className={cn("w-10 h-6 rounded-full p-1 transition-colors", effectiveBgAudioOn ? "bg-teal" : "bg-stone-300")}
                 >
-                  <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", prefs.bgAudioOn ? "translate-x-4" : "translate-x-0")} />
+                  <div className={cn("w-4 h-4 bg-white rounded-full transition-transform", effectiveBgAudioOn ? "translate-x-4" : "translate-x-0")} />
                 </button>
               </div>
             </div>
             
-            {prefs.bgAudioOn && (
+            {effectiveBgAudioOn && (
               <button 
                 onClick={() => setView('suasana')}
                 className={cn("flex justify-between items-center px-4 py-2 rounded-xl text-sm transition-colors", themeClasses.navBg)}
               >
                 <span>Pilih suasana</span>
                 <span className="flex items-center gap-1 font-bold">
-                  {availableSounds.find(s => s.id === prefs.bgAudioSoundId)?.name || 'Rekomendasi'}
+                  {selectedSoundId
+                    ? (availableSounds.find(s => s.id === selectedSoundId)?.name || 'Pilihan Pengguna')
+                    : (matchingSound ? `Rekomendasi (${matchingSound.name})` : 'Belum diatur (Pilih)')}
                   <Icon name="ChevronRight" size={16} />
                 </span>
               </button>
@@ -274,11 +284,18 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
       <button 
         onClick={() => updateOverride(storyId, { bgAudioSoundId: null })}
         className={cn("flex items-center justify-between p-3 rounded-xl border text-left", 
-          !prefs.bgAudioSoundId ? "border-teal bg-teal/5" : themeClasses.border
+          !selectedSoundId ? "border-teal bg-teal/5" : themeClasses.border
         )}
       >
-        <span className="font-bold">Rekomendasi (Otomatis)</span>
-        {!prefs.bgAudioSoundId && <Icon name="Check" className="text-teal" size={16} />}
+        <div className="flex flex-col">
+          <span className="font-bold">Rekomendasi (Otomatis)</span>
+          <span className="text-xs opacity-70">
+            {matchingSound
+              ? `Sesuai cerita: ${matchingSound.name}`
+              : 'Belum diatur untuk cerita ini (Mati)'}
+          </span>
+        </div>
+        {!selectedSoundId && <Icon name="Check" className="text-teal" size={16} />}
       </button>
       
       {availableSounds.map(s => (
@@ -286,14 +303,14 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
           key={s.id}
           onClick={() => updateOverride(storyId, { bgAudioSoundId: s.id })}
           className={cn("flex items-center justify-between p-3 rounded-xl border text-left", 
-            prefs.bgAudioSoundId === s.id ? "border-teal bg-teal/5" : themeClasses.border
+            selectedSoundId === s.id ? "border-teal bg-teal/5" : themeClasses.border
           )}
         >
           <div className="flex flex-col">
             <span className="font-bold">{s.name}</span>
             <span className="text-xs opacity-70">Vol: {s.volume}x</span>
           </div>
-          {prefs.bgAudioSoundId === s.id && <Icon name="Check" className="text-teal" size={16} />}
+          {selectedSoundId === s.id && <Icon name="Check" className="text-teal" size={16} />}
         </button>
       ))}
     </div>
@@ -383,4 +400,3 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
     </Sheet>
   );
 };
-
