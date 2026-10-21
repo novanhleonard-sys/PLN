@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useMediaQuery } from '../../../utils/useMediaQuery';
 import { Sheet } from '../../../ui/layers/Sheet';
 import { Icon } from '../../../ui/basic/Icon';
@@ -8,7 +8,7 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../auth/AuthStore';
 import { Button } from '../../../ui/basic/Button';
 import { Stepper } from '../../../ui/basic/Stepper';
-import { getMatchingAmbientSound } from './useAmbientSound';
+import { getMatchingAmbientSound, sortSoundsBySimilarity } from './useAmbientSound';
 
 interface ReaderMenuProps {
   isOpen: boolean;
@@ -35,6 +35,8 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
   const [reportStatus, setReportStatus] = useState<'idle'|'submitting'|'success'>('idle');
   const [age, setAge] = useState(6);
   const [sources, setSources] = useState<any[]>([]);
+  const [showAllSounds, setShowAllSounds] = useState(false);
+
   useEffect(() => {
     if (isOpen && versionId) {
       supabase.from('story_versions').select('sources').eq('id', versionId).single().then(({data}) => {
@@ -42,6 +44,7 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
       });
     }
   }, [isOpen, versionId]);
+
   const [adaptLoading, setAdaptLoading] = useState(false);
   const [availableSounds, setAvailableSounds] = useState<any[]>([]);
 
@@ -66,6 +69,12 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
     : (matchingSound !== null);
 
   const selectedSoundId = userStoryOverride?.bgAudioSoundId ?? globalPrefs.bgAudioSoundId;
+
+  const sortedSounds = useMemo(() => {
+    return sortSoundsBySimilarity(availableSounds, story);
+  }, [availableSounds, story]);
+
+  const displayedSounds = showAllSounds ? sortedSounds : sortedSounds.slice(0, 4);
 
   const submitReport = async () => {
     setReportStatus('submitting');
@@ -178,7 +187,7 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
                 <span className="flex items-center gap-1 font-bold">
                   {selectedSoundId
                     ? (availableSounds.find(s => s.id === selectedSoundId)?.name || 'Pilihan Pengguna')
-                    : (matchingSound ? `Rekomendasi (${matchingSound.name})` : 'Belum diatur (Pilih)')}
+                    : (matchingSound ? matchingSound.name : 'Rekomendasi')}
                   <Icon name="ChevronRight" size={16} />
                 </span>
               </button>
@@ -283,36 +292,37 @@ export const ReaderMenu: React.FC<ReaderMenuProps> = ({
     <div className="flex flex-col gap-2">
       <button 
         onClick={() => updateOverride(storyId, { bgAudioSoundId: null })}
-        className={cn("flex items-center justify-between p-3 rounded-xl border text-left", 
-          !selectedSoundId ? "border-teal bg-teal/5" : themeClasses.border
+        className={cn("flex items-center justify-between p-3 rounded-xl border text-left transition-colors", 
+          !selectedSoundId ? "border-teal bg-teal/5 font-bold" : themeClasses.border
         )}
       >
-        <div className="flex flex-col">
-          <span className="font-bold">Rekomendasi (Otomatis)</span>
-          <span className="text-xs opacity-70">
-            {matchingSound
-              ? `Sesuai cerita: ${matchingSound.name}`
-              : 'Belum diatur untuk cerita ini (Mati)'}
-          </span>
-        </div>
+        <span className="font-bold">Rekomendasi (Otomatis)</span>
         {!selectedSoundId && <Icon name="Check" className="text-teal" size={16} />}
       </button>
       
-      {availableSounds.map(s => (
+      {displayedSounds.map(s => (
          <button 
           key={s.id}
           onClick={() => updateOverride(storyId, { bgAudioSoundId: s.id })}
-          className={cn("flex items-center justify-between p-3 rounded-xl border text-left", 
-            selectedSoundId === s.id ? "border-teal bg-teal/5" : themeClasses.border
+          className={cn("flex items-center justify-between p-3 rounded-xl border text-left transition-colors", 
+            selectedSoundId === s.id ? "border-teal bg-teal/5 font-bold" : themeClasses.border
           )}
         >
-          <div className="flex flex-col">
-            <span className="font-bold">{s.name}</span>
-            <span className="text-xs opacity-70">Vol: {s.volume}x</span>
-          </div>
+          <span className="font-bold">{s.name}</span>
           {selectedSoundId === s.id && <Icon name="Check" className="text-teal" size={16} />}
         </button>
       ))}
+
+      {sortedSounds.length > 4 && (
+        <button
+          type="button"
+          onClick={() => setShowAllSounds(!showAllSounds)}
+          className={cn("mt-1 py-2 px-3 text-center text-sm font-bold text-teal hover:bg-teal/5 rounded-xl transition-colors flex items-center justify-center gap-1.5 w-full")}
+        >
+          <span>{showAllSounds ? 'Tampilkan lebih sedikit' : 'Lihat lebih lengkap'}</span>
+          <Icon name={showAllSounds ? "ChevronUp" : "ChevronDown"} size={16} />
+        </button>
+      )}
     </div>
   ));
 

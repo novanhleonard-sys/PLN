@@ -50,6 +50,34 @@ export function getMatchingAmbientSound(sounds?: AmbientSound[] | null, story?: 
   return bestSound;
 }
 
+export function getSoundSimilarityScore(sound: AmbientSound, story?: any): number {
+  if (!story) return 0;
+  const storyType = story.type;
+  const regionGroupId = story.region?.region_group_id || story.region?.region_group?.id;
+  const parentRegionGroupId = story.region?.region_group?.parent_id;
+  const soundRegionIds = sound.region_group_ids || [];
+
+  const matchesDirectRegion = regionGroupId ? soundRegionIds.includes(regionGroupId) : false;
+  const matchesParentRegion = parentRegionGroupId ? soundRegionIds.includes(parentRegionGroupId) : false;
+  const matchesType = !!sound.story_type && sound.story_type === storyType;
+
+  if (matchesDirectRegion && matchesType) return 10; // Sama daerah dan sama jenis cerita
+  if (matchesDirectRegion) return 7;                 // Sama daerah tapi beda jenis cerita
+  if (matchesParentRegion && matchesType) return 5;  // Sama jenis cerita dan daerah berdekatan (serumpun)
+  if (matchesParentRegion) return 4;                 // Daerah berdekatan (serumpun)
+  if (matchesType) return 3;                         // Sama jenis cerita tapi daerah lain
+  return 1;                                          // Lainnya
+}
+
+export function sortSoundsBySimilarity(sounds: AmbientSound[], story?: any): AmbientSound[] {
+  return [...sounds].sort((a, b) => {
+    const scoreA = getSoundSimilarityScore(a, story);
+    const scoreB = getSoundSimilarityScore(b, story);
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export const useAmbientSound = (mode: 'Baca' | 'Dongeng', story?: any) => {
   const { storyOverrides, activeStoryId, globalPrefs } = useReaderStore();
   const storyId = story?.id || activeStoryId;
