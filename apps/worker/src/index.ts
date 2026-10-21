@@ -23,6 +23,8 @@ import { adaptStage } from './stages/adapt';
 import { adaptCheckStage } from './stages/adapt-check';
 import { translateStage } from './stages/translate';
 import { syncAudioStage } from './stages/sync-audio';
+import { testImageStage } from './stages/test-run/image';
+import { testAudioStage } from './stages/test-run/audio';
 
 // Try to load local env if present
 dotenv.config({ path: '../../.env.local' });
@@ -59,6 +61,8 @@ runner.register('adapt', async (ctx, job) => await adaptStage(ctx, job, registry
 runner.register('adapt_check', async (ctx, job) => await adaptCheckStage(ctx, job, registry));
 runner.register('translate', async (ctx, job) => await translateStage(ctx, job, registry));
 runner.register('sync_audio', async (ctx, job) => await syncAudioStage(ctx, job));
+runner.register('test_image', async (ctx, job) => await testImageStage(ctx, job, registry));
+runner.register('test_audio', async (ctx, job) => await testAudioStage(ctx, job, registry));
 
 let isPolling = true;
 let lastPollAt = new Date().toISOString();

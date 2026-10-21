@@ -24,7 +24,9 @@ export class BudgetGuard {
         const parsed = typeof setting.value === 'number' ? setting.value : parseFloat(setting.value?.amount || setting.value);
         if (!isNaN(parsed) && parsed > 0) limit = parsed;
       }
-    } catch {}
+    } catch (e: any) {
+      console.warn('Failed to fetch ai_daily_budget_usd setting:', e.message);
+    }
 
     // 1. Check daily budget
     const today = new Date();
