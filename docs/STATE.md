@@ -19,6 +19,7 @@ Diperbarui oleh agent di akhir setiap sesi (AKHIRI SESI).
 | B14 AI Worker Overhaul | **selesai** | b14-done | Audit ulang Worker, perbaikan bug kritis, tracking cost, safety guardrail. |
 | B15 Hierarki Daerah | **selesai** | b15-done | Restrukturisasi Kelompok Daerah menjadi 2 tingkat (Besar & Subkelompok), perbaikan UI filter dropdown bertingkat. |
 | B16 Kontribusi Media Artis | **selesai** | b16-done | Pembukaan kontribusi gambar (ilustrasi) dan suara (narasi) oleh artis/pengisi suara untuk semua cerita. Full story upload, antrean admin moderasi, dan pengalihan badge AI ke nama artis. |
+| B17 Eksekusi & Pemantauan Tes Gaya AI | **selesai** | b17-done | Integrasi eksekusi stage test_image & test_audio di Worker, live tracking di modal, dan riwayat uji coba di Admin Gaya AI. |
 
 ## Kontrak beku
 
