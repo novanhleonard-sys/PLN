@@ -1,4 +1,4 @@
-﻿import { GoogleGenAI, Type, Schema } from '@google/genai';
+import { GoogleGenAI, Type, Schema } from '@google/genai';
 import { z } from 'zod';
 import { AIProvider } from './registry';
 
@@ -108,11 +108,23 @@ export class GeminiProvider implements AIProvider {
   }
 
   async generateAudio(model: string, prompt: string, voiceName: string, systemInstruction?: string, opts?: Record<string, any>) {
+    const isTtsModel = Boolean(model && model.endsWith('-tts'));
+    let contents = prompt;
+    let configSysInstruction: any = undefined;
+
+    if (systemInstruction) {
+      if (isTtsModel) {
+        contents = `[Instruksi Nada dan Gaya Suara:\n${systemInstruction}]\n\nNaskah Cerita:\n${prompt}`;
+      } else {
+        configSysInstruction = { role: 'user', parts: [{ text: systemInstruction }] };
+      }
+    }
+
     const response = await this.ai.models.generateContent({
       model: model || 'gemini-3.8-flash-tts',
-      contents: prompt,
+      contents,
       config: {
-          systemInstruction: (systemInstruction && !model.endsWith('-tts')) ? { role: 'user', parts: [{ text: systemInstruction }] } : undefined,
+        systemInstruction: configSysInstruction,
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
@@ -139,9 +151,17 @@ export class GeminiProvider implements AIProvider {
       outputTokens: response.usageMetadata?.candidatesTokenCount || 0,
     };
   }
-    async generateImage(model: string, prompt: string, referenceImages?: string[], opts?: Record<string, any>) {
+
+  async generateImage(model: string, prompt: string, referenceImages?: string[], opts?: Record<string, any>) {
+    const getImageMime = (b64: string): string => {
+      if (b64.startsWith('/9j/')) return 'image/jpeg';
+      if (b64.startsWith('UklGR')) return 'image/webp';
+      if (b64.startsWith('R0lGOD')) return 'image/gif';
+      return 'image/png';
+    };
+
     const contents = referenceImages?.length 
-      ? [ { text: prompt }, ...referenceImages.map(img => ({ inlineData: { data: img, mimeType: 'image/png' } })) ] as any 
+      ? [ { text: prompt }, ...referenceImages.map(img => ({ inlineData: { data: img, mimeType: getImageMime(img) } })) ] as any 
       : prompt;
 
     const response = await this.ai.models.generateContent({

@@ -7,7 +7,7 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
 
   const { data: version } = await ctx.supabase
     .from("story_versions")
-    .select("id, body, story:stories(title, region_id), scenes(id, idx, description)")
+    .select("id, body, story:stories(title, region_id, type), scenes(id, idx, description)")
     .eq("id", versionId)
     .single();
 
@@ -18,6 +18,47 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
 
   const { data: umumG } = await ctx.supabase.from("app_settings").select("value").eq("key", "umum_gambar").single();
   const globalPrompt = umumG?.value?.prompt || "Gaya ilustrasi storybook kartunis...";
+
+  // Resolve specific style from style_configs
+  let specificStyleDescriptor = "";
+  const storyType = (version.story as any)?.type;
+  const regionId = (version.story as any)?.region_id;
+
+  if (storyType) {
+    let regionGroupId: string | null = null;
+    if (regionId) {
+      const { data: regionData } = await ctx.supabase
+        .from("regions")
+        .select("region_group_id")
+        .eq("id", regionId)
+        .maybeSingle();
+      if (regionData) regionGroupId = regionData.region_group_id;
+    }
+
+    let styleQuery = ctx.supabase
+      .from("style_configs")
+      .select("descriptor, region_group_ids")
+      .eq("story_type", storyType);
+
+    if (regionGroupId) {
+      styleQuery = styleQuery.contains("region_group_ids", [regionGroupId]);
+    }
+
+    const { data: matchedStyle } = await styleQuery.limit(1).maybeSingle();
+    if (matchedStyle?.descriptor) {
+      specificStyleDescriptor = matchedStyle.descriptor;
+    } else {
+      const { data: fallbackStyle } = await ctx.supabase
+        .from("style_configs")
+        .select("descriptor")
+        .eq("story_type", storyType)
+        .limit(1)
+        .maybeSingle();
+      if (fallbackStyle?.descriptor) {
+        specificStyleDescriptor = fallbackStyle.descriptor;
+      }
+    }
+  }
 
   const bibleSchema = z.object({
     overall_direction: z.any(),
@@ -61,6 +102,7 @@ export const processStoryVisualBibleStage = async (ctx: { supabase: SupabaseClie
   const sysPrompt = `Anda adalah Art Director untuk Peta Legenda Nusantara. Buat Story Visual Bible untuk cerita berjudul: "${(version.story as any)?.title}".
 Patuhi Global Image Instruction berikut:
 ${globalPrompt}
+${specificStyleDescriptor ? `\nInstruksi Gaya Spesifik (${storyType}):\n${specificStyleDescriptor}\n` : ''}
 
 Hasilkan JSON dengan skema:
 - characters, locations, props: tetapkan is_canonical=true hanya untuk entitas penting (berulang/signifikan secara visual).

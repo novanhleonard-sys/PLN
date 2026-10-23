@@ -61,6 +61,7 @@ export const testImageStage = async (ctx: { supabase: SupabaseClient }, job: any
     const prompt = [
       umumPrompt ? `Aturan Umum:\n${umumPrompt}` : '',
       descriptor ? `Aturan Gaya Spesifik:\n${descriptor}` : '',
+      referenceBase64s.length > 0 ? 'Panduan Visual: Perhatikan contoh gambar referensi terlampir sebagai acuan utama palet warna, goresan ilustrasi, dan gaya visual.' : '',
       `Deskripsi Adegan Pengujian:\n${testRun.text_prompt}`,
       'Aturan Tambahan: Komposisi persegi, subjek jelas di tengah dengan margin aman. PENTING: Jangan tambahkan TEKS AI, LABEL, WATERMARK, atau CAPTION apa pun ke dalam gambar.'
     ].filter(Boolean).join('\n\n');

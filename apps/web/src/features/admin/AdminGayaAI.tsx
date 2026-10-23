@@ -232,7 +232,10 @@ export function AdminGayaAI() {
               />
               <div className="flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-bold text-stone-700">Contoh Referensi Suara (Multiple)</span>
+                  <div>
+                    <span className="text-sm font-bold text-stone-700">Contoh Referensi Suara (Multiple)</span>
+                    <p className="text-[11px] text-stone-400 mt-0.5">Berkas audio acuan kurator untuk standar intonasi. AI diarahkan via Voice ID dan instruksi di atas.</p>
+                  </div>
                   <div className="w-32">
                     <FileUploader bucket="admin-assets" folder="voices/umum" accept="audio/*" multiple label="Unggah" isAudio onUploadSuccess={p => setUmumSuaraForm(s => ({...s, references: [...s.references, ...p]}))} />
                   </div>
@@ -287,14 +290,41 @@ export function AdminGayaAI() {
           ) : (
             <div className="grid grid-cols-1 gap-4">
               <h3 className="text-xl font-fredoka font-bold text-stone-800 mb-2">{voiceForm.id ? 'Edit Aturan Spesifik Suara' : 'Buat Aturan Spesifik Suara'}</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (Bapak Tua)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
-                <div className="relative"><input className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm outline-none text-stone-700 font-mono" placeholder="Voice ID (Opsional/ElevenLabs)" value={voiceForm.voice_name} onChange={e => setVoiceForm({...voiceForm, voice_name: e.target.value})} /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark" placeholder="Nama Persona (contoh: Kakek Pendongeng)" value={voiceForm.name} onChange={e => setVoiceForm({...voiceForm, name: e.target.value})} />
+                <div className="flex flex-col gap-1.5">
+                  <input className="w-full px-4 py-2.5 bg-white border border-stone-200 rounded-xl text-sm outline-none text-stone-700 font-mono" placeholder="Voice ID (contoh: Aoede, Fenrir, Kore)" value={voiceForm.voice_name} onChange={e => setVoiceForm({...voiceForm, voice_name: e.target.value})} />
+                  <div className="flex gap-1.5 flex-wrap items-center text-[11px] text-stone-500">
+                    <span className="font-bold">Preset Gemini:</span>
+                    {[
+                      { id: 'Aoede', label: 'Aoede (Wanita Hangat)' },
+                      { id: 'Kore', label: 'Kore (Wanita Tenang)' },
+                      { id: 'Fenrir', label: 'Fenrir (Pria Berat)' },
+                      { id: 'Charon', label: 'Charon (Pria Misterius)' },
+                      { id: 'Puck', label: 'Puck (Remaja Ceria)' }
+                    ].map(v => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setVoiceForm(f => ({ ...f, voice_name: v.id }))}
+                        className={`px-2 py-0.5 rounded border text-[10px] font-semibold transition-all ${voiceForm.voice_name === v.id ? 'bg-teal-50 border-teal text-teal-dark font-bold' : 'bg-stone-50 border-stone-200 hover:bg-stone-100 text-stone-600'}`}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><MultiRegionSelect value={voiceForm.region_group_ids} onChange={val => setVoiceForm({...voiceForm, region_group_ids: val})} /></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik suara (Gaya bicara, aksen, dsb...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
+              <div className="grid grid-cols-2 gap-4"><select className="px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none" value={voiceForm.story_type} onChange={e => setVoiceForm({...voiceForm, story_type: e.target.value})}><option value="legenda">Legenda</option><option value="mite">Mite</option><option value="fabel">Fabel</option><option value="dongeng">Dongeng</option></select><MultiRegionSelect value={voiceForm.region_group_ids} onChange={val => setVoiceForm({...voiceForm, region_group_ids: val})} /></div><textarea className="px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm outline-none focus:border-teal-dark min-h-[60px]" placeholder="Instruksi spesifik suara (Gaya bicara, aksen, tempo, emosi...)" value={voiceForm.style_prompt} onChange={e => setVoiceForm({...voiceForm, style_prompt: e.target.value})} />
               
               <div className="flex flex-col gap-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
-                <div className="flex justify-between items-center"><span className="text-sm font-bold text-stone-700">Sampel Audio (MP3) Tambahan</span><div className="w-32"><FileUploader bucket="admin-assets" folder="voices" accept="audio/*" label="Unggah" isAudio onUploadSuccess={p => setVoiceForm(s => ({...s, sample_path: p[0]}))} /></div></div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-sm font-bold text-stone-700">Sampel Audio (MP3) Tambahan</span>
+                    <p className="text-[11px] text-stone-400 mt-0.5">Berkas sampel acuan kurasi. AI diarahkan via Voice ID dan instruksi gaya di atas.</p>
+                  </div>
+                  <div className="w-32"><FileUploader bucket="admin-assets" folder="voices" accept="audio/*" label="Unggah" isAudio onUploadSuccess={p => setVoiceForm(s => ({...s, sample_path: p[0]}))} /></div>
+                </div>
                 {voiceForm.sample_path && <audio controls className="w-full h-8" src={getUrl(voiceForm.sample_path)} />}
               </div>
 
